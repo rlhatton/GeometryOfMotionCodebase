@@ -26,13 +26,13 @@ class RepresentationGroup(gp.Group):
         # Store the identity input as the group identity representation, passing it through the appropriate
         # representation function if necessary
 
-        #identity = np.array(identity, dtype=float)
-        if (np.squeeze(identity)).ndim == 2:
+        identity = np.array(identity, dtype=float)
+        if identity.ndim == 2:
             identity_representation = identity
         else:
             identity_representation = self.representation_function_list[specification_chart](identity)
 
-        self.identity_rep = identity_representation
+        self.identity_rep = np.array(identity_representation, dtype=float)
 
     def element(self,
                 representation,
@@ -72,16 +72,19 @@ class RepresentationGroupElement(gp.GroupElement):
                          initial_chart)
 
         # Store the representation, passing it through the representation function if necessary
-        #representation = np.array(representation, dtype=float)
-        if (np.squeeze(representation)).ndim == 2:
+        representation = np.array(representation, dtype=float)
+        if representation.ndim == 2: #(np.squeeze(representation)).ndim == 2:
             pass
         else:
             representation = group.representation_function_list[initial_chart](representation)
 
-        self.rep = representation
+        print(representation)
+        self.rep = np.array(representation, dtype=float)
 
     def left_action(self,
                     g_right):
+        print(self.rep)
+        print(g_right.rep)
         g_composed_rep = np.matmul(self.rep, g_right.rep)
 
         return RepresentationGroupElement(self.group,

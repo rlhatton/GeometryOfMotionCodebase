@@ -23,7 +23,7 @@ print("Addition-group inverse composition of " +str(g1.rep) + " with " +str(g3.r
 
 def scalar_multiplication_rep(g_value):
 
-    g_rep = [[g_value]]
+    g_rep = np.array([[g_value]])
     return g_rep
 
 
