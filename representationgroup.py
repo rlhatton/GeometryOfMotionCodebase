@@ -94,3 +94,11 @@ class RepresentationGroupElement(gp.GroupElement):
         return RepresentationGroupElement(self.group,
                                           g_composed_rep,
                                           self.current_chart)
+
+    def inverse_element(self):
+
+        g_inv_rep = np.linalg.inv(self.rep)
+
+        g_inv = self.group.element(g_inv_rep)
+
+        return g_inv

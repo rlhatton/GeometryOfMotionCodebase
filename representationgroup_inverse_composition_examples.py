@@ -13,11 +13,11 @@ def scalar_addition_rep(g_value):
 R1plus = rgp.RepresentationGroup(scalar_addition_rep, 0)
 
 g1 = R1plus.element(2)
-g2 = R1plus.element(3)
+g3 = R1plus.element(5)
 
-g3 = g1 * g2
+g2 = g1.inverse_element() * g3
 
-print("Addition-group composition of " +str(g1.rep) + " and " +str(g2.rep) + " is " + str(g3.rep))
+print("Addition-group inverse composition of " +str(g1.rep) + " with " +str(g3.rep) + " is " + str(g2.rep))
 
 """ Scalar addition """
 
@@ -30,11 +30,11 @@ def scalar_multiplication_rep(g_value):
 R1times = rgp.RepresentationGroup(scalar_multiplication_rep, 1)
 
 g1 = R1times.element(2.)
-g2 = R1times.element(3.)
+g3 = R1times.element(6.)
 
-g3 = g1 * g2
+g2 = g1.inverse_element() * g3
 
-print("Multiplication-group composition of " +str(g1.rep) + " and " +str(g2.rep) + " is " + str(g3.rep))
+print("Multiplication-group inverse composition of " +str(g1.rep) + " with " +str(g3.rep) + " is " + str(g2.rep))
 
 def modular_addition_rep(g_value):
 
@@ -47,8 +47,8 @@ def modular_addition_rep(g_value):
 S1plus = rgp.RepresentationGroup(modular_addition_rep, 0)
 
 g1 = S1plus.element(.25)
-g2 = S1plus.element(.875)
+g3 = S1plus.element(.125)
 
-g3 = g1 * g2
+g2 = g1.inverse_element() * g3
 
 print("Modular-addition-group composition of " +str(g1.rep) + " and " +str(g2.rep) + " is " + str(g3.rep))
