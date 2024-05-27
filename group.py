@@ -9,7 +9,8 @@ class Group(md.Manifold):
     def __init__(self,
                  operation_list,
                  identity_list,
-                 transition_table=[[None]]):
+                 inverse_function_list=None,
+                 transition_table=((None,))):
 
         # Initialize the group as a manifold
         super().__init__(transition_table)
@@ -19,6 +20,9 @@ class Group(md.Manifold):
 
         # Save the identity as an instance attribute, wrapping it in a tuple if provided as a raw value
         self.identity_list = ut.ensureTuple(identity_list)
+
+        # Save the inverse operation as an instance attribute, wrapping it in a tuple if provided as a raw function
+        self.inverse_function_list = ut.ensureTuple(inverse_function_list)
 
     def element(self,
                 value,
@@ -67,30 +71,50 @@ class GroupElement(md.ManifoldElement):
     def left_action(self,
                     g_right):
 
-        # Attempt to ensure that g_right is expressed in the same chart as this group element
-        g_right = g_right.transition(self.current_chart)
+        if self.group.operation_list[self.current_chart] is not None:
 
-        # Apply the operation for the current chart, with this element on the left
-        g_composed_value = self.group.operation_list[self.current_chart](self.value, g_right.value)
+            # Attempt to ensure that g_right is expressed in the same chart as this group element
+            g_right = g_right.transition(self.current_chart)
 
-        # Construct an element from the composed value, in this element's chart
-        g_composed = GroupElement(self.group, g_composed_value, self.current_chart)
+            # Apply the operation for the current chart, with this element on the left
+            g_composed_value = self.group.operation_list[self.current_chart](self.value, g_right.value)
+
+            # Construct an element from the composed value, in this element's chart
+            g_composed = GroupElement(self.group, g_composed_value, self.current_chart)
+
+        else:
+
+            raise Exception("Group operation is undefined for chart " + str(self.current_chart))
 
         return g_composed
 
     def right_action(self,
                      g_left):
 
-        # Attempt to ensure that g_left is expressed in the same chart as this group element
-        g_left = g_left.transition(self.current_chart)
+        if self.group.operation_list[self.current_chart] is not None:
 
-        # Apply the operation for the current chart, with this element on the right
-        g_composed_value = self.group.operation_list[self.current_chart](g_left.value, self.value)
+            # Attempt to ensure that g_left is expressed in the same chart as this group element
+            g_left = g_left.transition(self.current_chart)
 
-        # Construct an element from the composed value, in this element's chart
-        g_composed = GroupElement(self.group, g_composed_value, self.current_chart)
+            # Apply the operation for the current chart, with this element on the right
+            g_composed_value = self.group.operation_list[self.current_chart](g_left.value, self.value)
+
+            # Construct an element from the composed value, in this element's chart
+            g_composed = GroupElement(self.group, g_composed_value, self.current_chart)
+
+        else:
+
+            raise Exception("Group operation is undefined for chart " + str(self.current_chart))
 
         return g_composed
+
+    def inverse_element(self):
+
+        g_inv_value = self.group.inverse_function_list[self.current_chart](self.value)
+
+        g_inv = self.group.element(g_inv_value,self.current_chart)
+
+        return g_inv
 
     def __mul__(self, other):
 
