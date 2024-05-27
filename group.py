@@ -53,7 +53,7 @@ class GroupElement(md.ManifoldElement):
                  initial_chart=0):
 
         # Handle the identity-element value keyword
-        if (value is 'identity'):
+        if isinstance(value, str) and (value == 'identity'):
             print('passed check')
             if (group.identity_list[initial_chart] is not None):
                 value = group.identity_list[initial_chart]
