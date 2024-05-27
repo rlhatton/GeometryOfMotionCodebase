@@ -7,7 +7,8 @@ class Manifold:
     Class to hold manifold structure
     """
 
-    def __init__(self, transition_table):
+    def __init__(self,
+                 transition_table):
         # Save the provided chart transition table as a class instance attribute
         self.transition_table = transition_table
         # Extract the number of charts implied by the transition table
@@ -19,11 +20,15 @@ class ManifoldElement:
     Class for manifold elements
     """
 
-    def __init__(self, manifold, value, initial_chart=0):
+    def __init__(self,
+                 manifold,
+                 value,
+                 initial_chart=0):
 
         # Save the provided manifold, configuration, and initial chart as class instance attributes
         self.manifold = manifold
-        self.value = np.array(value,dtype=float)
+        # Make sure the value is a numpy float array
+        self.value = np.array(value, dtype=float)
         self.current_chart = initial_chart
 
     def transition(self, new_chart):
@@ -32,17 +37,21 @@ class ManifoldElement:
         the configuration so that the actual point on the manifold stays the same
         """
 
+        # Simple passthrough behavior if chart is not actually changing
         if new_chart == self.current_chart:
 
             new_value = self.value
 
+        # Raise an exception if the transition from the current to new chart is not defined
         elif self.manifold.transition_table[self.current_chart][new_chart] is None:
 
             raise Exception(
                 "The transition from " + str(self.current_chart) + " to " + str(new_chart) + " is undefined.")
 
+        # If transition is non-trivial and defined, use the specified transition function
         else:
 
             new_value = self.manifold.transition_table[self.current_chart][new_chart](self.value)
 
+        # Return a ManifoldElement with the new value and chart
         return ManifoldElement(self.manifold, new_value, new_chart)
