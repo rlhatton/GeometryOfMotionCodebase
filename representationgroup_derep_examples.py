@@ -31,15 +31,19 @@ def scalar_multiplication_rep(g_value):
     g_rep = [[g_value]]
     return g_rep
 
+def scalar_multiplication_derep(g_rep):
 
-R1times = rgp.RepresentationGroup(scalar_multiplication_rep, 1)
+    g_value = g_rep[0][0]
+    return g_value
+
+R1times = rgp.RepresentationGroup(scalar_multiplication_rep, 1, scalar_multiplication_derep)
 
 g1 = R1times.element(2.)
 g2 = R1times.element(3.)
 
 g3 = g1 * g2
 
-print("Multiplication-group composition of " +str(g1.rep) + " and " +str(g2.rep) + " is " + str(g3.rep))
+print("Multiplication-group composition of " +str(g1.value) + " and " +str(g2.value) + " is " + str(g3.value))
 
 def modular_addition_rep_a(g_value):
 
