@@ -1,4 +1,6 @@
 #! /usr/bin/python3
+import copy
+
 import numpy as np
 
 
@@ -54,4 +56,7 @@ class ManifoldElement:
             new_value = self.manifold.transition_table[self.current_chart][new_chart](self.value)
 
         # Return a ManifoldElement with the new value and chart
-        return ManifoldElement(self.manifold, new_value, new_chart)
+        copied_element = copy.deepcopy(self)
+        copied_element.value = new_value
+        copied_element.current_chart = new_chart
+        return copied_element

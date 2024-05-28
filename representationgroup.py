@@ -9,6 +9,7 @@ class RepresentationGroup(gp.Group):
     def __init__(self,
                  representation_function_list,
                  identity,
+                 derepresentation_function_list=None,
                  specification_chart=0,
                  transition_table=((None,))
                  ):
@@ -22,6 +23,10 @@ class RepresentationGroup(gp.Group):
         # Save the representation function as an instance attribute, wrapping it in a tuple if provided as a raw
         # function
         self.representation_function_list = ut.ensureTuple(representation_function_list)
+
+        # Save the derepresentation function as an instance attribute, wrapping it in a tuple if provided as a raw
+        # function
+        self.derepresentation_function_list = ut.ensureTuple(derepresentation_function_list)
 
         # Store the identity input as the group identity representation, passing it through the appropriate
         # representation function if necessary
@@ -78,13 +83,11 @@ class RepresentationGroupElement(gp.GroupElement):
         else:
             representation = group.representation_function_list[initial_chart](representation)
 
-        print(representation)
         self.rep = np.array(representation, dtype=float)
 
     def left_action(self,
                     g_right):
-        print(self.rep)
-        print(g_right.rep)
+
         g_composed_rep = np.matmul(self.rep, g_right.rep)
 
         return RepresentationGroupElement(self.group,
@@ -105,3 +108,14 @@ class RepresentationGroupElement(gp.GroupElement):
         g_inv = self.group.element(g_inv_rep)
 
         return g_inv
+
+
+    @property
+    def value(self):
+
+        val = self.group.derepresentation_function_list[self.current_chart](self.rep)
+        return val
+
+    @value.setter
+    def value(self, val):
+        pass
