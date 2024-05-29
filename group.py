@@ -68,7 +68,7 @@ class GroupElement(md.ManifoldElement):
         # Store the group into the group element attributes
         self.group = group
 
-    def left_action(self,
+    def L(self,
                     g_right):
 
         if self.group.operation_list[self.current_chart] is not None:
@@ -88,7 +88,7 @@ class GroupElement(md.ManifoldElement):
 
         return g_composed
 
-    def right_action(self,
+    def R(self,
                      g_left):
 
         if self.group.operation_list[self.current_chart] is not None:
@@ -128,11 +128,11 @@ class GroupElement(md.ManifoldElement):
 
     def __mul__(self, other):
 
-        return self.left_action(other)
+        return self.L(other)
 
     def __rmul__(self, other):
 
-        return self.right_action(other)
+        return self.R(other)
 
 
 
