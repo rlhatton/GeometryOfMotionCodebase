@@ -12,17 +12,27 @@ class Group(md.Manifold):
                  inverse_function_list=None,
                  transition_table=((None,))):
 
+        # Ensure that the operation list, identity list, and inverse function list are all actually lists
+        operation_list = ut.ensureTuple(operation_list)
+        identity_list = ut.ensureTuple(identity_list)
+        inverse_function_list = ut.ensureTuple(inverse_function_list)
+
+        # Extract the dimensionality from the identity element
+        print(type(identity_list))
+        n_dim = np.size(identity_list[0])
+
         # Initialize the group as a manifold
-        super().__init__(transition_table)
+        super().__init__(transition_table,
+                         n_dim)
 
-        # Save the operation as an instance attribute, wrapping it in a tuple if provided as a raw function
-        self.operation_list = ut.ensureTuple(operation_list)
+        # Save the operation list as an instance attribute, wrapping it in a tuple if provided as a raw function
+        self.operation_list = operation_list
 
-        # Save the identity as an instance attribute, wrapping it in a tuple if provided as a raw value
-        self.identity_list = ut.ensureTuple(identity_list)
+        # Save the identity list as an instance attribute, wrapping it in a tuple if provided as a raw value
+        self.identity_list = identity_list
 
-        # Save the inverse operation as an instance attribute, wrapping it in a tuple if provided as a raw function
-        self.inverse_function_list = ut.ensureTuple(inverse_function_list)
+        # Save the inverse function list as an instance attribute, wrapping it in a tuple if provided as a raw function
+        self.inverse_function_list = inverse_function_list
 
     def element(self,
                 value,
@@ -133,6 +143,12 @@ class GroupElement(md.ManifoldElement):
     def __rmul__(self, other):
 
         return self.R(other)
+
+
+#commutator function is more natural to define as a function of group elements than as a class method
+def commutator(g: GroupElement, h: GroupElement):
+
+    return g * h * g.inverse_element() * h.inverse_element()
 
 
 

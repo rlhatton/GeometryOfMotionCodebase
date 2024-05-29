@@ -10,20 +10,32 @@ class Manifold:
     """
 
     def __init__(self,
-                 transition_table):
+                 transition_table,
+                 n_dim):
+
         # Save the provided chart transition table as a class instance attribute
         self.transition_table = transition_table
         # Extract the number of charts implied by the transition table
         self.n_charts = len(transition_table)
+        # Save the provided dimensionality as a class instance attribute
+        self.n_dim = n_dim
 
     def element(self,
                 value,
                 initial_chart=0):
-        """Instantiate a group element with a specified value"""
+        """Instantiate a manifold element with a specified value"""
         g = ManifoldElement(self,
                             value,
                             initial_chart)
         return g
+
+    def vector(self,
+               value,
+               configuration):
+        """Instantiate a tangent vector at the specified configuration on the manifold"""
+        v = TangentVector(self,
+                          value,
+                          configuration)
 
 
 class ManifoldElement:

@@ -25,28 +25,30 @@ class RepresentationGroup(gp.Group):
         else:
             transition_table = ((None,))
 
+        # Make sure that we have both the representation of the identity (for constructing the group) and its
+        # derepresentation (for determining the dimensionality)
+        identity = np.array(identity, dtype=float)
+        if identity.ndim == 2:
+            identity_representation = identity
+            identity_derepresentation = derepresentation_function_list[specification_chart](identity)
+        else:
+            identity_representation = representation_function_list[specification_chart](identity)
+            identity_derepresentation = identity
+
         # Initialize the representation group as a group, using None for the attributes we are going to re-implement
         super().__init__(None,  # Operation list
-                         None,  # Identity list
+                         identity_derepresentation,  # Identity list, for dimensionality calculation in Group class
                          None,  # Inverse function list
                          transition_table)
 
         # Save the representation function as an instance attribute,
-        self.representation_function_list = ut.ensureTuple(representation_function_list)
+        self.representation_function_list = representation_function_list
 
         # Save the derepresentation function as an instance attribute, wrapping it in a tuple if provided as a raw
         # function
-        self.derepresentation_function_list = ut.ensureTuple(derepresentation_function_list)
+        self.derepresentation_function_list = derepresentation_function_list
 
-        # Store the identity input as the group identity representation, passing it through the appropriate
-        # representation function if necessary
-
-        identity = np.array(identity, dtype=float)
-        if identity.ndim == 2:
-            identity_representation = identity
-        else:
-            identity_representation = self.representation_function_list[specification_chart](identity)
-
+        # Store the identity input as the group identity representation
         self.identity_rep = np.array(identity_representation, dtype=float)
 
     def element(self,
