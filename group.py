@@ -108,6 +108,16 @@ class GroupElement(md.ManifoldElement):
 
         return g_composed
 
+    def AD(self, other):
+        g_inv = self.inverse_element()
+        AD_g_other = self * other * g_inv
+        return AD_g_other
+
+    def ADinv(self, other):
+        g_inv = self.inverse_element()
+        ADi_g_other = g_inv * other * self
+        return ADi_g_other
+
     def inverse_element(self):
 
         g_inv_value = self.group.inverse_function_list[self.current_chart](self.value)
