@@ -11,8 +11,19 @@ class RepresentationGroup(gp.Group):
                  identity,
                  derepresentation_function_list=None,
                  specification_chart=0,
-                 transition_table=((None,))
                  ):
+
+        # Regularize representation and derepresentation function lists, wrapping them in tuples if provided as raw
+        # functions
+        representation_function_list = ut.ensureTuple(representation_function_list)
+        derepresentation_function_list = ut.ensureTuple(derepresentation_function_list)
+
+        # If a derepresentation list has been provided, use it to construct the transition map as the composition of
+        # the rep and derep functions
+        if (derepresentation_function_list is not None) and (len(derepresentation_function_list) == len(representation_function_list)):
+            transition_table = [[lambda x: derepresentation_function_list[j](representation_function_list[i](x)) for j in range(2)] for i in range(len(representation_function_list))]
+        else:
+            transition_table = ((None,))
 
         # Initialize the representation group as a group, using None for the attributes we are going to re-implement
         super().__init__(None,  # Operation list
@@ -20,8 +31,7 @@ class RepresentationGroup(gp.Group):
                          None,  # Inverse function list
                          transition_table)
 
-        # Save the representation function as an instance attribute, wrapping it in a tuple if provided as a raw
-        # function
+        # Save the representation function as an instance attribute,
         self.representation_function_list = ut.ensureTuple(representation_function_list)
 
         # Save the derepresentation function as an instance attribute, wrapping it in a tuple if provided as a raw

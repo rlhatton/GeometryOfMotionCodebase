@@ -72,21 +72,10 @@ def modular_addition_derep_b(g_rep):
 
     return g_value
 
-def tau_b_wrt_a(g_value):
-    if g_value < 0:
-        g_value += 1
-
-def tau_a_wrt_b(g_value):
-    if g_value > .5:
-        g_value -= 1
-
-
-transition_table = [[None, tau_b_wrt_a], [tau_a_wrt_b, None]]
-
 rep_list = (modular_addition_rep_a,modular_addition_rep_b)
 derep_list = (modular_addition_derep_a,modular_addition_derep_b)
 
-S1plus = rgp.RepresentationGroup(rep_list, 0, derep_list, 0, transition_table)
+S1plus = rgp.RepresentationGroup(rep_list, 0, derep_list)
 
 g1 = S1plus.element(.25)
 g2 = S1plus.element(.875)
