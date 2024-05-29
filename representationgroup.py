@@ -85,7 +85,7 @@ class RepresentationGroupElement(gp.GroupElement):
 
         self.rep = np.array(representation, dtype=float)
 
-    def left_action(self,
+    def L(self,
                     g_right):
 
         g_composed_rep = np.matmul(self.rep, g_right.rep)
@@ -93,7 +93,7 @@ class RepresentationGroupElement(gp.GroupElement):
         return RepresentationGroupElement(self.group,
                                           g_composed_rep,
                                           self.current_chart)
-    def right_action(self,
+    def R(self,
                      g_left):
         g_composed_rep = np.matmul(g_left.rep, self.rep)
 
