@@ -16,6 +16,15 @@ class Manifold:
         # Extract the number of charts implied by the transition table
         self.n_charts = len(transition_table)
 
+    def element(self,
+                value,
+                initial_chart=0):
+        """Instantiate a group element with a specified value"""
+        g = ManifoldElement(self,
+                            value,
+                            initial_chart)
+        return g
+
 
 class ManifoldElement:
     """
