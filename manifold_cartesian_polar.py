@@ -24,7 +24,7 @@ def cartesian_to_polar(cartesian_coords):
 
 transition_table = [[None, cartesian_to_polar], [polar_to_cartesian, None]]
 
-Q = md.Manifold(transition_table)
+Q = md.Manifold(transition_table, 2)
 q = Q.element([3, 3], 0)
 
 print("Initial configuration in Cartesian coordinates is " + str(q.value))
