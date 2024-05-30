@@ -3,6 +3,7 @@ import copy
 
 import numpy as np
 import numdifftools as ndt
+import warnings
 
 
 class Manifold:
@@ -22,9 +23,9 @@ class Manifold:
         self.n_dim = n_dim
 
         # Create a table of the Jacobians of the transition functions
-        transition_Jacobian_table = [[[] for _ in range(n_dim)] for _ in range(n_dim)]
-        for i in range(n_dim):
-            for j in range(n_dim):
+        transition_Jacobian_table = [[[] for _ in range(self.n_charts)] for _ in range(self.n_charts)]
+        for i in range(self.n_charts):
+            for j in range(self.n_charts):
                 if transition_table[i][j] is None:
                     transition_Jacobian_table[i][j] = None
                 else:
@@ -114,10 +115,8 @@ class TangentVector:
         # If configuration is a manifold element, verify that no manifold was specified or that the configuration's
         # manifold matches the manifold specified for this vector
         if isinstance(configuration, ManifoldElement):
-            if (manifold == None) or (configuration.manifold == manifold):
-                # If no initial chart was specified, take the chart from the provided configuration
-                if initial_chart is None:
-                    initial_chart = configuration.current_chart
+            if (manifold is None) or (configuration.manifold == manifold):
+                pass
             else:
                 raise Exception("Configuration specified for vector is not an element of the manifold to which the "
                                 "vector is attached")
@@ -138,14 +137,14 @@ class TangentVector:
         # Make sure that the value is a numpy array of floats, and that it is a column vector
         value = np.array(value, dtype=float)
         if value.shape[1] != 1:
-            raise Exception("Provided value is not a column vector. Make sure it is specified as a two-dimensional array with a single column")
-
+            raise Exception(
+                "Provided value is not a column vector. Make sure it is specified as a two-dimensional array with a "
+                "single column")
 
         # Set the value, initial basis, and configuration for the vector
         self.value = value
         self.current_basis = initial_basis
         self.configuration = configuration
-
 
     def transition(self,
                    new_basis,
@@ -204,7 +203,7 @@ class TangentVector:
                 # Convert other to the same chart as self and test for equality, but raise a warning
                 if np.isclose(self.configuration.value,
                               (other.configuration.transition(self.configuration.current_chart)).value):
-                    raise Warning("TangentVectors have configurations described on  different charts, but appear to "
+                    warnings.warn("TangentVectors have configurations described on  different charts, but appear to "
                                   "be at the same configuration")
                 else:
                     raise Exception("Cannot add two TangentVectors at different configurations")
@@ -215,7 +214,7 @@ class TangentVector:
         if self.current_basis == other.current_basis:
             pass
         else:
-            raise Warning("TangentVectors are expressed with respect to different bases, converting the second vector "
+            warnings.warn("TangentVectors are expressed with respect to different bases, converting the second vector "
                           "into the basis of the first")
             other = other.transition(self.current_basis)
 
@@ -223,5 +222,78 @@ class TangentVector:
         # of the converted values of 'self' and 'other'
         output_vector = copy.deepcopy(self)
         output_vector.value = self.value + other.value
+
+        return output_vector
+
+    def scalar_multiplication(self,
+                              other):
+
+        # Verify that 'other' is a scalar
+        if not np.isscalar(other):
+            raise Exception("Input for scalar multiplication is not a scalar")
+
+        # Copy 'self', and scale the value by the scalar input
+        output_vector = copy.deepcopy(self)
+        output_vector.value = other * output_vector.value
+
+        return output_vector
+
+    def matrix_multiplication(self,
+                              other):
+
+        # Verify that 'other' is a matrix of the appropriate size
+        if isinstance(other, np.ndarray):
+            if len(other.shape) == 2:
+                if other.shape[0] == other.shape[1]:
+                    if other.shape[1] == self.value.shape[0]:
+                        pass
+                    else:
+                        raise Exception("Input for matrix multiplication is a square matrix of the wrong size.")
+                else:
+                    raise Exception("Input for matrix multiplication is not square")
+            else:
+                raise Exception("Input for matrix multiplication is not two-dimensional")
+        else:
+            raise Exception("Input for matrix multiplication is not an ndarray")
+
+        # Copy 'self', and multiply the matrix input into the vector value
+        output_vector = copy.deepcopy(self)
+        output_vector.value = np.matmul(other, output_vector.value)
+
+        return output_vector
+
+    def __add__(self, other):
+
+        return self.vector_addition(other)
+
+    def __radd__(self, other):
+
+        return self.vector_addition(other)
+
+    def __mul__(self, other):
+
+        # Scalar multiplication
+        if np.isscalar(other):
+            output_vector = self.scalar_multiplication(other)
+        # Vector multiplication
+        elif isinstance(other, np.ndarray):
+            raise Exception("Undefined __mul__ behavior for TangentVector acting on matrices")
+        # Undefined interaction
+        else:
+            raise Exception("Undefined __mul__ behavior for TangentVector acting on " + type(other))
+
+        return output_vector
+
+    def __rmul__(self, other):
+
+        # Scalar multiplication
+        if np.isscalar(other):
+            output_vector = self.scalar_multiplication(other)
+        # Vector multiplication
+        elif isinstance(other, np.ndarray):
+            output_vector = self.matrix_multiplication(other)
+        # Undefined interaction
+        else:
+            raise Exception("Undefined __rmul__ behavior for TangentVector acting on " + type(other))
 
         return output_vector
