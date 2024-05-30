@@ -22,7 +22,7 @@ def cartesian_to_polar(cartesian_coords):
 transition_table = [[None, cartesian_to_polar], [polar_to_cartesian, None]]
 
 Q = md.Manifold(transition_table, 2)
-q = Q.element([1, 0], 0)
+q = Q.element([2, 0], 0)
 
 v = Q.vector([[0], [1]], q)
 
@@ -37,3 +37,7 @@ v = Q.vector([[1], [1]], q)
 v_polar = v.transition(1)
 
 print("Polar expression of " + str(v.value) + " at " + str(q.value) + " is " + str(v_polar.value))
+
+v_polar_cartesian_chart = v.transition(1, 'keep')
+
+print("Output vector has basis " + str(v_polar_cartesian_chart.current_basis) + " configuration chart " + str(v_polar_cartesian_chart.configuration.current_chart))

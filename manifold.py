@@ -164,7 +164,6 @@ class TangentVector:
 
             transition_jacobian = self.configuration.manifold.transition_Jacobian_table[self.current_basis][new_basis]
             new_value = np.matmul(transition_jacobian(matched_config.value), self.value)
-            print("Transition Jacobian is " + str(transition_jacobian(matched_config.value)))
 
         # Make a copy of 'self', then replace the value and current basis
         output_vector = copy.deepcopy(self)
