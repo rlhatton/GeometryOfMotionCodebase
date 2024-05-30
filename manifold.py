@@ -36,21 +36,25 @@ class Manifold:
                 value,
                 initial_chart=0):
         """Instantiate a manifold element with a specified value"""
-        g = ManifoldElement(self,
+        q = ManifoldElement(self,
                             value,
                             initial_chart)
-        return g
+        return q
 
     def vector(self,
                value,
                configuration,
-               initial_basis=0):
+               initial_basis=0,
+               initial_chart=0):
 
         """Instantiate a tangent vector at the specified configuration on the manifold"""
-        v = TangentVector(self,
-                          value,
+        v = TangentVector(value,
                           configuration,
-                          initial_basis)
+                          initial_basis,
+                          initial_chart,
+                          self)
+
+        return v
 
 
 class ManifoldElement:
@@ -103,7 +107,7 @@ class TangentVector:
     def __init__(self,
                  value,
                  configuration,
-                 initial_basis = 0,
+                 initial_basis=0,
                  initial_chart=None,
                  manifold: Manifold = None):
 
@@ -148,7 +152,7 @@ class TangentVector:
                    configuration_transition='match'):
 
         # Get the current configuration in the coordinates that match the current coordinate basis
-        matched_config = self.configuration.transition(new_basis)
+        matched_config = self.configuration.transition(self.current_basis)
 
         # Unless the transition is the trivial transition, get the Jacobian of the corresponding transition map and
         # multiply it by the current value
@@ -160,6 +164,7 @@ class TangentVector:
 
             transition_jacobian = self.configuration.manifold.transition_Jacobian_table[self.current_basis][new_basis]
             new_value = np.matmul(transition_jacobian(matched_config.value), self.value)
+            print("Transition Jacobian is " + str(transition_jacobian(matched_config.value)))
 
         # Make a copy of 'self', then replace the value and current basis
         output_vector = copy.deepcopy(self)
@@ -180,6 +185,8 @@ class TangentVector:
         else:
             # If a non-string was given, assume it identifies a specific chart to transition to
             output_vector.configuration = output_vector.configuration.transition(configuration_transition)
+
+        return output_vector
 
     def vector_addition(self, other):
 

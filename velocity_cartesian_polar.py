@@ -19,20 +19,21 @@ def cartesian_to_polar(cartesian_coords):
     return polar_coords
 
 
-
-
-
 transition_table = [[None, cartesian_to_polar], [polar_to_cartesian, None]]
 
 Q = md.Manifold(transition_table, 2)
-q = Q.element([3, 3], 0)
+q = Q.element([1, 0], 0)
 
-print("Initial configuration in Cartesian coordinates is " + str(q.value))
+v = Q.vector([[0], [1]], q)
 
-q_polar = q.transition(1)
+v_polar = v.transition(1)
 
-print("Configuration in polar coordinates " + str(q_polar.value))
+print("Polar expression of " + str(v.value) + " at " + str(q.value) + " is " + str(v_polar.value))
 
-q_cartesian = q_polar.transition(0)
+q = Q.element([1, 1], 0)
 
-print("Configuration back in Cartesian coordinates " + str(q_cartesian.value))
+v = Q.vector([[1], [1]], q)
+
+v_polar = v.transition(1)
+
+print("Polar expression of " + str(v.value) + " at " + str(q.value) + " is " + str(v_polar.value))
