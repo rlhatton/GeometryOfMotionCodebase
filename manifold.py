@@ -128,7 +128,7 @@ class TangentVector:
                 # Now that we know we're not pulling the chart from a provided ManifoldElement, make the default chart 0
                 if initial_chart is None:
                     initial_chart = 0
-                configuration = ManifoldElement(manifold, configuration, initial_chart)
+                configuration = manifold.element(configuration, initial_chart)
             else:
                 raise Exception("Provided configuration coordinates do not match dimensionality of specified manifold")
         else:
@@ -297,3 +297,52 @@ class TangentVector:
             raise Exception("Undefined __rmul__ behavior for TangentVector acting on " + type(other))
 
         return output_vector
+
+   def __matmul__(self, other):
+
+        # Vector multiplication
+        if isinstance(other, np.ndarray):
+            raise Exception("Undefined __matmul__ behavior for TangentVector acting on matrices")
+        # Undefined interaction
+        else:
+            raise Exception("Undefined __mul__ behavior for TangentVector acting on " + type(other))
+
+        return output_vector
+
+    def __rmatmul__(self, other):
+
+        # Vector multiplication
+        if isinstance(other, np.ndarray):
+            output_vector = self.matrix_multiplication(other)
+        # Undefined interaction
+        else:
+            raise Exception("Undefined __rmatmul__ behavior for TangentVector acting on " + type(other))
+
+        return output_vector
+
+
+def __truediv__(self, other):
+    # Scalar multiplication
+    if np.isscalar(other):
+        output_vector = self.scalar_multiplication(1/other)
+    # Vector multiplication
+    elif isinstance(other, np.ndarray):
+        raise Exception("Undefined __truediv__ behavior for TangentVector acting on matrices")
+    # Undefined interaction
+    else:
+        raise Exception("Undefined __truediv__ behavior for TangentVector acting on " + type(other))
+
+    return output_vector
+
+
+def __rtruediv__(self, other):
+    
+    # Scalar multiplication
+    if np.isscalar(other):
+        raise Exception("Undefined __rtruediv__ behavior for TangentVector acting on scalars")
+    # Vector multiplication
+    elif isinstance(other, np.ndarray):
+        raise Exception("Undefined __rtruediv__ behavior for TangentVector acting on matrices")
+    # Undefined interaction
+    else:
+        raise Exception("Undefined __rtruediv__ behavior for TangentVector acting on " + type(other))
