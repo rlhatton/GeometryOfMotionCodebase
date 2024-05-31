@@ -298,7 +298,7 @@ class TangentVector:
 
         return output_vector
 
-   def __matmul__(self, other):
+    def __matmul__(self, other):
 
         # Vector multiplication
         if isinstance(other, np.ndarray):
@@ -306,8 +306,6 @@ class TangentVector:
         # Undefined interaction
         else:
             raise Exception("Undefined __mul__ behavior for TangentVector acting on " + type(other))
-
-        return output_vector
 
     def __rmatmul__(self, other):
 
@@ -320,29 +318,27 @@ class TangentVector:
 
         return output_vector
 
+    def __truediv__(self, other):
+        # Scalar multiplication
+        if np.isscalar(other):
+            output_vector = self.scalar_multiplication(1/other)
+        # Vector multiplication
+        elif isinstance(other, np.ndarray):
+            raise Exception("Undefined __truediv__ behavior for TangentVector acting on matrices")
+        # Undefined interaction
+        else:
+            raise Exception("Undefined __truediv__ behavior for TangentVector acting on " + type(other))
 
-def __truediv__(self, other):
-    # Scalar multiplication
-    if np.isscalar(other):
-        output_vector = self.scalar_multiplication(1/other)
-    # Vector multiplication
-    elif isinstance(other, np.ndarray):
-        raise Exception("Undefined __truediv__ behavior for TangentVector acting on matrices")
-    # Undefined interaction
-    else:
-        raise Exception("Undefined __truediv__ behavior for TangentVector acting on " + type(other))
+        return output_vector
 
-    return output_vector
+    def __rtruediv__(self, other):
 
-
-def __rtruediv__(self, other):
-    
-    # Scalar multiplication
-    if np.isscalar(other):
-        raise Exception("Undefined __rtruediv__ behavior for TangentVector acting on scalars")
-    # Vector multiplication
-    elif isinstance(other, np.ndarray):
-        raise Exception("Undefined __rtruediv__ behavior for TangentVector acting on matrices")
-    # Undefined interaction
-    else:
-        raise Exception("Undefined __rtruediv__ behavior for TangentVector acting on " + type(other))
+        # Scalar multiplication
+        if np.isscalar(other):
+            raise Exception("Undefined __rtruediv__ behavior for TangentVector acting on scalars")
+        # Vector multiplication
+        elif isinstance(other, np.ndarray):
+            raise Exception("Undefined __rtruediv__ behavior for TangentVector acting on matrices")
+        # Undefined interaction
+        else:
+            raise Exception("Undefined __rtruediv__ behavior for TangentVector acting on " + type(other))
