@@ -56,6 +56,6 @@ S1plus = gp.Group(modular_addition, [0], modular_additive_inverse)
 g1 = S1plus.element(.25)
 g3 = S1plus.element(.125)
 
-g2 = g1.inverse_element() * g3
+g2 = g1.inverse * g3
 
 print("Modular pre-subtraction of " +str(g1.value) + " from " +str(g3.value) + " is " + str(g2.value))

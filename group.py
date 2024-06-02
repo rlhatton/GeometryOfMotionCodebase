@@ -128,7 +128,8 @@ class GroupElement(md.ManifoldElement):
         ADi_g_other = g_inv * other * self
         return ADi_g_other
 
-    def inverse_element(self):
+    @property
+    def inverse(self):
 
         g_inv_value = self.group.inverse_function_list[self.current_chart](self.value)
 
@@ -148,7 +149,7 @@ class GroupElement(md.ManifoldElement):
 #commutator function is more natural to define as a function of group elements than as a class method
 def commutator(g: GroupElement, h: GroupElement):
 
-    return g * h * g.inverse_element() * h.inverse_element()
+    return g * h * g.inverse * h.inverse
 
 
 
