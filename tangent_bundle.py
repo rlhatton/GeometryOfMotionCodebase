@@ -6,6 +6,8 @@ import numdifftools as ndt
 import warnings
 import manifold as md
 from inspect import signature
+import utilityfunctions as ut
+from typing import Union
 
 
 class TangentBasis:
@@ -55,7 +57,7 @@ class TangentBasis:
     def matrix(self):
 
         """Produce a square matrix in which each column is the value of the corresponding TangentVector in the basis"""
-        matrix_form = np.concatenate((self.vector_list[j].value for j in range(self.n_vectors)), 1)
+        matrix_form = [self.vector_list[j].value for j in range(self.n_vectors)]
 
         return matrix_form
 
@@ -134,7 +136,21 @@ class TangentVectorField:
                  defining_basis=0,
                  defining_chart=0):
 
-        self.defining_function = defining_function
+        # Make sure that the vector field can take both configuration and time as inputs
+        sig = signature(defining_function)
+        if len(sig.parameters) == 2:
+            def def_function(q, t):
+                return defining_function(q, t)
+
+        elif len(sig.parameters) == 1:
+            # noinspection PyUnusedLocal
+            def def_function(q, t):
+                return defining_function(q)
+        else:
+            raise Exception("Defining function should take either two (configuration, time) or one (configuration) "
+                            "input")
+
+        self.defining_function = def_function
         self.manifold = manifold
         self.defining_basis = defining_basis
         self.defining_chart = defining_chart
@@ -159,15 +175,13 @@ class TangentVectorField:
             configuration_value = configuration
 
         # Evaluate the defining function
-        defining_vector = self.defining_function(time, configuration_value)
+        defining_vector = self.defining_function(configuration_value, time)
 
         # Convert the coefficients returned by the defining function into a TangentVector
-        defining_tangent_vector = self.manifold.TangentVector(defining_vector,
-                                                              configuration,
-                                                              self.defining_basis,
-                                                              self.defining_chart,
-                                                              self.manifold)
-
+        defining_tangent_vector = self.manifold.vector(defining_vector,
+                                                       configuration,
+                                                       self.defining_basis,
+                                                       self.defining_chart)
         # Transition the TangentVector into the specified chart and basis
         output_tangent_vector = defining_tangent_vector.transition(basis, chart)
 
@@ -182,46 +196,107 @@ class TangentVectorField:
         return output_tangent_vector
 
     def grid_evaluate_vector_field(self,
-                                   configuration_grid,
+                                   configuration_grid: ut.GridArray,
                                    time=0,
                                    basis=None,
                                    chart=None):
 
-        gridded_defining_function = np.vectorize(self.evaluate_vector_field, excluded=['time', 'basis', 'chart', 'output_type'])
-        vectors_at_points = gridded_defining_function(configuration_grid, time, basis, chart, 'array')
+        # Take in data formatted with the outer grid indices corresponding to the dimensionality of the data and the
+        # inner grid indices corresponding to the location of those data points
 
-        n_dim = self.manifold.n_dim
-        new_ordering = np.concatenate((np.array([i for i in (range(n_dim, 2*n_dim))]), np.array([i for i in (range(0, n_dim))])))
-        reordered_vector_grid = np.transpose(vectors_at_points, new_ordering)
+        # Convert the data grid so that the outer indices correspond the location of the data points and the inner
+        # indices correspond to the dimensionality of the data
+        configuration_at_points = configuration_grid.everse
 
-        component_grids = [reordered_vector_grid[i][j] for i in reordered_vector_grid for j in reordered_vector_grid[i]]
+        # Evaluate the defining function at each data location to get the vector at that location
+        def v_function(x): return self.evaluate_vector_field(x, time, basis, chart, 'array')
 
-        # # Extract the vector at the first point in the configuration grid
-        # first_vector = tangent_vectors_at_points.flat(0)
-        #
-        # vector_grid = [np.empty(configuration_grid[0].shape, dtype=float) for i in range(len(first_vector.value))]
-        # for
+        vectors_at_points = configuration_at_points.grid_eval(v_function)
+
+        # Convert the vector representation so that its outer indices correspond to the vector dimensions and the
+        # inner indices the spatial location of the data
+        vector_grid = vectors_at_points.everse
+
+        return vector_grid
 
     def __call__(self,
                  configuration,
+                 time=0,
                  basis=None,
                  chart=None,
                  output_style=None):
 
+        vector_at_config = self.evaluate_vector_field(configuration, time, basis, chart)
+
         if isinstance(configuration, md.ManifoldElement):
             if output_style is None:
-                output_style = 'rich'
+                output_style = 'TangentVector'
         elif isinstance(configuration, np.ndarray):
             if output_style is None:
-                output_style = 'matrix'
+                output_style = 'array'
 
+        if output_style == 'TangentVector':
+            return vector_at_config
+        elif output_style == 'array':
+            return vector_at_config.value
+        else:
+            raise Exception("Unknown output style for vector field")
 
-class TangentVectorFieldGrid:
+    def transition(self, new_basis, configuration_transition: Union[str, int] = 'match'):
+        """Take a vector field defined in one basis and chart combination and convert it
+         to a different basis and chart combination"""
 
-    def __init__(self,
-                 configuration_grid,
-                 vector_grid):
+        # Parse the configuration_transition option
+        if isinstance(configuration_transition, str):
+            # 'match' says to match the configuration to the new basis
+            if configuration_transition == 'match':
+                new_chart = new_basis
+            elif configuration_transition == 'keep':
+                new_chart = self.defining_chart
+            else:
+                raise Exception("Unknown option " + configuration_transition + "for transitioning the configuration "
+                                                                               "while transitioning a "
+                                                                               "TangentVectorField")
+        else:
+            new_chart = configuration_transition
 
-        self.configuration_grid = configuration_grid,
-        self.vector_grid = vector_grid,
+        # Modify the defining function by pushing forward through the transition maps
+        def output_defining_function(x, t):
+            # pull back function through transition map
+            y = self.manifold.transition_table[new_chart][self.defining_chart](x)
+            u = self.defining_function(y, t)
+            # push forward vector through transition map
+            v = np.matmul(self.manifold.transition_Jacobian_table[self.defining_basis][new_basis](y), u)
 
+            return v
+
+        # Create a TangentVectorField from the output_defining_function
+        output_tangent_vector_field = TangentVectorField(output_defining_function, self.manifold, new_basis, new_chart)
+
+        return output_tangent_vector_field
+
+    def vector_field_addition(self, other):
+
+        # Verify that the other object is also a tangent vector field
+        if isinstance(other, TangentVectorField):
+            # Verify that the vector fields are associated with the same manifold
+            if self.manifold == other.manifold:
+                # Bring other into the same basis nd chart if necessary
+                if (self.defining_basis == other.defining_basis) and (self.defining_chart == other.defining_chart):
+                    pass
+                else:
+                    other = other.transition(self.defining_basis, self.defining_chart)
+            else:
+                raise Exception("Cannot add vector fields associated with different manifolds")
+        else:
+            raise Exception("Cannot add a vector field to an object of another type")
+
+        # Create a function that is the sum of the two vector field functions
+        def sum_of_functions(x, t):
+            sf = self.defining_function(x, t) + other.defining_function(x, t)
+            return sf
+
+        # Create a new TangentVectorField object
+        sum_of_fields = TangentVectorField(sum_of_functions, self.manifold, self.defining_basis, self.defining_chart)
+
+        return sum_of_fields
