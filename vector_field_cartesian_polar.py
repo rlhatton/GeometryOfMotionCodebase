@@ -60,3 +60,9 @@ vgrid_doubled = X_doubled.grid_evaluate_vector_field(grid)
 
 print("Adding vector fields expressed in different coordinates produces a vector field in the first field's "
       "coordinates: \n", vgrid_doubled)
+
+# Scalar multiplying vector fields
+X_tripled = X_outward_xy * 3
+vgrid_tripled = X_tripled.grid_evaluate_vector_field(grid)
+
+print("Multiplying a scalar by a vector field scales the output: \n", vgrid_tripled)

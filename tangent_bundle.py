@@ -302,9 +302,38 @@ class TangentVectorField:
             return sf
 
         # Create a new TangentVectorField object
-        sum_of_fields = TangentVectorField(sum_of_functions, self.manifold, self.defining_basis, self.defining_chart)
+        sum_of_fields = TangentVectorField(sum_of_functions,
+                                           self.manifold,
+                                           self.defining_basis,
+                                           self.defining_chart)
 
         return sum_of_fields
 
+    def scalar_multiplication(self, other):
+        # Verify that 'other' is a scalar
+        if not np.isscalar(other):
+            raise Exception("Input for scalar multiplication is not a scalar")
+
+        # Define a function that has a scaled output from
+        def scaled_defining_function(x, t):
+
+            v = other * self.defining_function(x, t)
+
+            return v
+
+        scalar_product_with_field = TangentVectorField(scaled_defining_function,
+                                                       self.manifold,
+                                                       self.defining_basis,
+                                                       self.defining_chart)
+
+        return scalar_product_with_field
+
     def __add__(self, other):
         return self.addition(other)
+
+    def __mul__(self, other):
+        return self.scalar_multiplication(other)
+
+    def __rmul__(self, other):
+        return self.scalar_multiplication(other)
+
