@@ -206,10 +206,17 @@ class TangentVectorField:
         # Take in data formatted with the outer grid indices corresponding to the dimensionality of the data and the
         # inner grid indices corresponding to the location of those data points
 
-        # Verify that the configuration grid is one-dimensional
+        # Verify that the configuration grid is a one-dimensional GridArray and that the dimensionality matches that
+        # of the manifold
+        if not isinstance(configuration_grid, ut.GridArray):
+            raise Exception("Expected configuration_grid to be of type GridArray.")
+
         if configuration_grid.n_outer != 1:
-            raise Exception("Expected a GridArray with n_outer=1. Check the grid you are providing as input to this "
-                            "function")
+            raise Exception("Expected n_outer to be 1 for the GridArray provided as configuration_grid.")
+
+        if configuration_grid.shape[0] != self.manifold.n_dim:
+            raise Exception("Expected the first axis of the GridArray provided as configuration_grid to match the "
+                            "dimensionality of the manifold.")
 
         # Convert the data grid so that the outer indices correspond the location of the data points and the inner
         # indices correspond to the dimensionality of the data
