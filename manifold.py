@@ -134,17 +134,31 @@ class TangentVector:
         else:
             raise Exception("Manifold not specified and provided configuration does not have an associated manifold")
 
-        # Make sure that the value is a numpy array of floats, and that it is a column vector
-        value = np.array(value, dtype=float)
-        if value.shape[1] != 1:
-            raise Exception(
-                "Provided value is not a column vector. Make sure it is specified as a two-dimensional array with a "
-                "single column")
 
         # Set the value, initial basis, and configuration for the vector
         self.value = value
         self.current_basis = initial_basis
         self.configuration = configuration
+
+    @property
+    def value(self):
+
+        val = self._value
+        return val
+
+    @value.setter
+    def value(self, val):
+
+        # Make sure that the value is a numpy array of floats, and that it is a column vector
+        value = np.array(val, dtype=float)
+
+        if value.shape[1] != 1:
+            raise Exception(
+                "Provided value is not a column vector. Make sure it is specified as a two-dimensional array with a "
+                "single column")
+
+        self._value = value
+
 
     def transition(self,
                    new_basis,

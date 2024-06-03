@@ -60,7 +60,9 @@ class GridArray(np.ndarray):
 
     def grid_eval(self,
                   func):
-        return GridArray(array_eval(func, self, self.n_outer), self.n_outer)
+        arr = array_eval(func, self, self.n_outer)
+        garr =  GridArray(arr, self.n_outer)
+        return garr
 
 
 def meshgrid_array(*args):

@@ -53,3 +53,10 @@ grid_rt = ut.meshgrid_array([.5, 1, 2], [0, np.pi / 2, np.pi])
 vgrid_rt = X_outward_rt.grid_evaluate_vector_field(grid_rt)
 
 print("The polar components of the outward field are all in the radial direction: \n", vgrid_rt)
+
+# Adding vector fields with casting
+X_doubled = X_outward_xy + X_outward_rt
+vgrid_doubled = X_doubled.grid_evaluate_vector_field(grid)
+
+print("Adding vector fields expressed in different coordinates produces a vector field in the first field's "
+      "coordinates: \n", vgrid_doubled)

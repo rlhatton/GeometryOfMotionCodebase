@@ -172,7 +172,9 @@ class TangentVectorField:
         if isinstance(configuration, md.ManifoldElement):
             configuration_value = configuration.value
         else:
-            configuration_value = configuration
+            configuration_value = np.array(configuration, dtype=float)
+
+
 
         # Evaluate the defining function
         defining_vector = self.defining_function(configuration_value, time)
@@ -209,7 +211,9 @@ class TangentVectorField:
         configuration_at_points = configuration_grid.everse
 
         # Evaluate the defining function at each data location to get the vector at that location
-        def v_function(x): return self.evaluate_vector_field(x, time, basis, chart, 'array')
+        def v_function(x):
+            v_at_x = self.evaluate_vector_field(x, time, basis, chart, 'array')
+            return v_at_x
 
         vectors_at_points = configuration_at_points.grid_eval(v_function)
 
@@ -231,7 +235,8 @@ class TangentVectorField:
         if isinstance(configuration, md.ManifoldElement):
             if output_style is None:
                 output_style = 'TangentVector'
-        elif isinstance(configuration, np.ndarray):
+        else:
+            configuration = np.array(configuration)
             if output_style is None:
                 output_style = 'array'
 
@@ -240,7 +245,7 @@ class TangentVectorField:
         elif output_style == 'array':
             return vector_at_config.value
         else:
-            raise Exception("Unknown output style for vector field")
+            raise Exception("Unknown output style " + output_style + "for vector field")
 
     def transition(self, new_basis, configuration_transition: Union[str, int] = 'match'):
         """Take a vector field defined in one basis and chart combination and convert it
@@ -275,7 +280,7 @@ class TangentVectorField:
 
         return output_tangent_vector_field
 
-    def vector_field_addition(self, other):
+    def addition(self, other):
 
         # Verify that the other object is also a tangent vector field
         if isinstance(other, TangentVectorField):
@@ -300,3 +305,6 @@ class TangentVectorField:
         sum_of_fields = TangentVectorField(sum_of_functions, self.manifold, self.defining_basis, self.defining_chart)
 
         return sum_of_fields
+
+    def __add__(self, other):
+        return self.addition(other)
