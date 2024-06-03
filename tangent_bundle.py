@@ -377,3 +377,12 @@ class TangentVectorField:
                 q_final = self.manifold.element(q_final, self.defining_chart)
 
             return q_final
+
+    def exp(self,
+            q0,
+            t0=0,
+            t_run=1):
+
+        """Shorthand for integration of flow"""
+        return self.integrate([t0, t0+t_run], q0, 'final')
+

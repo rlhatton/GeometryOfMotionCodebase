@@ -90,3 +90,7 @@ print("Flow solution in polar coordinates is: \n", sol.y)
 finalpoint = X_outward_xy.integrate([0, 1], [1, 2],'final')
 
 print("Flow solution in cartesian coordinates is: \n", finalpoint.value)
+
+# Exponentiation on flow
+exppoint = X_outward_xy.exp([1, 2])
+print("Exponential in cartesian coordinates is: \n", exppoint.value)
