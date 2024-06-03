@@ -337,3 +337,11 @@ class TangentVectorField:
     def __rmul__(self, other):
         return self.scalar_multiplication(other)
 
+    def __sub__(self, other):
+        return self + (-1 * other)
+
+    def __rsub__(self, other):
+        return (-1*self) + other
+
+    def __truediv__(self, other):
+        return self * (1/other)

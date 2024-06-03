@@ -66,3 +66,9 @@ X_tripled = X_outward_xy * 3
 vgrid_tripled = X_tripled.grid_evaluate_vector_field(grid)
 
 print("Multiplying a scalar by a vector field scales the output: \n", vgrid_tripled)
+
+# Dividing a vector field by a scalar
+X_halved = X_outward_xy / 2
+vgrid_halved = X_halved.grid_evaluate_vector_field(grid)
+
+print("Dividing a vector field by a scalar scales down the value \n", vgrid_halved)
