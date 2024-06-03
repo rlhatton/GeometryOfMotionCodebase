@@ -28,10 +28,12 @@ transition_table = [[None, cartesian_to_polar], [polar_to_cartesian, None]]
 # Build the manifold
 Q = md.Manifold(transition_table, 2)
 
+
 # Define a vector field function that points outward everywhere
 def v_outward_xy(q):
     v = np.array([[q[0]], [q[1]]])
     return v
+
 
 # Use the vector field function to construct a vector field
 X_outward_xy = tb.TangentVectorField(v_outward_xy, Q)
@@ -41,7 +43,8 @@ grid = ut.meshgrid_array([-1, 1, 2], [-2, 2, 3])
 
 # Evaluate the vector field on the grid
 vgrid = X_outward_xy.grid_evaluate_vector_field(grid)
-print("The Cartesian components of the outward field are the same as the underlying Cartesian coordinates: \n", vgrid, "\n")
+print("The Cartesian components of the outward field are the same as the underlying Cartesian coordinates: \n", vgrid,
+      "\n")
 
 # Transition the vector field into polar coordinates
 X_outward_rt = X_outward_xy.transition(1)
@@ -71,4 +74,14 @@ print("Multiplying a scalar by a vector field scales the output: \n", vgrid_trip
 X_halved = X_outward_xy / 2
 vgrid_halved = X_halved.grid_evaluate_vector_field(grid)
 
-print("Dividing a vector field by a scalar scales down the value \n", vgrid_halved)
+print("Dividing a vector field by a scalar scales down the value \n", vgrid_halved, "\n")
+
+# Integrating a flow on the vector field
+sol = X_outward_xy.integrate([0, 1], [1, 2])
+
+print("Flow solution is: \n", sol.y, "\n")
+
+# Integrating a flow on the polar vector field
+sol = X_outward_rt.integrate([0, 1], [1, np.pi/3])
+
+print("Flow solution in polar coordinates is: \n", sol.y)

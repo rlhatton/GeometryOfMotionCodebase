@@ -8,6 +8,7 @@ import manifold as md
 from inspect import signature
 import utilityfunctions as ut
 from typing import Union
+from scipy.integrate import solve_ivp
 
 
 class TangentBasis:
@@ -174,8 +175,6 @@ class TangentVectorField:
         else:
             configuration_value = np.array(configuration, dtype=float)
 
-
-
         # Evaluate the defining function
         defining_vector = self.defining_function(configuration_value, time)
 
@@ -230,8 +229,6 @@ class TangentVectorField:
                  chart=None,
                  output_style=None):
 
-        vector_at_config = self.evaluate_vector_field(configuration, time, basis, chart)
-
         if isinstance(configuration, md.ManifoldElement):
             if output_style is None:
                 output_style = 'TangentVector'
@@ -239,6 +236,8 @@ class TangentVectorField:
             configuration = np.array(configuration)
             if output_style is None:
                 output_style = 'array'
+
+        vector_at_config = self.evaluate_vector_field(configuration, time, basis, chart)
 
         if output_style == 'TangentVector':
             return vector_at_config
@@ -316,7 +315,6 @@ class TangentVectorField:
 
         # Define a function that has a scaled output from
         def scaled_defining_function(x, t):
-
             v = other * self.defining_function(x, t)
 
             return v
@@ -341,7 +339,20 @@ class TangentVectorField:
         return self + (-1 * other)
 
     def __rsub__(self, other):
-        return (-1*self) + other
+        return (-1 * self) + other
 
     def __truediv__(self, other):
-        return self * (1/other)
+        return self * (1 / other)
+
+    def integrate(self,
+                  timespan,
+                  initial_config,
+                  **kwargs):
+
+        def flow_function(t, x):
+            v = self.evaluate_vector_field(x, t, output_type='array')
+            return np.squeeze(v) # required to match dimension of vector with dimension of state
+
+        sol = solve_ivp(flow_function, timespan, initial_config, **kwargs)
+
+        return sol
