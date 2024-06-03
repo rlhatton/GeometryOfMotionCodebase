@@ -85,3 +85,8 @@ print("Flow solution is: \n", sol.y, "\n")
 sol = X_outward_rt.integrate([0, 1], [1, np.pi/3])
 
 print("Flow solution in polar coordinates is: \n", sol.y)
+
+# Final point integration of a flow on the cartesian field
+finalpoint = X_outward_xy.integrate([0, 1], [1, 2],'final')
+
+print("Flow solution in cartesian coordinates is: \n", finalpoint.value)

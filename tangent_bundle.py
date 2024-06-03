@@ -9,6 +9,7 @@ from inspect import signature
 import utilityfunctions as ut
 from typing import Union
 from scipy.integrate import solve_ivp
+from scipy.integrate import OdeSolution
 
 
 class TangentBasis:
@@ -347,12 +348,32 @@ class TangentVectorField:
     def integrate(self,
                   timespan,
                   initial_config,
+                  output_content='sol',
+                  output_format=None,
                   **kwargs):
+
+        # Parse the output content and format specifications
+        if output_content == 'sol':
+            if output_format is None:
+                output_format = 'array'
+        elif output_content == 'final':
+            if output_format is None:
+                output_format = 'TangentVector'
+        else:
+            raise Exception("Unsupported output content: ", output_content)
 
         def flow_function(t, x):
             v = self.evaluate_vector_field(x, t, output_type='array')
-            return np.squeeze(v) # required to match dimension of vector with dimension of state
+            return np.squeeze(v)  # required to match dimension of vector with dimension of state
 
-        sol = solve_ivp(flow_function, timespan, initial_config, **kwargs)
+        sol = solve_ivp(flow_function, timespan, initial_config, dense_output=True, **kwargs)
 
-        return sol
+        if output_content == 'sol':
+            return sol
+        else:
+            q_history = ut.GridArray(sol.y, 1).everse
+            q_final = q_history[-1]
+            if output_format == 'TangentVector':
+                q_final = self.manifold.element(q_final, self.defining_chart)
+
+            return q_final
