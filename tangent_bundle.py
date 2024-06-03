@@ -206,6 +206,11 @@ class TangentVectorField:
         # Take in data formatted with the outer grid indices corresponding to the dimensionality of the data and the
         # inner grid indices corresponding to the location of those data points
 
+        # Verify that the configuration grid is one-dimensional
+        if configuration_grid.n_outer != 1:
+            raise Exception("Expected a GridArray with n_outer=1. Check the grid you are providing as input to this "
+                            "function")
+
         # Convert the data grid so that the outer indices correspond the location of the data points and the inner
         # indices correspond to the dimensionality of the data
         configuration_at_points = configuration_grid.everse
