@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 import numpy as np
-import utilityfunctions as ut
-import manifold as md
+from . import utilityfunctions as ut
+from . import manifold as md
 
 
 class Group(md.Manifold):
@@ -13,9 +13,9 @@ class Group(md.Manifold):
                  transition_table=((None,))):
 
         # Ensure that the operation list, identity list, and inverse function list are all actually lists
-        operation_list = ut.ensureTuple(operation_list)
-        identity_list = ut.ensureTuple(identity_list)
-        inverse_function_list = ut.ensureTuple(inverse_function_list)
+        operation_list = ut.ensure_tuple(operation_list)
+        identity_list = ut.ensure_tuple(identity_list)
+        inverse_function_list = ut.ensure_tuple(inverse_function_list)
 
         # Extract the dimensionality from the identity element
         print(type(identity_list))

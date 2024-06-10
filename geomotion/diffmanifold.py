@@ -1,15 +1,14 @@
 #! /usr/bin/python3
 import copy
-
 import numpy as np
 import numdifftools as ndt
 import warnings
-import manifold as md
 from inspect import signature
-import utilityfunctions as ut
 from typing import Union
 from scipy.integrate import solve_ivp
-from scipy.integrate import OdeSolution
+
+from . import manifold as md
+from . import utilityfunctions as ut
 
 
 class DiffManifold(md.Manifold):

@@ -2,7 +2,7 @@
 import numpy as np
 
 
-def ensureTuple(value):
+def ensure_tuple(value):
     """ Function that wraps an input value in a tuple if it is not already a tuple"""
     if isinstance(value, tuple):
         value_tuple = value
@@ -34,6 +34,10 @@ def array_eval(func, arr, n_outer, depth=0):
         return np.array([func(arr[i]) for i in range(sh[0])])
 
 
+def meshgrid_array(*args):
+    return GridArray(np.stack(np.meshgrid(*args)), 1)
+
+
 class GridArray(np.ndarray):
 
     def __new__(cls, input_array, n_outer):
@@ -47,7 +51,8 @@ class GridArray(np.ndarray):
 
     def __array_finalize__(self, obj):
         # see InfoArray.__array_finalize__ for comments
-        if obj is None: return
+        if obj is None:
+            return
         self.info = getattr(obj, 'info', None)
 
     @property
@@ -61,9 +66,5 @@ class GridArray(np.ndarray):
     def grid_eval(self,
                   func):
         arr = array_eval(func, self, self.n_outer)
-        garr =  GridArray(arr, self.n_outer)
+        garr = GridArray(arr, self.n_outer)
         return garr
-
-
-def meshgrid_array(*args):
-    return GridArray(np.stack(np.meshgrid(*args)), 1)

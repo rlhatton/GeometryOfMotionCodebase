@@ -1,6 +1,6 @@
 #! /usr/bin/python3
 import numpy as np
-import diff_manifold as dm
+from geomotion import diffmanifold as dm
 
 
 def polar_to_cartesian(polar_coords):

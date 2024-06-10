@@ -1,6 +1,6 @@
 #! /usr/bin/python3
 import numpy as np
-import group as gp
+from geomotion import group as gp
 
 """ Affine addition """
 

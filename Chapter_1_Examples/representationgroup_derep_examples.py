@@ -1,6 +1,6 @@
 #! /usr/bin/python3
 import numpy as np
-import representationgroup as rgp
+from geomotion import representationgroup as rgp
 
 """ Scalar addition """
 

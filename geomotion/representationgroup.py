@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 import numpy as np
 import utilityfunctions as ut
-import group as gp
+from . import group as gp
 
 
 class RepresentationGroup(gp.Group):
@@ -15,8 +15,8 @@ class RepresentationGroup(gp.Group):
 
         # Regularize representation and derepresentation function lists, wrapping them in tuples if provided as raw
         # functions
-        representation_function_list = ut.ensureTuple(representation_function_list)
-        derepresentation_function_list = ut.ensureTuple(derepresentation_function_list)
+        representation_function_list = ut.ensure_tuple(representation_function_list)
+        derepresentation_function_list = ut.ensure_tuple(derepresentation_function_list)
 
         # If a derepresentation list has been provided, use it to construct the transition map as the composition of
         # the rep and derep functions

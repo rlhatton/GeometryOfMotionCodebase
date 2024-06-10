@@ -1,7 +1,5 @@
 import numpy as np
-import manifold as md
-import diff_manifold as tb
-import utilityfunctions as ut
+from geomotion import manifold as md, diffmanifold as tb, utilityfunctions as ut
 
 
 #########

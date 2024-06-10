@@ -1,5 +1,5 @@
 import numpy as np
-import utilityfunctions as ut
+from geomotion import utilityfunctions as ut
 
 
 def vfun(p):
