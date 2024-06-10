@@ -1,6 +1,6 @@
 #! /usr/bin/python3
 import numpy as np
-import manifold as md
+import diff_manifold as dm
 
 
 def polar_to_cartesian(polar_coords):
@@ -21,7 +21,7 @@ def cartesian_to_polar(cartesian_coords):
 
 transition_table = [[None, cartesian_to_polar], [polar_to_cartesian, None]]
 
-Q = md.Manifold(transition_table, 2)
+Q = dm.DiffManifold(transition_table, 2)
 q = Q.element([2, 0], 0)
 
 v = Q.vector([[0], [1]], q)

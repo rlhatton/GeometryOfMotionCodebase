@@ -1,6 +1,6 @@
 import numpy as np
 import manifold as md
-import tangent_bundle as tb
+import diff_manifold as tb
 import utilityfunctions as ut
 
 
