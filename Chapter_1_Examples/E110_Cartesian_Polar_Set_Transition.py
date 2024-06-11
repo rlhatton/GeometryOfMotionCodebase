@@ -17,7 +17,7 @@ q1 = Q.element([3, 3], 0)
 q2 = Q.element([3, 0], 0)
 
 # Collect these points into a set
-q_set = md.ManifoldSet([q1, q2])
+q_set = md.ManifoldElementSet([q1, q2])
 print("Initial set in Cartesian coordinates is ", str(q_set.value[0].value), " and ", str(q_set.value[1].value))
 
 # Transition the set into polar coordinates

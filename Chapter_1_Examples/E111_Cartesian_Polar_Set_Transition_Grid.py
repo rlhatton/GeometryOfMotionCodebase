@@ -19,8 +19,8 @@ q3 = Q.element([1, -1], 0)
 q4 = Q.element([0, 2], 0)
 
 # Collect these points into a set
-q_set = md.ManifoldSet([[q1, q2],
-                        [q3, q4]])
+q_set = md.ManifoldElementSet([[q1, q2],
+                               [q3, q4]])
 print("Initial set in Cartesian coordinates is ", str(q_set.value[0][0].value), " and ", str(q_set.value[0][1].value),
       "\n and ", str(q_set.value[1][0].value), " and ", str(q_set.value[1][1].value))
 

@@ -21,30 +21,41 @@ def evert_array(arr, n_outer):
 
 
 def array_eval(func, arr, n_outer, depth=0):
-    # Get the shape of the array at the current depth
-    sh = arr.shape
+    # Get the length of the array at the current depth
+    sh = arr.shape[0]
 
     # If we're not at the deepest level of the outer grid, iterate over the level we're at, calling array_eval on the
     # next-deeper layer and creating an array of the results
     if (depth + 1) < n_outer:
-        return np.array([array_eval(func, arr[i], n_outer, depth + 1) for i in range(sh[0])])
+        return np.array([array_eval(func, arr[i], n_outer, depth + 1) for i in range(sh)])
     # If we've reached the deepest level of the grid, evaluate the function for each point at this level and store
     # the results in an array
     else:
-        return np.array([func(arr[i]) for i in range(sh[0])])
+        return np.array([func(arr[i]) for i in range(sh)])
 
 
-def object_list_eval(method_function, object_list, target_depth, depth=0):
-    # Get the shape of the array at the current depth
-    l = len(object_list)
+def object_list_eval(method_function, object_list, target_depth=None, depth=0):
+    # Get the length of the array at the current depth
+    sh = len(object_list)
+
+    # If a target dept was supplied, check if we've reached it
+    if target_depth is not None:
+        reached_target_depth = depth < target_depth
+    # If no target depth was supplied, stop drilling down once we find a non-list item
+    else:
+        reached_target_depth = not all([isinstance(object_list[i], list) for i in range(sh)])
+
 
     # If we're not yet drilled down to the contents, recurse further down
-    if (depth + 1) < target_depth:
-        return [object_list_eval(method_function, object_list[i], target_depth, depth + 1) for i in range(l)]
+    if not reached_target_depth:
+        return [object_list_eval(method_function, object_list[i], target_depth, depth + 1) for i in range(sh)]
     # If we've reached the target level of the list, evaluate the specified method for each point at this level and
     # store the results in a list
     else:
-        return [method_function(object_list[i]) for i in range(l)]
+        return [method_function(object_list[i]) for i in range(sh)]
+
+def object_list_allinstance(test_class, object_list):
+    def
 
 
 def shape(a):

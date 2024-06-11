@@ -2,6 +2,7 @@
 import copy
 import numpy as np
 from operator import methodcaller
+from collections import UserList
 
 from . import utilityfunctions as ut
 
@@ -76,21 +77,40 @@ class ManifoldElement:
         return copied_element
 
 
-class ManifoldSet:
+class ManifoldElementSet(UserList):
 
-    def __init__(self,
-                 value):
-        self.value = value
+    def __init__(self, *args):
+
+        super().__init__(args[0])
+
+        # # If the first argument is a list, test if it is a nested list of ManifoldElements
+        # def manifold_element_test(x):
+        #     assert isinstance(x, ManifoldElement), "List input to ManifoldElementSet should contain ManifoldElements"
+        #
+        # try:
+        #     ut.object_list_eval(manifold_element_test, args[0], len(ut.shape(args[0])))
+        # except:
+        #     raise Exception()
+        #
+        # # If the value input is not an ndarray, assume it is a nested list of ManifoldElements
+        # if not isinstance(value, np.ndarray):
+        #self.value = args[0]
+
+
 
     @property
     def shape(self):
         return ut.shape(self.value)
 
+    @property
+    def value(self):
+        return self.data
+
     def transition(self, new_chart):
         transition_method = methodcaller('transition', new_chart)
 
         new_set = ut.object_list_eval(transition_method,
-                                      self.value,
-                                      len(self.shape))
+                                      self.value)
 
-        return ManifoldSet(new_set)
+        return self.__class__(new_set)
+
