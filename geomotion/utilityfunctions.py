@@ -34,6 +34,25 @@ def array_eval(func, arr, n_outer, depth=0):
         return np.array([func(arr[i]) for i in range(sh[0])])
 
 
+def object_list_eval(method_function, object_list, target_depth, depth=0):
+    # Get the shape of the array at the current depth
+    l = len(object_list)
+
+    # If we're not yet drilled down to the contents, recurse further down
+    if (depth + 1) < target_depth:
+        return [object_list_eval(method_function, object_list[i], target_depth, depth + 1) for i in range(l)]
+    # If we've reached the target level of the list, evaluate the specified method for each point at this level and
+    # store the results in a list
+    else:
+        return [method_function(object_list[i]) for i in range(l)]
+
+
+def shape(a):
+    if not isinstance(a, list):
+        return []
+    return [len(a)] + shape(a[0])
+
+
 def meshgrid_array(*args):
     return GridArray(np.stack(np.meshgrid(*args)), 1)
 

@@ -1,6 +1,9 @@
 #! /usr/bin/python3
 import copy
 import numpy as np
+from operator import methodcaller
+
+from . import utilityfunctions as ut
 
 
 class Manifold:
@@ -11,14 +14,12 @@ class Manifold:
     def __init__(self,
                  transition_table,
                  n_dim):
-
         # Save the provided chart transition table as a class instance attribute
         self.transition_table = transition_table
         # Extract the number of charts implied by the transition table
         self.n_charts = len(transition_table)
         # Save the provided dimensionality as a class instance attribute
         self.n_dim = n_dim
-
 
     def element(self,
                 value,
@@ -28,7 +29,6 @@ class Manifold:
                             value,
                             initial_chart)
         return q
-
 
 
 class ManifoldElement:
@@ -76,3 +76,21 @@ class ManifoldElement:
         return copied_element
 
 
+class ManifoldSet:
+
+    def __init__(self,
+                 value):
+        self.value = value
+
+    @property
+    def shape(self):
+        return ut.shape(self.value)
+
+    def transition(self, new_chart):
+        transition_method = methodcaller('transition', new_chart)
+
+        new_set = ut.object_list_eval(transition_method,
+                                      self.value,
+                                      len(self.shape))
+
+        return ManifoldSet(new_set)

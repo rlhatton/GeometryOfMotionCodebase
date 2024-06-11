@@ -11,7 +11,6 @@ class Group(md.Manifold):
                  identity_list,
                  inverse_function_list=None,
                  transition_table=((None,))):
-
         # Ensure that the operation list, identity list, and inverse function list are all actually lists
         operation_list = ut.ensure_tuple(operation_list)
         identity_list = ut.ensure_tuple(identity_list)
@@ -37,7 +36,6 @@ class Group(md.Manifold):
     def element(self,
                 value,
                 initial_chart=0):
-
         """Instantiate a group element with a specified value"""
         g = GroupElement(self,
                          value,
@@ -46,7 +44,6 @@ class Group(md.Manifold):
 
     def identity_element(self,
                          initial_chart=0):
-
         """Instantiate a group element at the identity"""
         g = GroupElement(self,
                          'identity',
@@ -79,7 +76,7 @@ class GroupElement(md.ManifoldElement):
         self.group = group
 
     def L(self,
-                    g_right):
+          g_right):
 
         if self.group.operation_list[self.current_chart] is not None:
 
@@ -99,7 +96,7 @@ class GroupElement(md.ManifoldElement):
         return g_composed
 
     def R(self,
-                     g_left):
+          g_left):
 
         if self.group.operation_list[self.current_chart] is not None:
 
@@ -133,7 +130,7 @@ class GroupElement(md.ManifoldElement):
 
         g_inv_value = self.group.inverse_function_list[self.current_chart](self.value)
 
-        g_inv = self.group.element(g_inv_value,self.current_chart)
+        g_inv = self.group.element(g_inv_value, self.current_chart)
 
         return g_inv
 
@@ -148,13 +145,4 @@ class GroupElement(md.ManifoldElement):
 
 #commutator function is more natural to define as a function of group elements than as a class method
 def commutator(g: GroupElement, h: GroupElement):
-
     return g * h * g.inverse * h.inverse
-
-
-
-
-
-
-
-
