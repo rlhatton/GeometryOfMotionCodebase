@@ -129,4 +129,4 @@ def convert_polar_xticks_to_radians(ax):
     # Format each label (edit this function however you'd like)
     labels = [format_radians_label(label) for label in labels]
 
-    ax.set_xticklabels(labels)
+    ax.set_xticks(label_positions, labels)
