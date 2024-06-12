@@ -107,3 +107,26 @@ class GridArray(np.ndarray):
         arr = array_eval(func, self, self.n_outer)
         garr = GridArray(arr, self.n_outer)
         return garr
+
+
+def format_radians_label(float_in):
+    # Converts a float value in radians into a
+    # string representation of that float
+    string_out = str(float_in / (np.pi)) + "π"
+
+    return string_out
+
+
+def convert_polar_xticks_to_radians(ax):
+    # Converts x-tick labels from degrees to radians
+
+    # Get the x-tick positions (returns in radians)
+    label_positions = ax.get_xticks()
+
+    # Convert to a list since we want to change the type of the elements
+    labels = list(label_positions)
+
+    # Format each label (edit this function however you'd like)
+    labels = [format_radians_label(label) for label in labels]
+
+    ax.set_xticklabels(labels)
