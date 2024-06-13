@@ -1,4 +1,6 @@
 #! /usr/bin/python3
+import warnings
+
 import numpy as np
 
 
@@ -55,6 +57,9 @@ def object_list_eval(method_function, object_list, n_outer=None, depth=0):
 
 
 def object_list_all_instance(test_class, object_list):
+    """ Check if all objects in a given nested list are instances of a given class"""
+
+    # Function that errors out if the target is not of the right class
     def object_test(x):
         assert isinstance(x, test_class)
 
@@ -66,6 +71,47 @@ def object_list_all_instance(test_class, object_list):
 
     return test_value
 
+
+def object_list_extract_first_entry(object_list, n_outer=None, depth=0):
+    """Drill down through the list to extract the first item from it"""
+    # Get the length of the array at the current depth
+    sh = len(object_list)
+
+    # If n_outer was supplied, check if we've reached it
+    if n_outer is not None:
+        reached_target_depth = (depth + 1) >= n_outer
+    # If no target depth was supplied, stop drilling down once we find a non-list item
+    else:
+        reached_target_depth = not all([isinstance(object_list[i], list) for i in range(sh)])
+
+    # If we're not yet drilled down to the contents, recurse further down
+    if not reached_target_depth:
+        return object_list_extract_first_entry(object_list[0])
+    # If we've reached the target level of the list, evaluate the specified method for each point at this level and
+    # store the results in a list
+    else:
+        return object_list[0]
+
+
+def nested_stack(array_list, n_outer=None, depth=0):
+    """Drill down through the list, stacking the arrays at each level"""
+    # Get the length of the array at the current depth
+    sh = len(array_list)
+
+    # If n_outer was supplied, check if we've reached it
+    if n_outer is not None:
+        reached_target_depth = (depth + 1) >= n_outer
+    # If no target depth was supplied, stop drilling down once we find a non-list item
+    else:
+        reached_target_depth = not all([isinstance(array_list[i], list) for i in range(sh)])
+
+    # If we're not yet drilled down to the contents, recurse further down
+    if not reached_target_depth:
+        return np.stack([nested_stack(array_list[i]) for i in range(sh)])
+    # If we've reached the target level of the list, evaluate the specified method for each point at this level and
+    # store the results in a list
+    else:
+        return np.stack(array_list)
 
 def shape(a):
     if not isinstance(a, list):
@@ -79,12 +125,20 @@ def meshgrid_array(*args):
 
 class GridArray(np.ndarray):
 
-    def __new__(cls, input_array, n_outer):
+    def __new__(cls, input_array, n_outer=None, n_inner=None):
         # Input array is an already formed ndarray instance
         # We first cast to be our class type
         obj = np.asarray(input_array).view(cls)
         # add the new attribute to the created instance
-        obj.n_outer = n_outer
+        if (n_outer is not None) and (n_inner is None):
+            obj.n_outer = n_outer
+        if (n_outer is None) and (n_inner is not None):
+            obj.n_outer = len(obj.shape) - n_inner
+        if (n_outer is not None) and (n_inner is not None):
+            obj.n_outer = n_outer
+            warnings.warn("Both n_outer and n_inner were specified. Using n_outer.")
+        if (n_outer is None) and (n_inner is None):
+            raise Exception("Must specify either n_outer or n_inner")
         # Finally, we must return the newly created object:
         return obj
 

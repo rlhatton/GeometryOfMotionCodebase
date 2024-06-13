@@ -1,5 +1,7 @@
 #! /usr/bin/python3
 import copy
+import warnings
+
 import numpy as np
 from operator import methodcaller
 from collections import UserList
@@ -87,6 +89,7 @@ class ManifoldElementSet(UserList):
         if isinstance(args[0], list):
             if ut.object_list_all_instance(ManifoldElement, args[0]):
                 value = args[0]
+                manifold = ut.object_list_extract_first_entry(args[0]).manifold
             else:
                 raise Exception("List input to ManifoldElementSet should contain ManifoldElements")
         # If the first argument is a manifold, process the inputs as if they were ManifoldElement inputs
@@ -116,7 +119,9 @@ class ManifoldElementSet(UserList):
                         elif grid_format == 'element':
                             pass
                     else:
-                        raise Exception("Grid format is ambiguous and a grid format was not provided")
+                        warnings.warn(
+                            "Grid format is ambiguous and a grid format was not provided. Assuming component-outer grid")
+                        grid = grid.everse
 
                 if c_outer_e_inner and (not e_outer_c_inner):
                     # Convert component-outer grid to element-outer grid
@@ -133,9 +138,11 @@ class ManifoldElementSet(UserList):
                     raise Exception("Grid does not appear to be a component-wise or element-wise grid compatible with "
                                     "the provided manifold")
 
-                # Convert element-outer grid to a list of ManifoldElements
+                # Convert element-outer grid to a list of ManifoldElements, including passing any any initial chart to
+                # the manifold element function
                 def manifold_construction_function(x):
-                    return manifold.element(x)
+                    return manifold.element(x, args[2])
+
                 value = ut.object_list_eval(manifold_construction_function, grid, grid.n_outer)
                 print("object_list_eval returns: ", value)
 
@@ -149,19 +156,7 @@ class ManifoldElementSet(UserList):
                             "ManifoldElements or a Manifold")
 
         super().__init__(value)
-
-        # # If the first argument is a list, test if it is a nested list of ManifoldElements
-        # def manifold_element_test(x):
-        #     assert isinstance(x, ManifoldElement), "List input to ManifoldElementSet should contain ManifoldElements"
-        #
-        # try:
-        #     ut.object_list_eval(manifold_element_test, args[0], len(ut.shape(args[0])))
-        # except:
-        #     raise Exception()
-        #
-        # # If the value input is not an ndarray, assume it is a nested list of ManifoldElements
-        # if not isinstance(value, np.ndarray):
-        #self.value = args[0]
+        self.manifold = manifold
 
     @property
     def shape(self):
@@ -170,6 +165,22 @@ class ManifoldElementSet(UserList):
     @property
     def value(self):
         return self.data
+
+    @property
+    def grid(self):
+        def extract_value(x):
+            return x.value
+
+        # Get an array of the manifold element values, and use nested_stack to make it an ndarray
+        element_outer_grid = ut.nested_stack(ut.object_list_eval(extract_value,
+                                                          self.value))
+
+        # Convert this array into a GridArray
+        element_outer_grid_array = ut.GridArray(element_outer_grid, n_inner=1)
+
+        component_outer_grid_array = element_outer_grid_array.everse
+
+        return component_outer_grid_array
 
     def transition(self, new_chart):
         transition_method = methodcaller('transition', new_chart)
