@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from geomotion import plottingfunctions as gplt
 from geomotion import utilityfunctions as ut
-from E100_Construct_R2 import R2  # Get the R2 manifold constructed previously
+from S100_Construct_R2 import R2  # Get the R2 manifold constructed previously
 
 
 # Make things print nicely

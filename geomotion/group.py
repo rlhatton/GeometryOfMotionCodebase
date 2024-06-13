@@ -17,7 +17,6 @@ class Group(md.Manifold):
         inverse_function_list = ut.ensure_tuple(inverse_function_list)
 
         # Extract the dimensionality from the identity element
-        print(type(identity_list))
         n_dim = np.size(identity_list[0])
 
         # Initialize the group as a manifold

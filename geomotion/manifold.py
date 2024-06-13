@@ -78,6 +78,8 @@ class ManifoldElement:
         copied_element.current_chart = new_chart
         return copied_element
 
+    def __getitem__(self, item):
+        return self.value[item]
 
 class ManifoldElementSet(UserList):
 
@@ -187,3 +189,5 @@ class ManifoldElementSet(UserList):
                                       self.value)
 
         return self.__class__(new_set)
+
+

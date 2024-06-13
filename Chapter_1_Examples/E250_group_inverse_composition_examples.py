@@ -18,7 +18,7 @@ R2plus = gp.Group(affine_addition, [0, 0], affine_additive_inverse)
 g1 = R2plus.element([0, 1])
 g3 = R2plus.element([1, 2])
 
-g2 = g1.inverse_element() * g3
+g2 = g1.inverse * g3
 
 print("Pre-subtraction of " +str(g1.value) + " from " +str(g3.value) + " is " + str(g2.value))
 
@@ -37,7 +37,7 @@ R1times = gp.Group(scalar_multiplication, [1], scalar_multiplicative_inverse)
 g1 = R1times.element(2)
 g3 = R1times.element(6)
 
-g2 = g1.inverse_element() * g3
+g2 = g1.inverse * g3
 
 print("Pre-division of " +str(g1.value) + " from " +str(g3.value) + " is " + str(g2.value))
 

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from geomotion import manifold as md
 from geomotion import utilityfunctions as ut
 from geomotion import plottingfunctions as gplt
-from E100_Construct_R2 import R2  # Get the R2 manifold as constructed previously
+from S100_Construct_R2 import R2  # Get the R2 manifold as constructed previously
 
 np.set_printoptions(precision=2)  # Make things print nicely
 
@@ -38,20 +38,22 @@ spot_color = gplt.crimson
 
 # Original values
 ax_orig = plt.subplot(2, 2, 1)
-ax_orig.scatter(q_set.grid[0], q_set.grid[1], color=spot_color)
-ax_orig.set_xlim(-.5, 5)
-ax_orig.set_ylim(-.5, 5)
-ax_orig.set_xticks([0, 1, 2, 3, 4])
-ax_orig.set_yticks([0, 1, 2, 3, 4])
-ax_orig.set_aspect('equal')
-ax_orig.grid(True)
-ax_orig.axhline(0, color='black')
-ax_orig.axvline(0, color='black')
+ax = ax_orig
+ax.scatter(q_set.grid[0], q_set.grid[1], color=spot_color)
+ax.set_xlim(-.5, 5)
+ax.set_ylim(-.5, 5)
+ax.set_xticks([0, 1, 2, 3, 4])
+ax.set_yticks([0, 1, 2, 3, 4])
+ax.set_aspect('equal')
+ax.grid(True)
+ax.axhline(0, color='black')
+ax.axvline(0, color='black')
 
 # Polar equivalents
 ax_polar = plt.subplot(2, 2, 4, projection='polar')
-ax_polar.scatter(q_set_polar.grid[1], q_set_polar.grid[0], color=spot_color)
-ax_polar.set_rlim(0, 6)
+ax = ax_polar
+ax.scatter(q_set_polar.grid[1], q_set_polar.grid[0], color=spot_color)
+ax.set_rlim(0, 6)
 ut.convert_polar_xticks_to_radians(ax_polar)
 
 plt.show()
