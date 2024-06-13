@@ -144,8 +144,6 @@ class ManifoldElementSet(UserList):
                     return manifold.element(x, args[2])
 
                 value = ut.object_list_eval(manifold_construction_function, grid, grid.n_outer)
-                print("object_list_eval returns: ", value)
-
 
             else:
                 raise Exception(
