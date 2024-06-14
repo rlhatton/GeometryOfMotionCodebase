@@ -81,6 +81,9 @@ class ManifoldElement:
     def __getitem__(self, item):
         return self.value[item]
 
+    def __str__(self):
+        return str(self.value)
+
 class ManifoldElementSet(UserList):
 
     def __init__(self, *args):
@@ -100,6 +103,7 @@ class ManifoldElementSet(UserList):
             manifold = args[0]
             if isinstance(args[1], ut.GridArray):
 
+                # Extract the grid array from the argument list
                 grid = args[1]
 
                 # Test if GridArray format could be component-wise in the outer dimension and element-wise on the
@@ -140,10 +144,15 @@ class ManifoldElementSet(UserList):
                     raise Exception("Grid does not appear to be a component-wise or element-wise grid compatible with "
                                     "the provided manifold")
 
-                # Convert element-outer grid to a list of ManifoldElements, including passing any any initial chart to
+                # Convert element-outer grid to a list of ManifoldElements, including passing any initial chart to
                 # the manifold element function
+                if n_args > 2:
+                    initial_chart = args[2]
+                else:
+                    initial_chart = 0
+
                 def manifold_construction_function(x):
-                    return manifold.element(x, args[2])
+                    return manifold.element(x, initial_chart)
 
                 value = ut.object_list_eval(manifold_construction_function, grid, grid.n_outer)
 
@@ -190,4 +199,5 @@ class ManifoldElementSet(UserList):
 
         return self.__class__(new_set)
 
-
+    def __getitem__(self, item):
+        return self.value[item]

@@ -20,7 +20,7 @@ g3 = R2plus.element([1, 2])
 
 g2 = g1.inverse * g3
 
-print("Pre-subtraction of " +str(g1.value) + " from " +str(g3.value) + " is " + str(g2.value))
+print("Pre-subtraction of ", g1.value, " from ", g3.value, " is ", g2)
 
 """ Scalar multiplication """
 def scalar_multiplication(g_value,
@@ -39,7 +39,7 @@ g3 = R1times.element(6)
 
 g2 = g1.inverse * g3
 
-print("Pre-division of " +str(g1.value) + " from " +str(g3.value) + " is " + str(g2.value))
+print("Pre-division of ", g1.value, " from ", g3.value, " is ", g2)
 
 """ Modular addition """
 
@@ -58,4 +58,4 @@ g3 = S1plus.element(.125)
 
 g2 = g1.inverse * g3
 
-print("Modular pre-subtraction of " +str(g1.value) + " from " +str(g3.value) + " is " + str(g2.value))
+print("Modular pre-subtraction of ", g1.value, " from ", g3.value, " is ", g2)

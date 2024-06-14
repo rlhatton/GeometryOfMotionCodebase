@@ -17,7 +17,7 @@ g2 = R2plus.element([1, 1])
 
 g3 = g1 * g2
 
-print("Sum of " + str(g1.value) + " and " + str(g2.value) + " is " + str(g3.value))
+print("Sum of ", g1, " and ", g2.value, " is ", g3.value)
 
 """ Scalar multiplication """
 
@@ -34,7 +34,7 @@ g2 = R1times.element(3)
 
 g3 = g1 * g2
 
-print("Product of " + str(g1.value) + " and " + str(g2.value) + " is " + str(g3.value))
+print("Product of ", g1, " and ", g2, " is ", g3)
 
 """ Modular addition """
 
@@ -51,4 +51,4 @@ g2 = S1plus.element(.875)
 
 g3 = g1 * g2
 
-print("Modular sum of " + str(g1.value) + " and " + str(g2.value) + " is " + str(g3.value))
+print("Modular sum of ", g1, " and ", g2, " is ", g3)

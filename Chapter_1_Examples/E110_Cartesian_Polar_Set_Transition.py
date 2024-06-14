@@ -16,17 +16,17 @@ q2 = Q.element([2, 0], 0)
 
 # Collect these points into a set
 q_set = md.ManifoldElementSet([q1, q2])
-print("Initial set in Cartesian coordinates is ", q_set[0].value, " and ", q_set[1].value)
+print("Initial set in Cartesian coordinates is ", q_set[0], " and ", q_set[1])
 
 # Transition the set into polar coordinates
 q_set_polar = q_set.transition(1)
 
 #
-print("Set in Polar coordinates is ", q_set_polar[0].value, " and ", q_set_polar[1].value)
+print("Set in Polar coordinates is ", q_set_polar[0], " and ", q_set_polar[1])
 
 q_set_cartesian = q_set_polar.transition(0)
 
-print("Set back in Cartesian coordinates ", q_set_cartesian[0].value, " and ", q_set_cartesian[1].value)
+print("Set back in Cartesian coordinates ", q_set_cartesian[0], " and ", q_set_cartesian[1])
 
 q_set_grid = q_set.grid
 print("Grid representation of set is ", q_set_grid[0], " and ", q_set_grid[1])
