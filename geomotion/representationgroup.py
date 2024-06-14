@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 import numpy as np
-import utilityfunctions as ut
-from . import group as gp
+from geomotion import utilityfunctions as ut
+from geomotion import group as gp
 
 
 class RepresentationGroup(gp.Group):
@@ -20,7 +20,8 @@ class RepresentationGroup(gp.Group):
 
         # If a derepresentation list has been provided, use it to construct the transition map as the composition of
         # the rep and derep functions
-        if (derepresentation_function_list is not None) and (len(derepresentation_function_list) == len(representation_function_list)):
+        if ((derepresentation_function_list is not None)
+                and (len(derepresentation_function_list) == len(representation_function_list))):
             transition_table = [[lambda x: derepresentation_function_list[j](representation_function_list[i](x)) for j in range(2)] for i in range(len(representation_function_list))]
         else:
             transition_table = ((None,))
@@ -126,7 +127,7 @@ class RepresentationGroupElement(gp.GroupElement):
     @property
     def value(self):
 
-        val = self.group.derepresentation_function_list[self.current_chart](self.rep)
+        val = np.array(self.group.derepresentation_function_list[self.current_chart](self.rep), dtype=float)
         return val
 
     @value.setter

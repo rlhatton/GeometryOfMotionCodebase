@@ -2,6 +2,8 @@
 import numpy as np
 from geomotion import representationgroup as rgp
 
+np.set_printoptions(precision=2)  # Make things print nicely
+
 """ Scalar addition """
 
 def scalar_addition_rep(g_value):
@@ -22,7 +24,7 @@ g2 = R1plus.element(3)
 
 g3 = g1 * g2
 
-print("Addition-group composition of " +str(g1.value) + " and " +str(g2.value) + " is " + str(g3.value))
+print("Addition-group composition of ", g1, " and ", g2, " is ", g3)
 
 """ Scalar addition """
 
@@ -43,7 +45,7 @@ g2 = R1times.element(3.)
 
 g3 = g1 * g2
 
-print("Multiplication-group composition of " +str(g1.value) + " and " +str(g2.value) + " is " + str(g3.value))
+print("Multiplication-group composition of ", g1, " and ", g2, " is ", g3)
 
 def modular_addition_rep_a(g_value):
 
@@ -73,7 +75,7 @@ def modular_addition_derep_b(g_rep):
     return g_value
 
 rep_list = (modular_addition_rep_a,modular_addition_rep_b)
-derep_list = (modular_addition_derep_a,modular_addition_derep_b)
+derep_list = (modular_addition_derep_a, modular_addition_derep_b)
 
 S1plus = rgp.RepresentationGroup(rep_list, 0, derep_list)
 
@@ -82,10 +84,12 @@ g2 = S1plus.element(.875)
 
 g3 = g1 * g2
 
-print("Modular-addition-group composition of " +str(g1.value) + " and " +str(g2.value) + " is " + str(g3.value))
+print("Modular-addition-group composition of  ", g1, " and ", g2, " is ", g3)
+
+
 
 g1a = g1.transition(1)
 g2a = g2.transition(1)
 g3a = g3.transition(1)
 
-print("Modular-addition-group composition of " +str(g1a.value) + " and " +str(g2a.value) + " is " + str(g3a.value))
+print("Modular-addition-group composition of  ", g1a, " and ", g2a, " is ", g3a)
