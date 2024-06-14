@@ -46,8 +46,13 @@ class ManifoldElement:
 
         # Save the provided manifold, configuration, and initial chart as class instance attributes
         self.manifold = manifold
+
+        # Make sure that the value is a list or ndarray
+        if not (isinstance(value, list) or isinstance(value, np.ndarray)):
+            value = [value]
+
         # Make sure the value is a numpy float array
-        self.value = np.squeeze(np.array(value, dtype=float))
+        self.value = np.array(value, dtype=float)
         self.current_chart = initial_chart
 
     def transition(self, new_chart):

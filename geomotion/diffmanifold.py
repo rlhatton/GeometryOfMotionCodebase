@@ -57,6 +57,13 @@ class TangentVector:
                  initial_chart=None,
                  manifold: DiffManifold = None):
 
+        # Make sure that the value and configuration are each a list or ndarray
+        if not (isinstance(value, list) or isinstance(value, np.ndarray)):
+            value = [value]
+
+        if not (isinstance(configuration, list) or isinstance(configuration, np.ndarray)):
+            configuration = [configuration]
+
         # If configuration is a manifold element, verify that no manifold was specified or that the configuration's
         # manifold matches the manifold specified for this vector
         if isinstance(configuration, md.ManifoldElement):
@@ -92,6 +99,10 @@ class TangentVector:
 
     @value.setter
     def value(self, val):
+
+        # Make sure that the value and configuration are each a list or ndarray
+        if not (isinstance(val, list) or isinstance(val, np.ndarray)):
+            val = [val]
 
         # Make sure that the value is a numpy array of floats, and that it is a column vector
         value = np.array(val, dtype=float)

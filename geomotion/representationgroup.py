@@ -28,6 +28,11 @@ class RepresentationGroup(gp.Group):
 
         # Make sure that we have both the representation of the identity (for constructing the group) and its
         # derepresentation (for determining the dimensionality)
+
+        # Make sure that the identity is specified as a list or ndarray
+        if not (isinstance(identity, list) or isinstance(identity, np.ndarray)):
+            identity = [identity]
+
         identity = np.array(identity, dtype=float)
         if identity.ndim == 2:
             identity_representation = identity
@@ -89,6 +94,11 @@ class RepresentationGroupElement(gp.GroupElement):
                                # representation and chart
                          initial_chart)
 
+
+        # Make sure that the representation is a list or ndarray
+        if not (isinstance(representation, list) or isinstance(representation, np.ndarray)):
+            representation = [representation]
+
         # Store the representation, passing it through the representation function if necessary
         representation = np.array(representation, dtype=float)
         if representation.ndim == 2: #(np.squeeze(representation)).ndim == 2:
@@ -127,7 +137,15 @@ class RepresentationGroupElement(gp.GroupElement):
     @property
     def value(self):
 
-        val = np.array(self.group.derepresentation_function_list[self.current_chart](self.rep), dtype=float)
+        val_raw = self.group.derepresentation_function_list[self.current_chart](self.rep)
+
+        # Make sure that the value is a list or ndarray
+        if not (isinstance(val_raw, list) or isinstance(val_raw, np.ndarray)):
+            val_raw = [val_raw]
+
+        # Make sure the value is an ndarray
+        val = np.array(val_raw, dtype=float)
+
         return val
 
     @value.setter

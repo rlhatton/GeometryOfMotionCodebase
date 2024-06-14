@@ -21,7 +21,6 @@ g4 = g2 * g1
 print("Right scale-shift action of ", g1, " on ", g2, " is ", g4)
 
 print("Inverse of g1 is ", g1.inverse)
-print(type(g1.inverse.value))
 
 g_delta_right = g1.inverse * g3
 print("Left inverse scale-shift action of ", g1, " on ", g2, " is ", g_delta_right)

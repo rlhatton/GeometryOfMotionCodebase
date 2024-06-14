@@ -6,9 +6,9 @@ np.set_printoptions(precision=2)  # Make things print nicely
 
 """ Scalar addition """
 
-def scalar_addition_rep(g_value):
 
-    g_rep = [[1, g_value], [0, 1]]
+def scalar_addition_rep(g_value):
+    g_rep = [[1, g_value[0]], [0, 1]]
     return g_rep
 
 
@@ -23,9 +23,9 @@ print("Addition-group inverse composition of \n", g1.rep, "\n with \n", g3.rep, 
 
 """ Scalar addition """
 
-def scalar_multiplication_rep(g_value):
 
-    g_rep = np.array([[g_value]])
+def scalar_multiplication_rep(g_value):
+    g_rep = np.array([[g_value[0]]])
     return g_rep
 
 
@@ -38,11 +38,11 @@ g2 = g1.inverse * g3
 
 print("Multiplication-group inverse composition of \n", g1.rep, "\n with \n", g3.rep, "\n is \n", g2.rep)
 
-def modular_addition_rep(g_value):
 
-    g_radians = 2*np.pi*g_value
+def modular_addition_rep(g_value):
+    g_radians = 2 * np.pi * g_value[0]
     g_rep = [[np.cos(g_radians), -np.sin(g_radians)],
-             [np.sin(g_radians),  np.cos(g_radians)]]
+             [np.sin(g_radians), np.cos(g_radians)]]
     return g_rep
 
 

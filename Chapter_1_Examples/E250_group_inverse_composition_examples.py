@@ -39,7 +39,7 @@ g3 = R1times.element(6)
 
 g2 = g1.inverse * g3
 
-print("Pre-division of ", g1.value, " from ", g3.value, " is ", g2)
+print("Pre-division of ", g1, " from ", g3, " is ", g2)
 
 """ Modular addition """
 
@@ -58,4 +58,4 @@ g3 = S1plus.element(.125)
 
 g2 = g1.inverse * g3
 
-print("Modular pre-subtraction of ", g1.value, " from ", g3.value, " is ", g2)
+print("Modular pre-subtraction of ", g1, " from ", g3, " is ", g2)
