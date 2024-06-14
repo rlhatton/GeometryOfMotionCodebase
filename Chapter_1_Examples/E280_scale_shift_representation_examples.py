@@ -9,8 +9,8 @@ np.set_printoptions(precision=2)  # Make things print nicely
 # Set the working group to be the semi-direct-product scale-shift group
 G = RxRplus
 
-g1 = RxRplus.element([3, -1])
-g2 = RxRplus.element([.5, 1.5])
+g1 = G.element([3, -1])
+g2 = G.element([.5, 1.5])
 
 g3 = g1 * g2
 
@@ -19,11 +19,6 @@ print("Left scale-shift action of ", g1, " on ", g2, " is ", g3)
 g4 = g2 * g1
 
 print("Right scale-shift action of ", g1, " on ", g2, " is ", g4)
-
-print("Inverse of g1 is ", g1.inverse)
-
-g_delta_right = g1.inverse * g3
-print("Left inverse scale-shift action of ", g1, " on ", g2, " is ", g_delta_right)
 
 
 
@@ -67,8 +62,7 @@ ax_g1g2_left = plt.subplot(3, 2, 3)
 ax = ax_g1g2_left
 ax.scatter(g1[0], g1[1], edgecolor=spot_color, facecolor='white')
 ax.scatter(g2[0], g2[1], edgecolor='black', facecolor=spot_color)
-ax.scatter(g3[0], g3[1], edgecolor='black', facecolor='white')
-ax.scatter(g3[0], g3[1], edgecolor='black', facecolor='black', s=3, zorder=3)
+ax.scatter(g3[0], g3[1], edgecolor='black', facecolor='white', marker=r'$\odot$')
 ax.scatter(1,0, edgecolor='black', facecolor='black')
 ax.scatter(0, 0, edgecolor='black', facecolor='white', s=20, clip_on=False, zorder=3)
 ax.set_xlim(0, 4)
@@ -89,8 +83,7 @@ ax_g1g2_right = plt.subplot(3, 2, 4)
 ax = ax_g1g2_right
 ax.scatter(g1[0], g1[1], edgecolor=spot_color, facecolor='white')
 ax.scatter(g2[0], g2[1], edgecolor='black', facecolor=spot_color)
-ax.scatter(g3[0], g3[1], edgecolor='black', facecolor='white')
-ax.scatter(g3[0], g3[1], edgecolor='black', facecolor='black', s=3, zorder=3)
+ax.scatter(g3[0], g3[1], edgecolor='black', facecolor='white', marker=r'$\odot$')
 ax.scatter(1,0, edgecolor='black', facecolor='black')
 ax.scatter(0, 0, edgecolor='black', facecolor='white', s=20, clip_on=False, zorder=3)
 ax.set_xlim(0, 4)
@@ -110,8 +103,7 @@ ax_g2g1_left = plt.subplot(3, 2, 5)
 ax = ax_g2g1_left
 ax.scatter(g1[0], g1[1], edgecolor=spot_color, facecolor='white')
 ax.scatter(g2[0], g2[1], edgecolor='black', facecolor=spot_color)
-ax.scatter(g4[0], g4[1], edgecolor=spot_color, facecolor='white')
-ax.scatter(g4[0], g4[1], edgecolor=spot_color, facecolor='black', s=3, zorder=3)
+ax.scatter(g4[0], g4[1], edgecolor=spot_color, facecolor='white', marker=r'$\odot$')
 ax.scatter(1,0, edgecolor='black', facecolor='black')
 ax.scatter(0, 0, edgecolor='black', facecolor='white', s=20, clip_on=False, zorder=3)
 ax.set_xlim(0, 4)
@@ -132,8 +124,7 @@ ax_g2g1_right = plt.subplot(3, 2, 6)
 ax = ax_g2g1_right
 ax.scatter(g1[0], g1[1], edgecolor=spot_color, facecolor='white')
 ax.scatter(g2[0], g2[1], edgecolor='black', facecolor=spot_color)
-ax.scatter(g4[0], g4[1], edgecolor=spot_color, facecolor='white')
-ax.scatter(g4[0], g4[1], edgecolor=spot_color, facecolor='black', s=3, zorder=3)
+ax.scatter(g4[0], g4[1], edgecolor=spot_color, facecolor='white', marker=r'$\odot$')
 ax.scatter(1,0, edgecolor='black', facecolor='black')
 ax.scatter(0, 0, edgecolor='black', facecolor='white', s=20, clip_on=False, zorder=3)
 ax.set_xlim(0, 4)
