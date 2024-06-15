@@ -86,7 +86,7 @@ class RepresentationGroupElement(gp.GroupElement):
                  initial_chart=0):
         # Handle the identity-element value keyword
         if isinstance(representation, str) and (representation == 'identity'):
-            representation = group.identity_representation
+            representation = group.identity_rep
 
         # Use the provided inputs to generate the group-element properties of the group element
         super().__init__(group,
