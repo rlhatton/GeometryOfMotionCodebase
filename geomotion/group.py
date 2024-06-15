@@ -115,12 +115,12 @@ class GroupElement(md.ManifoldElement):
         return g_composed
 
     def AD(self, other):
-        g_inv = self.inverse_element()
+        g_inv = self.inverse
         AD_g_other = self * other * g_inv
         return AD_g_other
 
     def ADinv(self, other):
-        g_inv = self.inverse_element()
+        g_inv = self.inverse
         ADi_g_other = g_inv * other * self
         return ADi_g_other
 

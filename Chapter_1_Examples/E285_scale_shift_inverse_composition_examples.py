@@ -1,5 +1,5 @@
 #! /usr/bin/python3
-from S280_Construct_RxRplus_rep import RxRplus as RxRplus_rep
+from S280_Construct_RxRplus_rep import RxRplus as RxRplus
 from geomotion import plottingfunctions as gplt
 from matplotlib import pyplot as plt
 import numpy as np
@@ -7,7 +7,7 @@ import numpy as np
 np.set_printoptions(precision=2)  # Make things print nicely
 
 # Set the working group to be the semi-direct-product scale-shift group
-G = RxRplus_rep
+G = RxRplus
 
 g1 = G.element([3, -1])
 g2 = G.element([.5, 1.5])
@@ -24,16 +24,16 @@ print("Left difference between g3=", g3, " and g1=", g1, " is ", g_delta_right, 
 
 # Calculate some intermediate points for drawing arrows
 
-g1scale = G.element([3, 0])
+g1scale = G.element([g1[0], 0])
 g1scale_g2 = g1scale * g2
 
-g2shift = G.element([1, 1.5])
+g2shift = G.element([1, g2[1]])
 g1_g2shift = g1 * g2shift
 
-g2scale = G.element([.5, 0])
+g2scale = G.element([g2[0], 0])
 g2scale_g1 = g2scale * g1
 
-g1shift = G.element([1, -1])
+g1shift = G.element([1, g1[1]])
 g2_g1shift = g2 * g1shift
 
 g2inv_shift = G.element([1, g2.inverse[1]])
@@ -87,8 +87,8 @@ ax.arrow(g1[0], 0-.2, 0, .7*(g1[1]), color=spot_color, zorder=.9, length_include
 ax.arrow(g3[0], g3[1], (g3_g2inv_shift[0] - g3[0]), (g3_g2inv_shift[1] - g3[1]), color='black', zorder=.9, length_includes_head=True, width=.01, head_width=0.2, overhang=.5)
 ax.arrow(g3_g2inv_shift[0], g3_g2inv_shift[1], .8*(g1[0] - g3_g2inv_shift[0]), (g1[1] - g3_g2inv_shift[1]), color='black', zorder=.9, length_includes_head=True, width=.01, head_width=0.2, overhang=.5)
 
-ax_g_delta_left = plt.subplot(2, 2, 4)
-ax = ax_g_delta_left
+ax_g_delta_right = plt.subplot(2, 2, 4)
+ax = ax_g_delta_right
 ax.scatter(g1[0], g1[1], edgecolor=spot_color, facecolor='white')
 ax.scatter(g2[0], g2[1], edgecolor='black', facecolor=spot_color)
 ax.scatter(g3[0], g3[1], edgecolor='black', facecolor='white', marker=r'$\odot$')
