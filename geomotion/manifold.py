@@ -89,6 +89,7 @@ class ManifoldElement:
     def __str__(self):
         return str(self.value)
 
+
 class ManifoldElementSet(UserList):
 
     def __init__(self, *args):
@@ -187,7 +188,7 @@ class ManifoldElementSet(UserList):
 
         # Get an array of the manifold element values, and use nested_stack to make it an ndarray
         element_outer_grid = ut.nested_stack(ut.object_list_eval(extract_value,
-                                                          self.value))
+                                                                 self.value))
 
         # Convert this array into a GridArray
         element_outer_grid_array = ut.GridArray(element_outer_grid, n_inner=1)

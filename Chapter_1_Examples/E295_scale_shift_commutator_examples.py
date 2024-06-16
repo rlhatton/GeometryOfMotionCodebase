@@ -16,9 +16,9 @@ print("The commutator of g1=", g1, " and g2=", g2, " is ", Comm_g1_g2, "\n")
 
 g1g2 = g1 * g2
 g2g1 = g2 * g1
-print("This commutator can be interpreted as the left difference between g1*g2 =", g1g2, " and g2*g1=", g2g1,
+print("This commutator can be interpreted as the left difference between\n g1*g2 =", g1g2, " and g2*g1=", g2g1,
       ", \ni.e., the group element whose left action takes g2*g1 to g1*g2.\n \n"
-      "Alternatively, the commutator can be considered as the point reached through the sequence g1 g2 g1inv g2inv.")
+      "Alternatively, the commutator can be considered as the point reached\n through the sequence g1 g2 g1inv g2inv.")
 
 
 

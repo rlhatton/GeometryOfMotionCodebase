@@ -2,6 +2,7 @@
 import numpy as np
 from . import utilityfunctions as ut
 from . import manifold as md
+from operator import methodcaller
 
 
 class Group(md.Manifold):
@@ -60,7 +61,7 @@ class GroupElement(md.ManifoldElement):
 
         # Handle the identity-element value keyword
         if isinstance(value, str) and (value == 'identity'):
-            if (group.identity_list[initial_chart] is not None):
+            if group.identity_list[initial_chart] is not None:
                 value = group.identity_list[initial_chart]
             else:
                 raise Exception("The specified chart " + str(initial_chart) + "does not have an identity element "
@@ -135,13 +136,67 @@ class GroupElement(md.ManifoldElement):
 
     def __mul__(self, other):
 
-        return self.L(other)
+        if isinstance(other, GroupElement):
+            return self.L(other)
+        else:
+            return NotImplemented
 
     def __rmul__(self, other):
 
-        return self.R(other)
+        if isinstance(other, GroupElement):
+            return self.R(other)
+        else:
+            return NotImplemented
 
 
-#commutator function is more natural to define as a function of group elements than as a class method
+# commutator function is more natural to define as a
+# function of group elements than as a class method
 def commutator(g: GroupElement, h: GroupElement):
     return g * h * g.inverse * h.inverse
+
+
+class GroupElementSet(md.ManifoldElementSet):
+
+    def group_set_action(self, other, action_name):
+
+        if hasattr(other, 'shape'):
+
+            if self.shape == other.shape:
+
+                action = methodcaller(action_name)
+                new_set = ut.object_list_binary_eval(action, self.value, other.value)
+
+            else:
+
+                raise Exception("Cannot apply a set of GroupElements to a set of a different size")
+
+        else:
+
+            action = methodcaller(action_name, other)
+            new_set = ut.object_list_eval(action, self.value)
+
+        return self.__class__(new_set)
+
+    def L(self, other):
+
+        return self.group_set_action(other, 'L')
+
+    def R(self, other):
+
+        return self.group_set_action(other, 'R')
+
+    def AD(self, other):
+
+        return self.group_set_action(other, 'AD')
+
+    def ADinv(self, other):
+
+        return self.group_set_action(other, 'R')
+
+    def __mul__(self, other):
+
+        return self.group_set_action(other, '__mul__')
+
+    def __rmul__(self, other):
+
+        return self.group_set_action(other, '__rmul__')

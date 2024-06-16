@@ -55,6 +55,24 @@ def object_list_eval(method_function, object_list, n_outer=None, depth=0):
     else:
         return [method_function(object_list[i]) for i in range(sh)]
 
+def object_list_binary_eval(method_function, object_list_1, object_list_2, n_outer=None, depth=0):
+    # Get the length of the first array at the current depth
+    sh = len(object_list_1)
+
+    # If a target dept was supplied, check if we've reached it
+    if n_outer is not None:
+        reached_target_depth = (depth + 1) >= n_outer
+    # If no target depth was supplied, stop drilling down once we find a non-list item
+    else:
+        reached_target_depth = not all([isinstance(object_list_1[i], list) for i in range(sh)])
+
+    # If we're not yet drilled down to the contents, recurse further down
+    if not reached_target_depth:
+        return [object_list_binary_eval(method_function, object_list_1[i], object_list_2[i], n_outer, depth + 1) for i in range(sh)]
+    # If we've reached the target level of the list, evaluate the specified method for each point at this level and
+    # store the results in a list
+    else:
+        return [method_function(object_list_1[i], object_list_2) for i in range(sh)]
 
 def object_list_all_instance(test_class, object_list):
     """ Check if all objects in a given nested list are instances of a given class"""
