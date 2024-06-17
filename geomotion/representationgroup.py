@@ -22,7 +22,9 @@ class RepresentationGroup(gp.Group):
         # the rep and derep functions
         if ((derepresentation_function_list is not None)
                 and (len(derepresentation_function_list) == len(representation_function_list))):
-            transition_table = [[lambda x: derepresentation_function_list[j](representation_function_list[i](x)) for j in range(2)] for i in range(len(representation_function_list))]
+            transition_table = [
+                [lambda x: derepresentation_function_list[j](representation_function_list[i](x)) for j in range(2)] for
+                i in range(len(representation_function_list))]
         else:
             transition_table = ((None,))
 
@@ -90,10 +92,9 @@ class RepresentationGroupElement(gp.GroupElement):
 
         # Use the provided inputs to generate the group-element properties of the group element
         super().__init__(group,
-                         None, # Don't pass in an initial value; we are making value a property that depends on the
-                               # representation and chart
+                         None,  # Don't pass in an initial value; we are making value a property that depends on the
+                         # representation and chart
                          initial_chart)
-
 
         # Make sure that the representation is a list or ndarray
         if not (isinstance(representation, list) or isinstance(representation, np.ndarray)):
@@ -101,7 +102,7 @@ class RepresentationGroupElement(gp.GroupElement):
 
         # Store the representation, passing it through the representation function if necessary
         representation = np.array(representation, dtype=float)
-        if representation.ndim == 2: #(np.squeeze(representation)).ndim == 2:
+        if representation.ndim == 2:  #(np.squeeze(representation)).ndim == 2:
             pass
         else:
             representation = group.representation_function_list[initial_chart](representation)
@@ -109,15 +110,16 @@ class RepresentationGroupElement(gp.GroupElement):
         self.rep = np.array(representation, dtype=float)
 
     def L(self,
-                    g_right):
+          g_right):
 
         g_composed_rep = np.matmul(self.rep, g_right.rep)
 
         return RepresentationGroupElement(self.group,
                                           g_composed_rep,
                                           self.current_chart)
+
     def R(self,
-                     g_left):
+          g_left):
         g_composed_rep = np.matmul(g_left.rep, self.rep)
 
         return RepresentationGroupElement(self.group,
@@ -132,7 +134,6 @@ class RepresentationGroupElement(gp.GroupElement):
         g_inv = self.group.element(g_inv_rep)
 
         return g_inv
-
 
     @property
     def value(self):

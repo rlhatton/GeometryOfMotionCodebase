@@ -21,7 +21,7 @@ print("Configuration in polar coordinates ", q_polar)
 
 # Return the point to Cartesian coordinates
 q_cartesian = q_polar.transition(0)
-print("Configuration back in Cartesian coordinates " + str(q_cartesian))
+print("Configuration back in Cartesian coordinates ", q_cartesian)
 
 
 
