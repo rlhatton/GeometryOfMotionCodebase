@@ -82,5 +82,5 @@ class RigidBody:
             plot_points_global = self.position * p
             plot_points_global_grid = plot_points_global.grid
 
-            axis.fill(plot_points_global_grid[0], plot_points_global_grid[1], 'black')  #, **{plot_options[i]})
+            axis.fill(plot_points_global_grid[0], plot_points_global_grid[1], 'black', **(plot_options[i]))
             print(plot_points_global_grid[0], "\n", plot_points_global_grid[1])
