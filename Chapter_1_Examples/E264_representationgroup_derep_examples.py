@@ -6,47 +6,47 @@ np.set_printoptions(precision=3, floatmode='maxprec')  # Make things print nicel
 
 """ Scalar addition """
 
-#
-# def scalar_addition_rep(g_value):
-#     g_rep = [[1, g_value], [0, 1]]
-#     return g_rep
-#
-#
-# def scalar_addition_derep(g_rep):
-#     g_value = g_rep[0][1]
-#     return g_value
-#
-#
-# R1plus = rgp.RepresentationGroup(scalar_addition_rep, 0, scalar_addition_derep)
-#
-# g1 = R1plus.element(2)
-# g2 = R1plus.element(3)
-#
-# g3 = g1 * g2
-#
-# print("Addition-group composition of ", g1, " and ", g2, " is ", g3)
-#
-# """ Scalar addition """
-#
-#
-# def scalar_multiplication_rep(g_value):
-#     g_rep = [[g_value]]
-#     return g_rep
-#
-#
-# def scalar_multiplication_derep(g_rep):
-#     g_value = g_rep[0][0]
-#     return g_value
-#
-#
-# R1times = rgp.RepresentationGroup(scalar_multiplication_rep, 1, scalar_multiplication_derep)
-#
-# g1 = R1times.element(2.)
-# g2 = R1times.element(3.)
-#
-# g3 = g1 * g2
-#
-# print("Multiplication-group composition of ", g1, " and ", g2, " is ", g3)
+
+def scalar_addition_rep(g_value):
+    g_rep = [[1, g_value[0]], [0, 1]]
+    return g_rep
+
+
+def scalar_addition_derep(g_rep):
+    g_value = g_rep[0][1]
+    return g_value
+
+
+R1plus = rgp.RepresentationGroup(scalar_addition_rep, 0, scalar_addition_derep)
+
+g1 = R1plus.element(2)
+g2 = R1plus.element(3)
+
+g3 = g1 * g2
+
+print("Addition-group composition of ", g1, " and ", g2, " is ", g3)
+
+""" Scalar addition """
+
+
+def scalar_multiplication_rep(g_value):
+    g_rep = [[g_value[0]]]
+    return g_rep
+
+
+def scalar_multiplication_derep(g_rep):
+    g_value = g_rep[0][0]
+    return g_value
+
+
+R1times = rgp.RepresentationGroup(scalar_multiplication_rep, 1, scalar_multiplication_derep)
+
+g1 = R1times.element(2.)
+g2 = R1times.element(3.)
+
+g3 = g1 * g2
+
+print("Multiplication-group composition of ", g1, " and ", g2, " is ", g3)
 
 
 def modular_addition_rep_a(g_value):
