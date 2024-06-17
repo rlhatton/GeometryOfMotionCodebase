@@ -163,8 +163,7 @@ class GroupElementSet(md.ManifoldElementSet):
 
             if self.shape == other.shape:
 
-                action = methodcaller(action_name)
-                new_set = ut.object_list_binary_eval(action, self.value, other.value)
+                new_set = ut.object_list_binary_eval(action_name, self.value, other.value)
 
             else:
 
