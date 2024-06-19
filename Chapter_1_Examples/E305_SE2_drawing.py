@@ -8,11 +8,12 @@ import numpy as np
 spot_color = gplt.crimson
 
 
-# Initial position of elements
+# Initial positions of elements
 e = SE2.identity_element()
 g = SE2.element([2, 1, np.pi / 2])
 h = SE2.element([0, -1, -np.pi / 4])
 
+# Make three rigid bodies from the elements
 a = RigidBody(cornered_triangle(.25, spot_color), e)
 b = RigidBody(cornered_triangle(.25, spot_color), g)
 c = RigidBody(cornered_triangle(.25, spot_color), h)
