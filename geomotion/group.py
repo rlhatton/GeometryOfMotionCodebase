@@ -125,6 +125,9 @@ class GroupElement(md.ManifoldElement):
         ADi_g_other = g_inv * other * self
         return ADi_g_other
 
+    def commutator(self, other):
+        return commutator(self, other)
+
     @property
     def inverse(self):
 
@@ -149,8 +152,7 @@ class GroupElement(md.ManifoldElement):
             return NotImplemented
 
 
-# commutator function is more natural to define as a
-# function of group elements than as a class method
+
 def commutator(g: GroupElement, h: GroupElement):
     return g * h * g.inverse * h.inverse
 
@@ -163,7 +165,7 @@ class GroupElementSet(md.ManifoldElementSet):
 
             if self.shape == other.shape:
 
-                new_set = ut.object_list_binary_eval(action_name, self.value, other.value)
+                new_set = ut.object_list_method_eval_pairwise(action_name, self.value, other.value)
 
             else:
 
@@ -191,6 +193,10 @@ class GroupElementSet(md.ManifoldElementSet):
     def ADinv(self, other):
 
         return self.group_set_action(other, 'R')
+
+    def commutator(self, other):
+
+        return self.group_set_action(other, 'commutator')
 
     def __mul__(self, other):
 

@@ -92,6 +92,9 @@ class ManifoldElement:
 
 class ManifoldElementSet(UserList):
 
+    """ Argument list should either be a list of manifold elements or
+    Manifold, GridArray, initial_chart, component-or-element """
+
     def __init__(self, *args):
 
         n_args = len(args)

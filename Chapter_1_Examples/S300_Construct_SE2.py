@@ -40,7 +40,7 @@ class RigidBodyPlotInfo:
             self.plot_style = kwargs['plot_style']
 
 
-def cornered_triangle(r, spot_color):
+def cornered_triangle(r, spot_color, **kwargs):
     T1 = gp.GroupElementSet(SE2,
                             ut.GridArray([[r, 0, 0],
                                           [r * np.cos(2 * np.pi / 3), r * np.sin(2 * np.pi / 3), 0],
@@ -56,8 +56,10 @@ def cornered_triangle(r, spot_color):
 
     plot_points = [T1, T2]
 
-    plot_style = [{"edgecolor": 'black', "facecolor": 'white'},
-                  {"edgecolor": 'black', "facecolor": spot_color}]
+    plot_style = [{"edgecolor": 'black', "facecolor": 'white'} | kwargs,
+                  {"edgecolor": 'black', "facecolor": spot_color} | kwargs]
+
+
 
     plot_info = RigidBodyPlotInfo(plot_points=plot_points, plot_style=plot_style)
 

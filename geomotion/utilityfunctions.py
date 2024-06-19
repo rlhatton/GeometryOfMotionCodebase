@@ -36,7 +36,8 @@ def array_eval(func, arr, n_outer, depth=0):
         return np.array([func(arr[i]) for i in range(sh)])
 
 
-def object_list_eval(method_function, object_list, n_outer=None, depth=0):
+def object_list_eval(f, object_list, n_outer=None, depth=0):
+
     # Get the length of the array at the current depth
     sh = len(object_list)
 
@@ -49,13 +50,14 @@ def object_list_eval(method_function, object_list, n_outer=None, depth=0):
 
     # If we're not yet drilled down to the contents, recurse further down
     if not reached_target_depth:
-        return [object_list_eval(method_function, object_list[i], n_outer, depth + 1) for i in range(sh)]
+        return [object_list_eval(f, object_list[i], n_outer, depth + 1) for i in range(sh)]
     # If we've reached the target level of the list, evaluate the specified method for each point at this level and
     # store the results in a list
     else:
-        return [method_function(object_list[i]) for i in range(sh)]
+        return [f(object_list[i]) for i in range(sh)]
 
-def object_list_binary_eval(method_name, object_list_1, object_list_2, n_outer=None, depth=0):
+
+def object_list_method_eval_pairwise(method_name, object_list_1, object_list_2, n_outer=None, depth=0):
     # Get the length of the first array at the current depth
     sh = len(object_list_1)
 
@@ -68,11 +70,36 @@ def object_list_binary_eval(method_name, object_list_1, object_list_2, n_outer=N
 
     # If we're not yet drilled down to the contents, recurse further down
     if not reached_target_depth:
-        return [object_list_binary_eval(method_function, object_list_1[i], object_list_2[i], n_outer, depth + 1) for i in range(sh)]
+        return [object_list_method_eval_pairwise(method_name, object_list_1[i], object_list_2[i], n_outer, depth + 1)
+                for i
+                in range(sh)]
     # If we've reached the target level of the list, evaluate the specified method for each point at this level and
     # store the results in a list
     else:
         return [getattr(object_list_1[i], method_name)(object_list_2[i]) for i in range(sh)]
+
+
+def object_list_method_eval_allpairs(method_name, object_list_1, object_list_2, n_outer=None, depth=0):
+    # Get the length of the first array at the current depth
+    sh = len(object_list_1)
+
+    # If a target dept was supplied, check if we've reached it
+    if n_outer is not None:
+        reached_target_depth = (depth + 1) >= n_outer
+    # If no target depth was supplied, stop drilling down once we find a non-list item
+    else:
+        reached_target_depth = not all([isinstance(object_list_1[i], list) for i in range(sh)])
+
+    # If we're not yet drilled down to the contents, recurse further down
+    if not reached_target_depth:
+        return [object_list_method_eval_allpairs(method_name, object_list_1[i], object_list_2, n_outer, depth + 1)
+                for i
+                in range(sh)]
+    # If we've reached the target level of the list, evaluate the specified method for each point at this level and
+    # store the results in a list
+    else:
+        return [object_list_eval(getattr(object_list_1[i], method_name), object_list_2) for i in range(sh)]
+
 
 def object_list_all_instance(test_class, object_list):
     """ Check if all objects in a given nested list are instances of a given class"""
@@ -130,6 +157,7 @@ def nested_stack(array_list, n_outer=None, depth=0):
     # store the results in a list
     else:
         return np.stack(array_list)
+
 
 def shape(a):
     if not isinstance(a, list):
@@ -202,4 +230,3 @@ def convert_polar_xticks_to_radians(ax):
     labels = [format_radians_label(label) for label in labels]
 
     ax.set_xticks(label_positions, labels)
-
