@@ -4,8 +4,6 @@ import warnings
 
 import numpy as np
 from operator import methodcaller
-from collections import UserList
-
 from . import utilityfunctions as ut
 
 
@@ -90,7 +88,7 @@ class ManifoldElement:
         return str(self.value)
 
 
-class ManifoldElementSet(UserList):
+class ManifoldElementSet(ut.GeomotionSet):
 
     """ Argument list should either be a list of manifold elements or
     Manifold, GridArray, initial_chart, component-or-element """

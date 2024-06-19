@@ -1,8 +1,10 @@
 #! /usr/bin/python3
 import warnings
-
+from collections import UserList
 import numpy as np
 
+class GeomotionSet(UserList):
+    """ Generic class for sets of elements"""
 
 def ensure_tuple(value):
     """ Function that wraps an input value in a tuple if it is not already a tuple"""
