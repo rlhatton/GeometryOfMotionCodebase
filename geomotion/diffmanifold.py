@@ -61,7 +61,8 @@ class TangentVector:
         if not (isinstance(value, list) or isinstance(value, np.ndarray)):
             value = [value]
 
-        if not (isinstance(configuration, list) or isinstance(configuration, np.ndarray)):
+        if not (isinstance(configuration, list) or isinstance(configuration, np.ndarray)
+                or isinstance(configuration, md.ManifoldElement)):
             configuration = [configuration]
 
         # If configuration is a manifold element, verify that no manifold was specified or that the configuration's
@@ -113,6 +114,12 @@ class TangentVector:
                 "single column")
 
         self._value = value
+
+    def __getitem__(self, item):
+        return self.value[item]
+
+    def __str__(self):
+        return str(self.value)
 
     def transition(self,
                    new_basis,

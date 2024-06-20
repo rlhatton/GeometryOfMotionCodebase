@@ -3,8 +3,10 @@ import warnings
 from collections import UserList
 import numpy as np
 
+
 class GeomotionSet(UserList):
     """ Generic class for sets of elements"""
+
 
 def ensure_tuple(value):
     """ Function that wraps an input value in a tuple if it is not already a tuple"""
@@ -39,7 +41,6 @@ def array_eval(func, arr, n_outer, depth=0):
 
 
 def object_list_eval(f, object_list, n_outer=None, depth=0):
-
     # Get the length of the array at the current depth
     sh = len(object_list)
 
