@@ -90,7 +90,6 @@ class ManifoldElement:
 
 
 class ManifoldElementSet(ut.GeomotionSet):
-
     """ Argument list should either be a list of manifold elements or
     Manifold, GridArray, initial_chart, component-or-element """
 
@@ -140,12 +139,12 @@ class ManifoldElementSet(ut.GeomotionSet):
                 if c_outer_e_inner and (not e_outer_c_inner):
                     # Convert component-outer grid to element-outer grid
                     grid = grid.everse
-                    #print("Detected component-outer grid and everted it")
+                    # print("Detected component-outer grid and everted it")
 
                 if (not c_outer_e_inner) and e_outer_c_inner:
                     # Keep element-outer grid
                     pass
-                    #print("Detected element-outer grid and maintained it")
+                    # print("Detected element-outer grid and maintained it")
 
                 if (not c_outer_e_inner) and (not e_outer_c_inner):
                     # Grid is not compatible with manifold structure
@@ -176,14 +175,6 @@ class ManifoldElementSet(ut.GeomotionSet):
         self.manifold = manifold
 
     @property
-    def shape(self):
-        return ut.shape(self.value)
-
-    @property
-    def value(self):
-        return self.data
-
-    @property
     def grid(self):
         def extract_value(x):
             return x.value
@@ -206,6 +197,3 @@ class ManifoldElementSet(ut.GeomotionSet):
                                       self.value)
 
         return self.__class__(new_set)
-
-    def __getitem__(self, item):
-        return self.value[item]

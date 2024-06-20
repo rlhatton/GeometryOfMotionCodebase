@@ -7,6 +7,16 @@ import numpy as np
 class GeomotionSet(UserList):
     """ Generic class for sets of elements"""
 
+    @property
+    def shape(self):
+        return shape(self.value)
+
+    @property
+    def value(self):
+        return self.data
+
+    def __getitem__(self, item):
+        return self.value[item]
 
 def ensure_tuple(value):
     """ Function that wraps an input value in a tuple if it is not already a tuple"""
