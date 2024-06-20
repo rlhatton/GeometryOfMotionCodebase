@@ -320,6 +320,7 @@ class TangentVector:
         else:
             raise Exception("Undefined __rtruediv__ behavior for TangentVector acting on " + type(other))
 
+class TangentVectorSet(ut.GeomotionSet)
 
 class TangentBasis:
     """Class that stores a basis in a tangent space as a set of TangentVector elements"""
