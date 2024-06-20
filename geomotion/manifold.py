@@ -76,10 +76,11 @@ class ManifoldElement:
             new_value = self.manifold.transition_table[self.current_chart][new_chart](self.value)
 
         # Return a ManifoldElement with the new value and chart
-        copied_element = copy.deepcopy(self)
-        copied_element.value = new_value
-        copied_element.current_chart = new_chart
-        return copied_element
+        # copied_element = copy.deepcopy(self)
+        # copied_element.value = new_value
+        # copied_element.current_chart = new_chart
+
+        return self.__class__(self.manifold, new_value, new_chart)
 
     def __getitem__(self, item):
         return self.value[item]

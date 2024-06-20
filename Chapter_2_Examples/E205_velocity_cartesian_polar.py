@@ -34,5 +34,17 @@ print("\nPolar expression of Cartesian \n", v2, "\n at ", q2, " is \n", v2_polar
 # Generate a vector in a polar basis, but that retains its Cartesian configuration specification
 v2_polar_cartesian_chart = v2.transition(1, 'keep')
 
-print("\n\nOutput vector has basis ", v2_polar_cartesian_chart.current_basis,
-      " and configuration chart ", v2_polar_cartesian_chart.configuration.current_chart)
+
+# Demonstrate that adding two vectors at the same configuration but in different bases works
+v1_cart_v1_polar_sum = v1 + v1_polar
+
+print("Sum of Cartesian v1=\n", v1, "\n and polar v1=", v1_polar, " is Cartesian \n", v1_cart_v1_polar_sum)
+
+# Demonstrate that adding two vectors at different configurations and in different bases
+# gets the correct error handling
+try:
+    v1_cart_v2_polar_sum = v1 + v2_polar
+except Exception as error:
+    print("\n Attempted to add Cartesian v1 and polar v21, but TangentVector class prevented this with error: \n",
+          error)
+

@@ -69,7 +69,7 @@ class TangentVector:
         # manifold matches the manifold specified for this vector
         if isinstance(configuration, md.ManifoldElement):
             if (manifold is None) or (configuration.manifold == manifold):
-                pass
+                self.manifold = configuration.manifold
             else:
                 raise Exception("Configuration specified for vector is not an element of the manifold to which the "
                                 "vector is attached")
@@ -77,6 +77,7 @@ class TangentVector:
         # manifold dimensionality, and if it is of the right size, use it to construct a configuration element of the
         # appropriate size in the appropriate chart
         elif manifold is not None:
+            self.manifold = manifold
             if np.size(np.array(configuration)) == manifold.n_dim:
                 # Now that we know we're not pulling the chart from a provided ManifoldElement, make the default chart 0
                 if initial_chart is None:
@@ -146,20 +147,22 @@ class TangentVector:
 
         # Transition the vector's configuration if called for
         if isinstance(configuration_transition, str):
-            # 'match' says to match the configuration to the new basis
+            # 'match' says to match the configuration chart to the new basis
             if configuration_transition == 'match':
-                output_vector.configuration = matched_config
-            # 'keep' says to leave the configuration as whatever it is currently
+                output_configuration = matched_config
+                output_chart = new_basis
+            # 'keep' says to leave the configuration chart as whatever it is currently
             elif configuration_transition == 'keep':
-                pass
+                output_configuration = self.configuration
+                output_chart = self.configuration.current_chart
             else:
                 raise Exception("Unknown option " + configuration_transition + "for transitioning the configuration "
                                                                                "while transitioning a TangentVector")
         else:
             # If a non-string was given, assume it identifies a specific chart to transition to
-            output_vector.configuration = output_vector.configuration.transition(configuration_transition)
+            output_configuration = self.configuration.transition(configuration_transition)
 
-        return output_vector
+        return self.__class__(new_value, output_configuration, new_basis, output_chart, self.manifold)
 
     def vector_addition(self, other):
 
@@ -170,16 +173,15 @@ class TangentVector:
         # Verify that 'other' is at the same configuration as self
         if self.configuration.manifold == other.configuration.manifold:
             if self.configuration.current_chart == other.configuration.current_chart:
-                if np.isclose(self.configuration.value, other.configuration.value):
+                if all(np.isclose(self.configuration.value, other.configuration.value)):
                     pass
                 else:
                     raise Exception("Cannot add two TangentVectors at different configurations")
             else:
-                # Convert other to the same chart as self and test for equality, but raise a warning
+                # Test if configurations are equal when expressed in same chart
                 if np.isclose(self.configuration.value,
                               (other.configuration.transition(self.configuration.current_chart)).value):
-                    warnings.warn("TangentVectors have configurations described on  different charts, but appear to "
-                                  "be at the same configuration")
+                    pass
                 else:
                     raise Exception("Cannot add two TangentVectors at different configurations")
         else:
@@ -189,8 +191,8 @@ class TangentVector:
         if self.current_basis == other.current_basis:
             pass
         else:
-            warnings.warn("TangentVectors are expressed with respect to different bases, converting the second vector "
-                          "into the basis of the first")
+            # warnings.warn("TangentVectors are expressed with respect to different bases, converting the second vector "
+            #               "into the basis of the first")
             other = other.transition(self.current_basis)
 
         # Add the values of the two TangentVectors together, and then create a clone of 'self' with the value the sum

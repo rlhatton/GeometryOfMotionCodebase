@@ -1,30 +1,8 @@
 import numpy as np
 from geomotion import manifold as md, diffmanifold as tb, utilityfunctions as ut
+from S200_Construct_R2 import R2
 
-
-#########
-# Define manifold transition functions
-def polar_to_cartesian(polar_coords):
-    cartesian_coords = np.copy(polar_coords)
-    cartesian_coords[0] = polar_coords[0] * np.cos(polar_coords[1])
-    cartesian_coords[1] = polar_coords[0] * np.sin(polar_coords[1])
-
-    return cartesian_coords
-
-
-def cartesian_to_polar(cartesian_coords):
-    polar_coords = np.copy(cartesian_coords)
-    polar_coords[0] = np.sqrt((cartesian_coords[0] * cartesian_coords[0]) + (cartesian_coords[1] * cartesian_coords[1]))
-    polar_coords[1] = np.arctan2(cartesian_coords[1], cartesian_coords[0])
-
-    return polar_coords
-
-
-# Build transition table from transition functions
-transition_table = [[None, cartesian_to_polar], [polar_to_cartesian, None]]
-
-# Build the manifold
-Q = md.Manifold(transition_table, 2)
+Q = R2
 
 
 # Define a vector field function that points outward everywhere
