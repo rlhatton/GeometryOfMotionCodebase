@@ -3,7 +3,6 @@ import warnings
 import numpy as np
 
 
-
 def ensure_tuple(value):
     """ Function that wraps an input value in a tuple if it is not already a tuple"""
     if isinstance(value, tuple):
@@ -206,6 +205,71 @@ class GridArray(np.ndarray):
         arr = array_eval(func, self, self.n_outer)
         garr = GridArray(arr, self.n_outer)
         return garr
+
+
+def grid_format_test(grid, element_shape):
+    # Test if GridArray format could be component-wise in the outer dimension and element-wise on the
+    # inner dimensions
+    c_outer_e_inner = (grid.n_outer == len(element_shape)) and (grid.shape[:grid.n_outer] == element_shape)
+
+    # Test if GridArray format could be element-wise in the outer dimension and component-wise on the
+    # inner dimensions
+    e_outer_c_inner = (grid.n_inner == len(element_shape)) and (grid.shape[-1:-1:-grid.n_outer] == element_shape)
+
+    return c_outer_e_inner, e_outer_c_inner
+
+
+def format_grid(grid, element_shape, target_format, input_format=None):
+    # Verify target format and input_format strings are legitimate options
+    if target_format in ['component', 'element']:
+        pass
+    else:
+        raise Exception("target_format was not provided as 'component' or 'element' ")
+
+    if (input_format is None) or (input_format in ['component', 'element']):
+        pass
+    else:
+        raise Exception("input_format was provided as something other than None, 'component' or 'element' ")
+
+    # Test grid format, and then use result and known_format to determine grid format
+    c_outer_e_inner, e_outer_c_inner = grid_format_test(grid, element_shape)
+
+    if c_outer_e_inner and e_outer_c_inner:
+        detected_format = None
+
+    if c_outer_e_inner and (not e_outer_c_inner):
+        detected_format = 'component'
+
+    if (not c_outer_e_inner) and e_outer_c_inner:
+        detected_format = 'element'
+
+    if (not c_outer_e_inner) and (not e_outer_c_inner):
+        # Grid is not compatible with either component or element structure
+        raise Exception("Grid does not appear to be a component-wise or element-wise grid compatible with "
+                        "the provided element shape")
+
+    # Compare detected and input formats
+    if detected_format is not None:
+        if input_format is not None:
+            if detected_format == input_format:
+                output_format = detected_format
+            else:
+                raise Exception("Detected format does not match input format")
+        else:
+            output_format = detected_format
+    else:
+        if input_format is not None:
+            output_format = input_format
+        else:
+            raise Exception("Grid format is ambiguous and was not specified.")
+
+    # Convert the grid if necessary
+    if output_format == target_format:
+        pass
+    else:
+        grid = grid.everse
+
+    return grid
 
 
 def format_radians_label(float_in):
