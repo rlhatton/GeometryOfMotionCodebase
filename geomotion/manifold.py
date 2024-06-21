@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 import copy
 import warnings
-
+from collections import UserList
 import numpy as np
 from operator import methodcaller
 from . import utilityfunctions as ut
@@ -75,11 +75,6 @@ class ManifoldElement:
 
             new_value = self.manifold.transition_table[self.current_chart][new_chart](self.value)
 
-        # Return a ManifoldElement with the new value and chart
-        # copied_element = copy.deepcopy(self)
-        # copied_element.value = new_value
-        # copied_element.current_chart = new_chart
-
         return self.__class__(self.manifold, new_value, new_chart)
 
     def __getitem__(self, item):
@@ -89,12 +84,109 @@ class ManifoldElement:
         return str(self.value)
 
 
-class ManifoldElementSet(ut.GeomotionSet):
+class GeomotionSet(UserList):
+    """ Generic class for sets of elements"""
+
+    def __init__(self, contents_class, *args):
+
+        n_args = len(args)
+
+        # Check if the first argument is a list of Elements of the specified type, and if so, use it directly
+        if isinstance(args[0], list):
+            if ut.object_list_all_instance(contents_class, args[0]):
+                value = args[0]
+                manifold = ut.object_list_extract_first_entry(args[0]).manifold
+            else:
+                raise Exception("List input to GeomotionSet should contain Elements")
+
+        # If the first argument is a manifold, process the inputs as if they were ManifoldElement inputs
+        # provided in a GridArray
+        elif isinstance(args[0], Manifold):
+            manifold = args[0]
+            if isinstance(args[1], ut.GridArray):
+
+                # Extract the grid array from the argument list
+                grid = args[1]
+
+                # Test if GridArray format could be component-wise in the outer dimension and element-wise on the
+                # inner dimensions
+                c_outer_e_inner = (grid.n_outer == 1) and (grid.shape[0] == manifold.n_dim)
+
+                # Test if GridArray format could be element-wise in the outer dimension and component-wise on the
+                # inner dimensions
+                e_outer_c_inner = (grid.n_inner == 1) and (grid.shape[-1] == manifold.n_dim)
+
+                # Use results from these tests to determine grid format
+                if c_outer_e_inner and e_outer_c_inner:
+
+                    # Grid format is ambiguous. Check for fourth argument specifying which format is being used
+                    if n_args > 3:
+                        grid_format = args[3]
+                        if grid_format == 'component':
+                            grid = grid.everse
+                        elif grid_format == 'element':
+                            pass
+                    else:
+                        warnings.warn(
+                            "Grid format is ambiguous and a grid format was not provided. Assuming component-outer grid")
+                        grid = grid.everse
+
+                if c_outer_e_inner and (not e_outer_c_inner):
+                    # Convert component-outer grid to element-outer grid
+                    grid = grid.everse
+                    # print("Detected component-outer grid and everted it")
+
+                if (not c_outer_e_inner) and e_outer_c_inner:
+                    # Keep element-outer grid
+                    pass
+                    # print("Detected element-outer grid and maintained it")
+
+                if (not c_outer_e_inner) and (not e_outer_c_inner):
+                    # Grid is not compatible with manifold structure
+                    raise Exception("Grid does not appear to be a component-wise or element-wise grid compatible with "
+                                    "the provided manifold")
+
+                # Convert element-outer grid to a list of ManifoldElements, including passing any initial chart to
+                # the manifold element function
+                if n_args > 2:
+                    initial_chart = args[2]
+                else:
+                    initial_chart = 0
+
+                def manifold_construction_function(x):
+                    return manifold.element(x, initial_chart)
+
+                value = ut.object_list_eval(manifold_construction_function, grid, grid.n_outer)
+
+            else:
+                raise Exception(
+                    "If first input to ManifoldElementSet is a Manifold, second input should be a GridArray")
+
+        else:
+            raise Exception("First argument to ManifoldElementSet should be either a list of "
+                            "ManifoldElements or a Manifold")
+
+        super().__init__(value)
+        self.manifold = manifold
+
+    @property
+    def shape(self):
+        return ut.shape(self.value)
+
+    @property
+    def value(self):
+        return self.data
+
+    def __getitem__(self, item):
+        return self.value[item]
+
+
+class ManifoldElementSet(GeomotionSet):
     """ Argument list should either be a list of manifold elements or
     Manifold, GridArray, initial_chart, component-or-element """
 
     def __init__(self, *args):
-        super().__init__(Manifold, ManifoldElement, *args)
+        super().__init__(ManifoldElement, *args)
 
     @property
     def grid(self):
