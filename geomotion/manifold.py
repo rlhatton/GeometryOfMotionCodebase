@@ -153,10 +153,10 @@ class GeomotionSet(UserList):
                 else:
                     initial_chart = 0
 
-                def manifold_construction_function(x):
-                    return manifold.element(x, initial_chart)
+                def element_construction_function(x):
+                    return contents_class(manifold, x, initial_chart)
 
-                value = ut.object_list_eval(manifold_construction_function, grid, grid.n_outer)
+                value = ut.object_list_eval(element_construction_function, grid, grid.n_outer)
 
             else:
                 raise Exception(
