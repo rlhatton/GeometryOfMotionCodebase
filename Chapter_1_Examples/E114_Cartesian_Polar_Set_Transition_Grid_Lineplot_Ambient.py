@@ -93,6 +93,7 @@ q_set_cartesian = q_set_ambient.transition(0)
 # Convert the rectangle into a set of points specified in the polar chart
 q_set_polar = q_set_cartesian.transition(1)
 
+
 ############
 # For plotting purposes, create a rotated cartesian grid
 

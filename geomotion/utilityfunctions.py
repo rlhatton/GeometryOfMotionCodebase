@@ -1,22 +1,7 @@
 #! /usr/bin/python3
 import warnings
-from collections import UserList
 import numpy as np
 
-
-class GeomotionSet(UserList):
-    """ Generic class for sets of elements"""
-
-    @property
-    def shape(self):
-        return shape(self.value)
-
-    @property
-    def value(self):
-        return self.data
-
-    def __getitem__(self, item):
-        return self.value[item]
 
 def ensure_tuple(value):
     """ Function that wraps an input value in a tuple if it is not already a tuple"""
@@ -50,6 +35,26 @@ def array_eval(func, arr, n_outer, depth=0):
         return np.array([func(arr[i]) for i in range(sh)])
 
 
+def array_eval_pairwise(func, arr1, arr2, n_outer, depth=0):
+    # Verify that arrays are of the same length
+    if arr1.shape == arr2.shape:
+        pass
+    else:
+        raise Exception("Cannot make pairwise evaluation of arrays for arrays of different shape")
+
+    # Get the length of the array at the current depth
+    sh = arr1.shape[0]
+
+    # If we're not at the deepest level of the outer grid, iterate over the level we're at, calling array_eval on the
+    # next-deeper layer and creating an array of the results
+    if (depth + 1) < n_outer:
+        return np.array([array_eval(func, arr1[i], arr2[i], n_outer, depth + 1) for i in range(sh)])
+    # If we've reached the deepest level of the grid, evaluate the function for each point at this level and store
+    # the results in an array
+    else:
+        return np.array([func(arr1[i], arr2[i]) for i in range(sh)])
+
+
 def object_list_eval(f, object_list, n_outer=None, depth=0):
     # Get the length of the array at the current depth
     sh = len(object_list)
@@ -68,6 +73,26 @@ def object_list_eval(f, object_list, n_outer=None, depth=0):
     # store the results in a list
     else:
         return [f(object_list[i]) for i in range(sh)]
+
+
+def object_list_eval_pairwise(f, object_list_1, object_list_2, n_outer=None, depth=0):
+    # Get the length of the array at the current depth
+    sh = len(object_list_1)
+
+    # If a target dept was supplied, check if we've reached it
+    if n_outer is not None:
+        reached_target_depth = (depth + 1) >= n_outer
+    # If no target depth was supplied, stop drilling down once we find a non-list item
+    else:
+        reached_target_depth = not all([isinstance(object_list_1[i], list) for i in range(sh)])
+
+    # If we're not yet drilled down to the contents, recurse further down
+    if not reached_target_depth:
+        return [object_list_eval_pairwise(f, object_list_1[i], object_list_2[i], n_outer, depth + 1) for i in range(sh)]
+    # If we've reached the target level of the list, evaluate the specified method for each point at this level and
+    # store the results in a list
+    else:
+        return [f(object_list_1[i], object_list_1[i]) for i in range(sh)]
 
 
 def object_list_method_eval_pairwise(method_name, object_list_1, object_list_2, n_outer=None, depth=0):
@@ -220,6 +245,76 @@ class GridArray(np.ndarray):
         arr = array_eval(func, self, self.n_outer)
         garr = GridArray(arr, self.n_outer)
         return garr
+
+
+def grid_format_test(grid, element_shape):
+    # Test if GridArray format could be component-wise in the outer dimension and element-wise on the
+    # inner dimensions
+    c_outer_e_inner = (grid.n_outer == len(element_shape)) and (grid.shape[:grid.n_outer] == element_shape)
+
+    # Test if GridArray format could be element-wise in the outer dimension and component-wise on the
+    # inner dimensions
+    e_outer_c_inner = (grid.n_inner == len(element_shape)) and (grid.shape[-1:-1:-grid.n_outer] == element_shape)
+
+    return c_outer_e_inner, e_outer_c_inner
+
+
+def format_grid(grid, element_shape, target_format, input_format=None):
+    # Verify target format and input_format strings are legitimate options
+    if target_format in ['component', 'element']:
+        pass
+    else:
+        raise Exception("target_format was not provided as 'component' or 'element' ")
+
+    if (input_format is None) or (input_format in ['component', 'element']):
+        pass
+    else:
+        raise Exception("input_format was provided as something other than None, 'component' or 'element' ")
+
+    # Test if GridArray format could be component-wise in the outer dimension and element-wise on the
+    # inner dimensions
+    c_outer_e_inner = (grid.n_outer == len(element_shape)) and (grid.shape[:grid.n_outer] == element_shape)
+
+    # Test if GridArray format could be element-wise in the outer dimension and component-wise on the
+    # inner dimensions
+    e_outer_c_inner = (grid.n_inner == len(element_shape)) and (grid.shape[-grid.n_inner:] == element_shape)
+
+    if c_outer_e_inner and e_outer_c_inner:
+        detected_format = None
+
+    if c_outer_e_inner and (not e_outer_c_inner):
+        detected_format = 'component'
+
+    if (not c_outer_e_inner) and e_outer_c_inner:
+        detected_format = 'element'
+
+    if (not c_outer_e_inner) and (not e_outer_c_inner):
+        # Grid is not compatible with either component or element structure
+        raise Exception("Grid does not appear to be a component-wise or element-wise grid compatible with "
+                        "the provided element shape")
+
+    # Compare detected and input formats
+    if detected_format is not None:
+        if input_format is not None:
+            if detected_format == input_format:
+                output_format = detected_format
+            else:
+                raise Exception("Detected format does not match input format")
+        else:
+            output_format = detected_format
+    else:
+        if input_format is not None:
+            output_format = input_format
+        else:
+            raise Exception("Grid format is ambiguous and was not specified.")
+
+    # Convert the grid if necessary
+    if output_format == target_format:
+        pass
+    else:
+        grid = grid.everse
+
+    return grid
 
 
 def format_radians_label(float_in):
