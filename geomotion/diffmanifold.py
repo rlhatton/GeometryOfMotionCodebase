@@ -428,49 +428,84 @@ class TangentVectorSet(md.GeomotionSet):
         super().__init__(value)
         self.manifold = manifold
 
+    @property
+    def grid(self):
+        def extract_value(x):
+            return x.value
 
+        # Get an array of the vector element values, and use nested_stack to make it an ndarray
+        element_outer_grid = ut.nested_stack(ut.object_list_eval(extract_value,
+                                                                 self.value))
+
+        # Convert this array into a GridArray
+        element_outer_grid_array = ut.GridArray(element_outer_grid, n_inner=2)
+
+        vector_component_outer_grid_array = element_outer_grid_array.everse
+
+        ################
+
+        def extract_config(x):
+            return x.configuration.value
+
+        # Get an array of the manifold element values, and use nested_stack to make it an ndarray
+
+        element_outer_grid = ut.nested_stack(ut.object_list_eval(extract_config,
+                                                                 self.value))
+
+        # Convert this array into a GridArray
+        element_outer_grid_array = ut.GridArray(element_outer_grid, n_inner=1)
+
+        config_component_outer_grid_array = element_outer_grid_array.everse
+
+        return vector_component_outer_grid_array, config_component_outer_grid_array
 class TangentBasis(TangentVectorSet):
-    """Class that stores a basis in a tangent space as a set of TangentVector elements"""
+    """Class that stores a basis in a tangent space as a TangentVectorSet whose vectors are all at the same point"""
 
-    def __init__(self,
-                 vector_list,
-                 configuration=None,
-                 initial_underlying_basis=0,
-                 initial_chart=0,
-                 manifold: md.Manifold = None):
+    def __init__(self, *args):
+        # vector_list,
+        # configuration=None,
+        # initial_underlying_basis=0,
+        # initial_chart=0,
+        # manifold: md.Manifold = None):
 
-        # Check type of elements in vector_list, and convert them to vectors at the specified configuration if they
-        # are not already TangentVectors
+        # Pass the inputs to the TangentVectorSet init function
+        self().__init__(*args)
 
-        # If vector_list is already a list of TangentVectors, do nothing
-        if all(isinstance(vector_list[i], md.TangentVector) for i in vector_list):
-            pass
-        # If vector_list is a matrix or a list of vectors, and a configuration is provided, convert it to a list of
-        # TangentVectors
-        elif configuration is not None:
+        # Verify that all of the configuration values are the same
 
-            # Make sure that vector_list is a list of ndarrays that can be interpreted as vectors
 
-            # If vector_list is provided as an ndarray, separate it into a list of its columns
-            if isinstance(vector_list, np.ndarray):
-                vector_list = (vector_list[:][i] for i in vector_list)
-            elif all(isinstance(vector_list[i], np.ndarray) for i in vector_list):
-                pass
-            else:
-                raise Exception("Input vector_list is not a list of TangentVectors, a matrix, or a list of ndarrays "
-                                "that can be interpreted as vectors")
-
-            # Convert vector list to a list of TangentVectors
-            vector_list = [
-                md.TangentVector(vector_list[i], configuration, initial_underlying_basis, initial_chart, manifold)
-                for i in vector_list]
-
-        else:
-            raise Exception("Input vector_list is not a list of TangentVectors, but no configuration was provided at "
-                            "which to construct the basis")
-
-        # Save the list of TangentVector elements as the value of the basis
-        self.vector_list = vector_list
+        # # Check type of elements in vector_list, and convert them to vectors at the specified configuration if they
+        # # are not already TangentVectors
+        #
+        # # If vector_list is already a list of TangentVectors, do nothing
+        # if all(isinstance(vector_list[i], md.TangentVector) for i in vector_list):
+        #     pass
+        # # If vector_list is a matrix or a list of vectors, and a configuration is provided, convert it to a list of
+        # # TangentVectors
+        # elif configuration is not None:
+        #
+        #     # Make sure that vector_list is a list of ndarrays that can be interpreted as vectors
+        #
+        #     # If vector_list is provided as an ndarray, separate it into a list of its columns
+        #     if isinstance(vector_list, np.ndarray):
+        #         vector_list = (vector_list[:][i] for i in vector_list)
+        #     elif all(isinstance(vector_list[i], np.ndarray) for i in vector_list):
+        #         pass
+        #     else:
+        #         raise Exception("Input vector_list is not a list of TangentVectors, a matrix, or a list of ndarrays "
+        #                         "that can be interpreted as vectors")
+        #
+        #     # Convert vector list to a list of TangentVectors
+        #     vector_list = [
+        #         md.TangentVector(vector_list[i], configuration, initial_underlying_basis, initial_chart, manifold)
+        #         for i in vector_list]
+        #
+        # else:
+        #     raise Exception("Input vector_list is not a list of TangentVectors, but no configuration was provided at "
+        #                     "which to construct the basis")
+        #
+        # # Save the list of TangentVector elements as the value of the basis
+        # self.vector_list = vector_list
 
     @property
     def matrix(self):

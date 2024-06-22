@@ -3,6 +3,7 @@ import numpy as np
 from S200_Construct_R2 import R2
 from geomotion import diffmanifold as dm
 from geomotion import utilityfunctions as ut
+import matplotlib.pyplot as plt
 
 # Make things print nicely
 np.set_printoptions(precision=2)
@@ -34,6 +35,13 @@ config_components_c = ut.GridArray([[[2, 0], [-1, 1]], [[0, 3], [0, -1]]], 1)
 print("Shape of vector_components_c is ", vector_components_c.shape)
 print("Shape of vector_components_c everse is ", vector_components_c.everse.shape)
 
+v_grid1, c_grid1 = v_set1.grid
+print(v_grid1[0][0])
+print(c_grid1.shape)
+
+ax = plt.subplot(1, 3, 1)
+ax.quiver(c_grid1[0], c_grid1[1], v_grid1[0][0], v_grid1[1][0])
+ax.set_aspect('equal')
 
 v_set2 = dm.TangentVectorSet(Q, vector_components_c, config_components_c, 0, 0, 'component')
 print("Successfully created TangentVectorSet \n", v_set2, "\nfrom component-wise grids")
@@ -53,18 +61,20 @@ print("Successfully created TangentVectorSet \n", v_set3, "\nfrom element-wise g
 # ManifoldElement
 
 v_set4 = dm.TangentVectorSet(Q, vector_components_e, q11, 0, 0, 'element')
-print("Successfully created TangentVectorSet \n", v_set3, "\nfrom element-wise grid and single manifold element")
+print("Successfully created TangentVectorSet \n", v_set4, "\nfrom element-wise grid and single manifold element")
 
 # Construct a TangentVectorSet from an element-wise grid of vector components and a single
 # ndarray of manifold components
 
 v_set5 = dm.TangentVectorSet(Q, vector_components_e, np.array([0, 1]), 0, 0, 'element')
-print("Successfully created TangentVectorSet \n", v_set3,
+print("Successfully created TangentVectorSet \n", v_set5,
       "\nfrom element-wise grid and single ndarray of manifold components")
 
 # Construct a TangentVectorSet from an element-wise grid of vector components and a single
 # ndarray of manifold components
 
 v_set6 = dm.TangentVectorSet(Q, vector_components_e, [0, 1], 0, 0, 'element')
-print("Successfully created TangentVectorSet \n", v_set3,
+print("Successfully created TangentVectorSet \n", v_set6,
       "\nfrom element-wise grid and single list of manifold components")
+
+plt.show()

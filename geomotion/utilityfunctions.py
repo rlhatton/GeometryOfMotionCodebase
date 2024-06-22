@@ -271,9 +271,6 @@ def format_grid(grid, element_shape, target_format, input_format=None):
     else:
         raise Exception("input_format was provided as something other than None, 'component' or 'element' ")
 
-    # Test grid format, and then use result and known_format to determine grid format
-    # c_outer_e_inner, e_outer_c_inner = grid_format_test(grid, element_shape)
-
     # Test if GridArray format could be component-wise in the outer dimension and element-wise on the
     # inner dimensions
     c_outer_e_inner = (grid.n_outer == len(element_shape)) and (grid.shape[:grid.n_outer] == element_shape)
