@@ -39,11 +39,11 @@ class DiffManifold(md.Manifold):
                initial_chart=0):
 
         """Instantiate a tangent vector at the specified configuration on the manifold"""
-        v = TangentVector(value,
+        v = TangentVector(self,
+                          value,
                           configuration,
                           initial_basis,
-                          initial_chart,
-                          self)
+                          initial_chart)
 
         return v
 
@@ -51,11 +51,11 @@ class DiffManifold(md.Manifold):
 class TangentVector:
 
     def __init__(self,
+                 manifold,
                  value,
                  configuration,
                  initial_basis=0,
-                 initial_chart=None,
-                 manifold: DiffManifold = None):
+                 initial_chart=None):
 
         # Make sure that the value and configuration are each a list or ndarray
         if not (isinstance(value, list) or isinstance(value, np.ndarray)):
@@ -321,7 +321,7 @@ class TangentVector:
             raise Exception("Undefined __rtruediv__ behavior for TangentVector acting on " + type(other))
 
 
-class TangentVectorSet(ut.GeomotionSet):
+class TangentVectorSet(md.GeomotionSet):
 
     def __init__(self, *args):
 
@@ -333,78 +333,101 @@ class TangentVectorSet(ut.GeomotionSet):
                 value = args[0]
                 manifold = ut.object_list_extract_first_entry(args[0]).manifold
             else:
-                raise Exception("List input to TangentVectorSet should contain TangentVectors")
+                raise Exception("List input to TangentVectorSet should contain TangentVector objects")
 
         # If the first argument is a manifold, process the inputs as if they were TangentVector inputs
         # provided in a GridArray
         elif isinstance(args[0], md.Manifold):
             manifold = args[0]
-
             if isinstance(args[1], ut.GridArray):
 
-                # Extract the grid array from the argument list
-                grid = args[1]
+                # Extract the vector and configuration grid arrays from the argument list
+                vector_grid = args[1]
+                config_info = args[2]
 
-                # Test if GridArray format could be component-wise in the outer dimension and element-wise on the
-                # inner dimensions
-                c_outer_e_inner = (grid.n_outer == 1) and (grid.shape[0] == manifold.n_dim)
+                # Check if configuration is supplied as a single element for all vectors
+                if isinstance(config_info, np.ndarray):
+                    config_shape = config_info.shape
+                    config_manifold_shape_match = (config_shape == (manifold.n_dim,))
+                elif isinstance(config_info, list):
+                    config_shape = ut.shape(config_info)
+                    config_manifold_shape_match = (config_shape == [manifold.n_dim])
 
-                # Test if GridArray format could be element-wise in the outer dimension and component-wise on the
-                # inner dimensions
-                e_outer_c_inner = (grid.n_inner == 1) and (grid.shape[-1] == manifold.n_dim)
+                if isinstance(config_info, md.ManifoldElement) or config_manifold_shape_match:
+                    single_configuration = True
+                else:
+                    single_configuration = False
 
-                # Use results from these tests to determine grid format
-                if c_outer_e_inner and e_outer_c_inner:
+                # Check if the format of the grids has been specified
+                if n_args > 5:
+                    input_format = args[5]
+                else:
+                    input_format = None
 
-                    # Grid format is ambiguous. Check for fourth argument specifying which format is being used
-                    if n_args > 3:
-                        grid_format = args[3]
-                        if grid_format == 'component':
-                            grid = grid.everse
-                        elif grid_format == 'element':
-                            pass
+                # Make sure that the vector component grid is in element-outer format
+                vector_grid = ut.format_grid(vector_grid, (manifold.n_dim, 1), 'element', input_format)
+
+                if not single_configuration:
+
+                    # Format the configuration grid
+                    config_info = ut.format_grid(config_info, (manifold.n_dim,), 'element', input_format)
+
+                    # Verify that the element-wise configuration grid is of matching dimension to the vector grid
+                    if vector_grid.shape[:vector_grid.n_outer] == config_info.shape[:config_info.n_outer]:
+                        pass
                     else:
-                        warnings.warn(
-                            "Grid format is ambiguous and a grid format was not provided. Assuming component-outer grid")
-                        grid = grid.everse
+                        raise Exception("Vector grid and configuration grid do not have matching element structures")
 
-                if c_outer_e_inner and (not e_outer_c_inner):
-                    # Convert component-outer grid to element-outer grid
-                    grid = grid.everse
-                    # print("Detected component-outer grid and everted it")
+                # Convert element-outer grids to a list of TangentVectors, including passing any initial chart and
+                # basis to the manifold element function
+                if n_args > 3:
+                    initial_basis = args[3]
+                else:
+                    initial_basis = 0
 
-                if (not c_outer_e_inner) and e_outer_c_inner:
-                    # Keep element-outer grid
-                    pass
-                    # print("Detected element-outer grid and maintained it")
-
-                if (not c_outer_e_inner) and (not e_outer_c_inner):
-                    # Grid is not compatible with manifold structure
-                    raise Exception("Grid does not appear to be a component-wise or element-wise grid compatible with "
-                                    "the provided manifold")
-
-                # Convert element-outer grid to a list of TangentVectors, including passing any initial chart to
-                # the tangent vector function
-                if n_args > 2:
-                    initial_chart = args[2]
+                if n_args > 4:
+                    initial_chart = args[4]
                 else:
                     initial_chart = 0
 
-                def manifold_construction_function(x):
-                    return manifold.element(x, initial_chart)
+                # Call an appropriate construction function depending on whether we're dealing
+                # one configuration across all vectors, or have paired vector and configuration
+                # grids
+                if single_configuration:
 
-                value = ut.object_list_eval(manifold_construction_function, grid, grid.n_outer)
+                    def tangent_vector_construction_function(vector_value):
+                        return manifold.vector(vector_value,
+                                               config_info,
+                                               initial_basis,
+                                               initial_chart)
+
+                    value = ut.object_list_eval(tangent_vector_construction_function,
+                                                vector_grid,
+                                                vector_grid.n_outer)
+
+                else:
+                    def tangent_vector_construction_function(vector_value, configuration_value):
+                        return manifold.vector(vector_value,
+                                               configuration_value,
+                                               initial_basis,
+                                               initial_chart)
+
+                    value = ut.object_list_eval_pairwise(tangent_vector_construction_function,
+                                                         vector_grid,
+                                                         config_info,
+                                                         vector_grid.n_outer)
 
             else:
                 raise Exception(
-                    "If first input to ManifoldElementSet is a Manifold, second input should be a GridArray")
+                    "If first input to TangentVectorSet is a Manifold, second input should be a GridArray")
 
         else:
-            raise Exception("First argument to ManifoldElementSet should be either a list of "
-                            "ManifoldElements or a Manifold")
+            raise Exception("First argument to ManifoldSet should be either a list of "
+                            "TangentVectors or a Manifold")
 
         super().__init__(value)
         self.manifold = manifold
+
 
 class TangentBasis(TangentVectorSet):
     """Class that stores a basis in a tangent space as a set of TangentVector elements"""
