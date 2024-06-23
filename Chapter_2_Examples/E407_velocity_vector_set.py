@@ -1,6 +1,6 @@
 #! /usr/bin/python3
 import numpy as np
-from S200_Construct_R2 import R2
+from S400_Construct_R2 import R2
 from geomotion import diffmanifold as dm
 from geomotion import utilityfunctions as ut
 import matplotlib.pyplot as plt
@@ -19,28 +19,28 @@ q21 = Q.element([-1, 0], 0)
 q22 = Q.element([1, -1], 0)
 
 # Construct vectors at the configurations; note the column structure
-v11 = Q.vector([[0], [9]], q11)
-v12 = Q.vector([[5], [3]], q12)
-v21 = Q.vector([[8], [7]], q21)
-v22 = Q.vector([[4], [2]], q22)
+v11 = Q.vector([0, 9], q11)
+v12 = Q.vector([5, 3], q12)
+v21 = Q.vector([8, 7], q21)
+v22 = Q.vector([4, 2], q22)
 
 # Construct a TangentVectorSet from the vectors
 v_set1 = dm.TangentVectorSet([[v11, v12], [v21, v22]])
 print("Successfully created TangentVectorSet \n", v_set1, "from TangentVectors")
 
 # Construct a TangentVectorSet from component-wise grids of vector and configuration components
-vector_components_c = ut.GridArray([[[[0, 5], [8, 4]]], [[[9, 3], [7, 2]]]], 2)
+vector_components_c = ut.GridArray([[[0, 5], [8, 4]], [[9, 3], [7, 2]]], 1)
 config_components_c = ut.GridArray([[[2, 0], [-1, 1]], [[0, 3], [0, -1]]], 1)
 
 print("Shape of vector_components_c is ", vector_components_c.shape)
 print("Shape of vector_components_c everse is ", vector_components_c.everse.shape)
 
 v_grid1, c_grid1 = v_set1.grid
-print(v_grid1[0][0])
+print(v_grid1[0])
 print(c_grid1.shape)
 
 ax = plt.subplot(1, 3, 1)
-ax.quiver(c_grid1[0], c_grid1[1], v_grid1[0][0], v_grid1[1][0])
+ax.quiver(c_grid1[0], c_grid1[1], v_grid1[0], v_grid1[1])
 ax.set_aspect('equal')
 
 v_set2 = dm.TangentVectorSet(Q, vector_components_c, config_components_c, 0, 0, 'component')

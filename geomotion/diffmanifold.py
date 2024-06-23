@@ -47,23 +47,31 @@ class DiffManifold(md.Manifold):
 
         return v
 
+    @property
+    def vector_shape(self):
+        return (self.n_dim,)
+
 
 class TangentVector:
 
     def __init__(self,
-                 manifold,
+                 manifold: DiffManifold,
                  value,
                  configuration,
                  initial_basis=0,
                  initial_chart=None):
 
-        # Make sure that the value and configuration are each a list or ndarray
-        if not (isinstance(value, list) or isinstance(value, np.ndarray)):
-            value = [value]
+        # Make sure that the value and configuration are each an ndarray
+        if not isinstance(value, np.ndarray):
+            if not isinstance(value, list):
+                value = [value]
+            value = np.array(value, dtype=float)
 
-        if not (isinstance(configuration, list) or isinstance(configuration, np.ndarray)
-                or isinstance(configuration, md.ManifoldElement)):
-            configuration = [configuration]
+        if not isinstance(configuration, md.ManifoldElement):
+            if not isinstance(configuration, np.ndarray):
+                if not isinstance(configuration, list):
+                    configuration = [configuration]
+                configuration = np.array(configuration, dtype=float)
 
         # If configuration is a manifold element, verify that no manifold was specified or that the configuration's
         # manifold matches the manifold specified for this vector
@@ -88,6 +96,12 @@ class TangentVector:
         else:
             raise Exception("Manifold not specified and provided configuration does not have an associated manifold")
 
+        # Check that the shape of the provided value matches the expected form
+        if value.shape == self.manifold.element_shape:
+            pass
+        else:
+            raise Exception("Value should be of shape ", self.manifold.vector_shape, " not ", value.shape)
+
         # Set the value, initial basis, and configuration for the vector
         self.value = value
         self.current_basis = initial_basis
@@ -102,17 +116,15 @@ class TangentVector:
     @value.setter
     def value(self, val):
 
-        # Make sure that the value and configuration are each a list or ndarray
-        if not (isinstance(val, list) or isinstance(val, np.ndarray)):
-            val = [val]
-
-        # Make sure that the value is a numpy array of floats, and that it is a column vector
+        # Make sure that the value and configuration are each an ndarray
+        if not isinstance(val, np.ndarray):
+            if not isinstance(val, list):
+                value = [val]
         value = np.array(val, dtype=float)
 
-        if value.shape[1] != 1:
+        if len(val.shape) != 1:
             raise Exception(
-                "Provided value is not a column vector. Make sure it is specified as a two-dimensional array with a "
-                "single column")
+                "Provided value is not a single-dimension array")
 
         self._value = value
 
@@ -162,7 +174,7 @@ class TangentVector:
             # If a non-string was given, assume it identifies a specific chart to transition to
             output_configuration = self.configuration.transition(configuration_transition)
 
-        return self.__class__(new_value, output_configuration, new_basis, output_chart, self.manifold)
+        return self.__class__(self.manifold, new_value, output_configuration, new_basis, output_chart)
 
     def vector_addition(self, other):
 
@@ -339,6 +351,7 @@ class TangentVectorSet(md.GeomotionSet):
         # provided in a GridArray
         elif isinstance(args[0], md.Manifold):
             manifold = args[0]
+            element_shape = (manifold.n_dim,)
             if isinstance(args[1], ut.GridArray):
 
                 # Extract the vector and configuration grid arrays from the argument list
@@ -365,7 +378,7 @@ class TangentVectorSet(md.GeomotionSet):
                     input_format = None
 
                 # Make sure that the vector component grid is in element-outer format
-                vector_grid = ut.format_grid(vector_grid, (manifold.n_dim, 1), 'element', input_format)
+                vector_grid = ut.format_grid(vector_grid, element_shape, 'element', input_format)
 
                 if not single_configuration:
 
@@ -458,6 +471,8 @@ class TangentVectorSet(md.GeomotionSet):
         config_component_outer_grid_array = element_outer_grid_array.everse
 
         return vector_component_outer_grid_array, config_component_outer_grid_array
+
+
 class TangentBasis(TangentVectorSet):
     """Class that stores a basis in a tangent space as a TangentVectorSet whose vectors are all at the same point"""
 
@@ -472,7 +487,6 @@ class TangentBasis(TangentVectorSet):
         self().__init__(*args)
 
         # Verify that all of the configuration values are the same
-
 
         # # Check type of elements in vector_list, and convert them to vectors at the specified configuration if they
         # # are not already TangentVectors

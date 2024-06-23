@@ -1,6 +1,6 @@
 #! /usr/bin/python3
 import numpy as np
-from S200_Construct_R2 import R2
+from S400_Construct_R2 import R2
 
 # Make things print nicely
 np.set_printoptions(precision=2)
@@ -12,8 +12,8 @@ Q = R2
 # Construct an element of R2
 q1 = Q.element([2, 0], 0)
 
-# Construct a vector at q; note the column structure
-v1 = Q.vector([[0], [1]], q1)
+# Construct a vector at q; note the single-dimension array structure
+v1 = Q.vector([0, 1], q1)
 
 # Convert the vector to the polar basis and polar coordinates
 v1_polar = v1.transition(1)
@@ -24,7 +24,7 @@ print("Polar expression of Cartesian \n", v1, "\n at ", q1, " is \n", v1_polar, 
 q2 = Q.element([1, 1], 0)
 
 # Construct a vector at this point
-v2 = Q.vector([[1], [1]], q2)
+v2 = Q.vector([1, 1], q2)
 
 # Convert to polar coordinates and basis
 v2_polar = v2.transition(1)

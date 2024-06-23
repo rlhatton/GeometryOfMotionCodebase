@@ -31,6 +31,10 @@ class Manifold:
                             initial_chart)
         return q
 
+    @property
+    def element_shape(self):
+        return (self.n_dim,)
+
 
 class ManifoldElement:
     """
@@ -87,8 +91,6 @@ class ManifoldElement:
 class GeomotionSet(UserList):
     """ Generic class for sets of elements"""
 
-
-
     @property
     def shape(self):
         return ut.shape(self.value)
@@ -136,7 +138,7 @@ class ManifoldElementSet(GeomotionSet):
                     input_format = None
 
                 # Make sure that the grid is in element-outer format
-                grid = ut.format_grid(grid, (manifold.n_dim,), 'element', input_format)
+                grid = ut.format_grid(grid, manifold.element_shape, 'element', input_format)
 
                 # Convert element-outer grid to a list of ManifoldElements, including passing any initial chart to
                 # the manifold element function
@@ -160,6 +162,10 @@ class ManifoldElementSet(GeomotionSet):
 
         super().__init__(value)
         self.manifold = manifold
+
+    @property
+    def element_shape(self):
+        return (self.manifold.n_dim,)
 
     @property
     def grid(self):
