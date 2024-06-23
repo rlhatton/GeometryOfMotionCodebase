@@ -18,6 +18,7 @@ class DiffManifold(md.Manifold):
                  transition_table,
                  n_dim):
 
+        # Initialize a manifold with the provided transition table and number of dimensions
         super().__init__(transition_table,
                          n_dim)
 
@@ -38,7 +39,7 @@ class DiffManifold(md.Manifold):
                initial_basis=0,
                initial_chart=0):
 
-        """Instantiate a tangent vector at the specified configuration on the manifold"""
+        """Instantiate a tangent vector at a specified configuration on the manifold"""
         v = TangentVector(self,
                           value,
                           configuration,
@@ -49,6 +50,9 @@ class DiffManifold(md.Manifold):
 
     @property
     def vector_shape(self):
+
+        """ Vectors should be 1-dimensional arrays with as many entries as there are dimensions
+        This property facilitates checking this condition"""
         return (self.n_dim,)
 
 
@@ -61,17 +65,8 @@ class TangentVector:
                  initial_basis=0,
                  initial_chart=None):
 
-        # Make sure that the value and configuration are each an ndarray
-        if not isinstance(value, np.ndarray):
-            if not isinstance(value, list):
-                value = [value]
-            value = np.array(value, dtype=float)
-
-        if not isinstance(configuration, md.ManifoldElement):
-            if not isinstance(configuration, np.ndarray):
-                if not isinstance(configuration, list):
-                    configuration = [configuration]
-                configuration = np.array(configuration, dtype=float)
+        # Make sure that the value is an ndarray
+        value = ut.ensure_ndarray(value)
 
         # If configuration is a manifold element, verify that no manifold was specified or that the configuration's
         # manifold matches the manifold specified for this vector
@@ -81,15 +76,18 @@ class TangentVector:
             else:
                 raise Exception("Configuration specified for vector is not an element of the manifold to which the "
                                 "vector is attached")
+
         # If configuration is not a manifold element, attempt to cast it to an np.array, check its size against the
         # manifold dimensionality, and if it is of the right size, use it to construct a configuration element of the
         # appropriate size in the appropriate chart
         elif manifold is not None:
             self.manifold = manifold
-            if np.size(np.array(configuration)) == manifold.n_dim:
-                # Now that we know we're not pulling the chart from a provided ManifoldElement, make the default chart 0
+            configuration = ut.ensure_ndarray(configuration)
+            if configuration.size == manifold.n_dim:
+                # Use the initial chart, defaulting to the first chart
                 if initial_chart is None:
                     initial_chart = 0
+                # Generate the configuration as a manifold element at the specified configuration and chart
                 configuration = manifold.element(configuration, initial_chart)
             else:
                 raise Exception("Provided configuration coordinates do not match dimensionality of specified manifold")
@@ -116,23 +114,24 @@ class TangentVector:
     @value.setter
     def value(self, val):
 
-        # Make sure that the value and configuration are each an ndarray
-        if not isinstance(val, np.ndarray):
-            if not isinstance(val, list):
-                value = [val]
-        value = np.array(val, dtype=float)
+        # Make sure that the value is an ndarray
+        val = ut.ensure_ndarray(val)
 
         if len(val.shape) != 1:
             raise Exception(
                 "Provided value is not a single-dimension array")
 
-        self._value = value
+        self._value = val
 
     def __getitem__(self, item):
         return self.value[item]
 
     def __str__(self):
         return str(self.value)
+
+    @property
+    def column(self):
+        return ut.column(self.value)
 
     def transition(self,
                    new_basis,
@@ -152,11 +151,6 @@ class TangentVector:
             transition_jacobian = self.configuration.manifold.transition_Jacobian_table[self.current_basis][new_basis]
             new_value = np.matmul(transition_jacobian(matched_config.value), self.value)
 
-        # Make a copy of 'self', then replace the value and current basis
-        output_vector = copy.deepcopy(self)
-        output_vector.value = new_value
-        output_vector.current_basis = new_basis
-
         # Transition the vector's configuration if called for
         if isinstance(configuration_transition, str):
             # 'match' says to match the configuration chart to the new basis
@@ -173,6 +167,7 @@ class TangentVector:
         else:
             # If a non-string was given, assume it identifies a specific chart to transition to
             output_configuration = self.configuration.transition(configuration_transition)
+            output_chart = new_basis
 
         return self.__class__(self.manifold, new_value, output_configuration, new_basis, output_chart)
 
@@ -203,16 +198,18 @@ class TangentVector:
         if self.current_basis == other.current_basis:
             pass
         else:
-            # warnings.warn("TangentVectors are expressed with respect to different bases, converting the second vector "
-            #               "into the basis of the first")
+            # warnings.warn("TangentVectors are expressed with respect to different bases, converting the second
+            # vector " "into the basis of the first")
             other = other.transition(self.current_basis)
 
-        # Add the values of the two TangentVectors together, and then create a clone of 'self' with the value the sum
-        # of the converted values of 'self' and 'other'
-        output_vector = copy.deepcopy(self)
-        output_vector.value = self.value + other.value
+        # Add the values of the two TangentVectors together
+        new_value = self.value + other.value
 
-        return output_vector
+        return self.__class__(self.manifold,
+                              new_value,
+                              self.configuration,
+                              self.current_basis,
+                              self.configuration.current_chart)
 
     def scalar_multiplication(self,
                               other):
@@ -221,17 +218,20 @@ class TangentVector:
         if not np.isscalar(other):
             raise Exception("Input for scalar multiplication is not a scalar")
 
-        # Copy 'self', and scale the value by the scalar input
-        output_vector = copy.deepcopy(self)
-        output_vector.value = other * output_vector.value
+        # Scale the value of the TangentVector value
+        new_value = self.value * other
 
-        return output_vector
+        return self.__class__(self.manifold,
+                              new_value,
+                              self.configuration,
+                              self.current_basis,
+                              self.configuration.current_chart)
 
     def matrix_multiplication(self,
                               other):
 
         # Verify that 'other' is a matrix of the appropriate size
-        if isinstance(other, np.ndarray):
+        if isinstance(other, np.ndarray):                          # Is a matrix
             if len(other.shape) == 2:
                 if other.shape[0] == other.shape[1]:
                     if other.shape[1] == self.value.shape[0]:
@@ -245,11 +245,14 @@ class TangentVector:
         else:
             raise Exception("Input for matrix multiplication is not an ndarray")
 
-        # Copy 'self', and multiply the matrix input into the vector value
-        output_vector = copy.deepcopy(self)
-        output_vector.value = np.matmul(other, output_vector.value)
+        # Multiply the matrix input into the column representation of the vector value, then squeeze back to 1-d
+        new_value = np.squeeze(np.matmul(other, self.column))
 
-        return output_vector
+        return self.__class__(self.manifold,
+                              new_value,
+                              self.configuration,
+                              self.current_basis,
+                              self.configuration.current_chart)
 
     def __add__(self, other):
 

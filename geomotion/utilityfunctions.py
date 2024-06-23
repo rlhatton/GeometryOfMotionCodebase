@@ -13,8 +13,23 @@ def ensure_tuple(value):
     return value_tuple
 
 
+def ensure_ndarray(value):
+    if not isinstance(value, np.ndarray):
+        if not isinstance(value, list):
+            value = [value]
+        value = np.array(value, dtype=float)
+
+    return value
+
+def row(vec):
+    return vec[None]
+
+def column(vec):
+    return vec[:,None]
+
+
 def evert_array(arr, n_outer):
-    """Take a multi-dimensional ndarray whose first n_outer dimensions correspond to a primary grid and whose remaining
+    """Take a multidimensional ndarray whose first n_outer dimensions correspond to a primary grid and whose remaining
     dimensions correspond to a secondary grid, and return an array in which the primary and secondary grids are
     swapped"""
 
