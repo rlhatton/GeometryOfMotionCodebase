@@ -1,8 +1,7 @@
 #! /usr/bin/python3
-import copy
 import numpy as np
 import numdifftools as ndt
-import warnings
+from operator import methodcaller
 from inspect import signature
 from typing import Union
 from scipy.integrate import solve_ivp
@@ -18,6 +17,7 @@ class DiffManifold(md.Manifold):
                  transition_table,
                  n_dim):
 
+        # Initialize a manifold with the provided transition table and number of dimensions
         super().__init__(transition_table,
                          n_dim)
 
@@ -38,7 +38,7 @@ class DiffManifold(md.Manifold):
                initial_basis=0,
                initial_chart=0):
 
-        """Instantiate a tangent vector at the specified configuration on the manifold"""
+        """Instantiate a tangent vector at a specified configuration on the manifold"""
         v = TangentVector(self,
                           value,
                           configuration,
@@ -47,23 +47,25 @@ class DiffManifold(md.Manifold):
 
         return v
 
+    @property
+    def vector_shape(self):
+
+        """ Vectors should be 1-dimensional arrays with as many entries as there are dimensions
+        This property facilitates checking this condition"""
+        return (self.n_dim,)
+
 
 class TangentVector:
 
     def __init__(self,
-                 manifold,
+                 manifold: DiffManifold,
                  value,
                  configuration,
                  initial_basis=0,
                  initial_chart=None):
 
-        # Make sure that the value and configuration are each a list or ndarray
-        if not (isinstance(value, list) or isinstance(value, np.ndarray)):
-            value = [value]
-
-        if not (isinstance(configuration, list) or isinstance(configuration, np.ndarray)
-                or isinstance(configuration, md.ManifoldElement)):
-            configuration = [configuration]
+        # Make sure that the value is an ndarray
+        value = ut.ensure_ndarray(value)
 
         # If configuration is a manifold element, verify that no manifold was specified or that the configuration's
         # manifold matches the manifold specified for this vector
@@ -73,20 +75,29 @@ class TangentVector:
             else:
                 raise Exception("Configuration specified for vector is not an element of the manifold to which the "
                                 "vector is attached")
+
         # If configuration is not a manifold element, attempt to cast it to an np.array, check its size against the
         # manifold dimensionality, and if it is of the right size, use it to construct a configuration element of the
         # appropriate size in the appropriate chart
         elif manifold is not None:
             self.manifold = manifold
-            if np.size(np.array(configuration)) == manifold.n_dim:
-                # Now that we know we're not pulling the chart from a provided ManifoldElement, make the default chart 0
+            configuration = ut.ensure_ndarray(configuration)
+            if configuration.size == manifold.n_dim:
+                # Use the initial chart, defaulting to the first chart
                 if initial_chart is None:
                     initial_chart = 0
+                # Generate the configuration as a manifold element at the specified configuration and chart
                 configuration = manifold.element(configuration, initial_chart)
             else:
                 raise Exception("Provided configuration coordinates do not match dimensionality of specified manifold")
         else:
             raise Exception("Manifold not specified and provided configuration does not have an associated manifold")
+
+        # Check that the shape of the provided value matches the expected form
+        if value.shape == self.manifold.element_shape:
+            pass
+        else:
+            raise Exception("Value should be of shape ", self.manifold.vector_shape, " not ", value.shape)
 
         # Set the value, initial basis, and configuration for the vector
         self.value = value
@@ -102,25 +113,24 @@ class TangentVector:
     @value.setter
     def value(self, val):
 
-        # Make sure that the value and configuration are each a list or ndarray
-        if not (isinstance(val, list) or isinstance(val, np.ndarray)):
-            val = [val]
+        # Make sure that the value is an ndarray
+        val = ut.ensure_ndarray(val)
 
-        # Make sure that the value is a numpy array of floats, and that it is a column vector
-        value = np.array(val, dtype=float)
-
-        if value.shape[1] != 1:
+        if len(val.shape) != 1:
             raise Exception(
-                "Provided value is not a column vector. Make sure it is specified as a two-dimensional array with a "
-                "single column")
+                "Provided value is not a single-dimension array")
 
-        self._value = value
+        self._value = val
 
     def __getitem__(self, item):
         return self.value[item]
 
     def __str__(self):
         return str(self.value)
+
+    @property
+    def column(self):
+        return ut.column(self.value)
 
     def transition(self,
                    new_basis,
@@ -140,11 +150,6 @@ class TangentVector:
             transition_jacobian = self.configuration.manifold.transition_Jacobian_table[self.current_basis][new_basis]
             new_value = np.matmul(transition_jacobian(matched_config.value), self.value)
 
-        # Make a copy of 'self', then replace the value and current basis
-        output_vector = copy.deepcopy(self)
-        output_vector.value = new_value
-        output_vector.current_basis = new_basis
-
         # Transition the vector's configuration if called for
         if isinstance(configuration_transition, str):
             # 'match' says to match the configuration chart to the new basis
@@ -161,8 +166,9 @@ class TangentVector:
         else:
             # If a non-string was given, assume it identifies a specific chart to transition to
             output_configuration = self.configuration.transition(configuration_transition)
+            output_chart = new_basis
 
-        return self.__class__(new_value, output_configuration, new_basis, output_chart, self.manifold)
+        return self.__class__(self.manifold, new_value, output_configuration, new_basis, output_chart)
 
     def vector_addition(self, other):
 
@@ -191,16 +197,18 @@ class TangentVector:
         if self.current_basis == other.current_basis:
             pass
         else:
-            # warnings.warn("TangentVectors are expressed with respect to different bases, converting the second vector "
-            #               "into the basis of the first")
+            # warnings.warn("TangentVectors are expressed with respect to different bases, converting the second
+            # vector " "into the basis of the first")
             other = other.transition(self.current_basis)
 
-        # Add the values of the two TangentVectors together, and then create a clone of 'self' with the value the sum
-        # of the converted values of 'self' and 'other'
-        output_vector = copy.deepcopy(self)
-        output_vector.value = self.value + other.value
+        # Add the values of the two TangentVectors together
+        new_value = self.value + other.value
 
-        return output_vector
+        return self.__class__(self.manifold,
+                              new_value,
+                              self.configuration,
+                              self.current_basis,
+                              self.configuration.current_chart)
 
     def scalar_multiplication(self,
                               other):
@@ -209,17 +217,20 @@ class TangentVector:
         if not np.isscalar(other):
             raise Exception("Input for scalar multiplication is not a scalar")
 
-        # Copy 'self', and scale the value by the scalar input
-        output_vector = copy.deepcopy(self)
-        output_vector.value = other * output_vector.value
+        # Scale the value of the TangentVector value
+        new_value = self.value * other
 
-        return output_vector
+        return self.__class__(self.manifold,
+                              new_value,
+                              self.configuration,
+                              self.current_basis,
+                              self.configuration.current_chart)
 
     def matrix_multiplication(self,
                               other):
 
         # Verify that 'other' is a matrix of the appropriate size
-        if isinstance(other, np.ndarray):
+        if isinstance(other, np.ndarray):  # Is a matrix
             if len(other.shape) == 2:
                 if other.shape[0] == other.shape[1]:
                     if other.shape[1] == self.value.shape[0]:
@@ -233,11 +244,14 @@ class TangentVector:
         else:
             raise Exception("Input for matrix multiplication is not an ndarray")
 
-        # Copy 'self', and multiply the matrix input into the vector value
-        output_vector = copy.deepcopy(self)
-        output_vector.value = np.matmul(other, output_vector.value)
+        # Multiply the matrix input into the column representation of the vector value, then ravel back to 1-d
+        new_value = np.ravel(np.matmul(other, self.column))
 
-        return output_vector
+        return self.__class__(self.manifold,
+                              new_value,
+                              self.configuration,
+                              self.current_basis,
+                              self.configuration.current_chart)
 
     def __add__(self, other):
 
@@ -252,9 +266,6 @@ class TangentVector:
         # Scalar multiplication
         if np.isscalar(other):
             output_vector = self.scalar_multiplication(other)
-        # Vector multiplication
-        elif isinstance(other, np.ndarray):
-            raise Exception("Undefined __mul__ behavior for TangentVector acting on matrices")
         # Undefined interaction
         else:
             raise Exception("Undefined __mul__ behavior for TangentVector acting on " + type(other))
@@ -266,7 +277,7 @@ class TangentVector:
         # Scalar multiplication
         if np.isscalar(other):
             output_vector = self.scalar_multiplication(other)
-        # Vector multiplication
+        # Matrix-vector multiplication
         elif isinstance(other, np.ndarray):
             output_vector = self.matrix_multiplication(other)
         # Undefined interaction
@@ -277,16 +288,12 @@ class TangentVector:
 
     def __matmul__(self, other):
 
-        # Vector multiplication
-        if isinstance(other, np.ndarray):
-            raise Exception("Undefined __matmul__ behavior for TangentVector acting on matrices")
         # Undefined interaction
-        else:
-            raise Exception("Undefined __mul__ behavior for TangentVector acting on " + type(other))
+        raise Exception("Undefined __mul__ behavior for TangentVector acting on " + type(other))
 
     def __rmatmul__(self, other):
 
-        # Vector multiplication
+        # Matrix-vector multiplication
         if isinstance(other, np.ndarray):
             output_vector = self.matrix_multiplication(other)
         # Undefined interaction
@@ -299,9 +306,6 @@ class TangentVector:
         # Scalar multiplication
         if np.isscalar(other):
             output_vector = self.scalar_multiplication(1 / other)
-        # Vector multiplication
-        elif isinstance(other, np.ndarray):
-            raise Exception("Undefined __truediv__ behavior for TangentVector acting on matrices")
         # Undefined interaction
         else:
             raise Exception("Undefined __truediv__ behavior for TangentVector acting on " + type(other))
@@ -310,15 +314,7 @@ class TangentVector:
 
     def __rtruediv__(self, other):
 
-        # Scalar multiplication
-        if np.isscalar(other):
-            raise Exception("Undefined __rtruediv__ behavior for TangentVector acting on scalars")
-        # Vector multiplication
-        elif isinstance(other, np.ndarray):
-            raise Exception("Undefined __rtruediv__ behavior for TangentVector acting on matrices")
-        # Undefined interaction
-        else:
-            raise Exception("Undefined __rtruediv__ behavior for TangentVector acting on " + type(other))
+        raise Exception("Undefined __rtruediv__ behavior for TangentVector acting on " + type(other))
 
 
 class TangentVectorSet(md.GeomotionSet):
@@ -339,6 +335,7 @@ class TangentVectorSet(md.GeomotionSet):
         # provided in a GridArray
         elif isinstance(args[0], md.Manifold):
             manifold = args[0]
+            element_shape = (manifold.n_dim,)
             if isinstance(args[1], ut.GridArray):
 
                 # Extract the vector and configuration grid arrays from the argument list
@@ -352,6 +349,10 @@ class TangentVectorSet(md.GeomotionSet):
                 elif isinstance(config_info, list):
                     config_shape = ut.shape(config_info)
                     config_manifold_shape_match = (config_shape == [manifold.n_dim])
+                elif isinstance(config_info, md.ManifoldElement):
+                    config_manifold_shape_match = None
+                else:
+                    raise Exception("Supplied configuration information is not an ndarray, list, or ManifoldElement.")
 
                 if isinstance(config_info, md.ManifoldElement) or config_manifold_shape_match:
                     single_configuration = True
@@ -365,18 +366,22 @@ class TangentVectorSet(md.GeomotionSet):
                     input_format = None
 
                 # Make sure that the vector component grid is in element-outer format
-                vector_grid = ut.format_grid(vector_grid, (manifold.n_dim, 1), 'element', input_format)
+                vector_grid = ut.format_grid(vector_grid, element_shape, 'element', input_format)
 
                 if not single_configuration:
 
                     # Format the configuration grid
-                    config_info = ut.format_grid(config_info, (manifold.n_dim,), 'element', input_format)
+                    config_info = ut.format_grid(config_info,
+                                                 (manifold.n_dim,),
+                                                 'element',
+                                                 input_format)
 
                     # Verify that the element-wise configuration grid is of matching dimension to the vector grid
                     if vector_grid.shape[:vector_grid.n_outer] == config_info.shape[:config_info.n_outer]:
                         pass
                     else:
-                        raise Exception("Vector grid and configuration grid do not have matching element structures")
+                        raise Exception("Vector grid and configuration grid do not have matching element-wise "
+                                        "structures")
 
                 # Convert element-outer grids to a list of TangentVectors, including passing any initial chart and
                 # basis to the manifold element function
@@ -458,66 +463,62 @@ class TangentVectorSet(md.GeomotionSet):
         config_component_outer_grid_array = element_outer_grid_array.everse
 
         return vector_component_outer_grid_array, config_component_outer_grid_array
+
+    def transition(self,
+                   new_basis,
+                   configuration_transition):
+
+        transition_method = methodcaller('transition', new_basis, configuration_transition)
+
+        new_set = ut.object_list_eval(transition_method,
+                                      self.value)
+
+        return self.__class__(new_set)
+
+    def vector_addition(self, other):
+        transition_method = methodcaller('vector_addition', other)
+
+        new_set = ut.object_list_eval(transition_method,
+                                      self.value)
+
+        return self.__class__(new_set)
+
+    def scalar_multiplication(self, other):
+        transition_method = methodcaller('scalar_multiplication', other)
+
+        new_set = ut.object_list_eval(transition_method,
+                                      self.value)
+
+        return self.__class__(new_set)
+
+    def matrix_multiplication(self, other):
+        transition_method = methodcaller('matrix_multiplication', other)
+
+        new_set = ut.object_list_eval(transition_method,
+                                      self.value)
+
+        return self.__class__(new_set)
+
+
 class TangentBasis(TangentVectorSet):
     """Class that stores a basis in a tangent space as a TangentVectorSet whose vectors are all at the same point"""
 
     def __init__(self, *args):
-        # vector_list,
-        # configuration=None,
-        # initial_underlying_basis=0,
-        # initial_chart=0,
-        # manifold: md.Manifold = None):
 
         # Pass the inputs to the TangentVectorSet init function
-        self().__init__(*args)
-
-        # Verify that all of the configuration values are the same
-
-
-        # # Check type of elements in vector_list, and convert them to vectors at the specified configuration if they
-        # # are not already TangentVectors
-        #
-        # # If vector_list is already a list of TangentVectors, do nothing
-        # if all(isinstance(vector_list[i], md.TangentVector) for i in vector_list):
-        #     pass
-        # # If vector_list is a matrix or a list of vectors, and a configuration is provided, convert it to a list of
-        # # TangentVectors
-        # elif configuration is not None:
-        #
-        #     # Make sure that vector_list is a list of ndarrays that can be interpreted as vectors
-        #
-        #     # If vector_list is provided as an ndarray, separate it into a list of its columns
-        #     if isinstance(vector_list, np.ndarray):
-        #         vector_list = (vector_list[:][i] for i in vector_list)
-        #     elif all(isinstance(vector_list[i], np.ndarray) for i in vector_list):
-        #         pass
-        #     else:
-        #         raise Exception("Input vector_list is not a list of TangentVectors, a matrix, or a list of ndarrays "
-        #                         "that can be interpreted as vectors")
-        #
-        #     # Convert vector list to a list of TangentVectors
-        #     vector_list = [
-        #         md.TangentVector(vector_list[i], configuration, initial_underlying_basis, initial_chart, manifold)
-        #         for i in vector_list]
-        #
-        # else:
-        #     raise Exception("Input vector_list is not a list of TangentVectors, but no configuration was provided at "
-        #                     "which to construct the basis")
-        #
-        # # Save the list of TangentVector elements as the value of the basis
-        # self.vector_list = vector_list
+        super().__init__(*args)
 
     @property
     def matrix(self):
 
-        """Produce a square matrix in which each column is the value of the corresponding TangentVector in the basis"""
-        matrix_form = [self.vector_list[j].value for j in range(self.n_vectors)]
+        """Produce a matrix in which each column is the value of the corresponding TangentVector in the basis"""
+        basis_matrix = np.concatenate([self.vector_list[j].column for j in range(self.n_vectors)], axis=1)
 
-        return matrix_form
+        return basis_matrix
 
     @property
     def configuration(self):
-        return (self.vector_list[1]).configuration
+        return (self.vector_list[0]).configuration
 
     @property
     def manifold(self):
@@ -553,33 +554,7 @@ class TangentBasis(TangentVectorSet):
             raise Exception("Vector basis has " + str(self.n_vectors) +
                             " elements, but array of coefficients is " + str(other.shape))
 
-    def __add__(self, other):
-        """Add two basis elements together if they are at the same location. Based on the rules encoded in the vector
-        addition operation, the output will be in the chart and underlying basis of 'self'"""
-
-        if self.n_vectors == other.n_vectors:
-
-            # Add the corresponding vectors together
-            output_vector_list = [self.vector_list[i] + other.vector_list[i] for i in range(self.n_vectors)]
-
-            # Create a basis from the output vector list
-            output_tangent_basis = TangentBasis(output_vector_list)
-
-            return output_tangent_basis
-
-        else:
-            raise Exception("Cannot add vector bases with different numbers of elements")
-
-    def transition(self, new_basis, configuration_transition='match'):
-        """Apply transition to each vector"""
-
-        output_vector_list = [self.vector_list[i].transition(new_basis, configuration_transition) for i in
-                              range(self.n_vectors)]
-
-        # Create a basis from the output vector list
-        output_tangent_basis = TangentBasis(output_vector_list)
-
-        return output_tangent_basis
+   
 
 
 class TangentVectorField:
@@ -828,7 +803,7 @@ class TangentVectorField:
 
         def flow_function(t, x):
             v = self.evaluate_vector_field(x, t, output_type='array')
-            return np.squeeze(v)  # required to match dimension of vector with dimension of state
+            return np.ravel(v)  # required to match dimension of vector with dimension of state
 
         sol = solve_ivp(flow_function, timespan, initial_config, dense_output=True, **kwargs)
 

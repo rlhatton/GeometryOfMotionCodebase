@@ -1,13 +1,13 @@
 import numpy as np
 from geomotion import manifold as md, diffmanifold as tb, utilityfunctions as ut
-from S200_Construct_R2 import R2
+from S400_Construct_R2 import R2
 
 Q = R2
 
 
 # Define a vector field function that points outward everywhere
 def v_outward_xy(q):
-    v = np.array([[q[0]], [q[1]]])
+    v = np.array([q[0], q[1]])
     return v
 
 
