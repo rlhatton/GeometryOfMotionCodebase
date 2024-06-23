@@ -77,4 +77,16 @@ v_set6 = dm.TangentVectorSet(Q, vector_components_e, [0, 1], 0, 0, 'element')
 print("Successfully created TangentVectorSet \n", v_set6,
       "\nfrom element-wise grid and single list of manifold components")
 
+v_set7 = v_set6.transition(1, 'match')
+print("Successfully transitioned TangentVectorSet \n", v_set6,
+      "\ninto ", v_set7)
+
+v_set8 = v_set6 * 3
+print("Successfully tripled TangentVectorSet \n", v_set6,
+      "\ninto ", v_set8)
+
+v_set9 = v_set6 + v_set6
+print("Successfully added TangentVectorSet \n", v_set6, "to itself, resulting"
+      "\nin ", v_set9)
+
 plt.show()

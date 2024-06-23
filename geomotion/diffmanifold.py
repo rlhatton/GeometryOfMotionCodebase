@@ -1,8 +1,7 @@
 #! /usr/bin/python3
-import copy
 import numpy as np
 import numdifftools as ndt
-import warnings
+from operator import methodcaller
 from inspect import signature
 from typing import Union
 from scipy.integrate import solve_ivp
@@ -231,7 +230,7 @@ class TangentVector:
                               other):
 
         # Verify that 'other' is a matrix of the appropriate size
-        if isinstance(other, np.ndarray):                          # Is a matrix
+        if isinstance(other, np.ndarray):  # Is a matrix
             if len(other.shape) == 2:
                 if other.shape[0] == other.shape[1]:
                     if other.shape[1] == self.value.shape[0]:
@@ -245,8 +244,8 @@ class TangentVector:
         else:
             raise Exception("Input for matrix multiplication is not an ndarray")
 
-        # Multiply the matrix input into the column representation of the vector value, then squeeze back to 1-d
-        new_value = np.squeeze(np.matmul(other, self.column))
+        # Multiply the matrix input into the column representation of the vector value, then ravel back to 1-d
+        new_value = np.ravel(np.matmul(other, self.column))
 
         return self.__class__(self.manifold,
                               new_value,
@@ -267,9 +266,6 @@ class TangentVector:
         # Scalar multiplication
         if np.isscalar(other):
             output_vector = self.scalar_multiplication(other)
-        # Vector multiplication
-        elif isinstance(other, np.ndarray):
-            raise Exception("Undefined __mul__ behavior for TangentVector acting on matrices")
         # Undefined interaction
         else:
             raise Exception("Undefined __mul__ behavior for TangentVector acting on " + type(other))
@@ -281,7 +277,7 @@ class TangentVector:
         # Scalar multiplication
         if np.isscalar(other):
             output_vector = self.scalar_multiplication(other)
-        # Vector multiplication
+        # Matrix-vector multiplication
         elif isinstance(other, np.ndarray):
             output_vector = self.matrix_multiplication(other)
         # Undefined interaction
@@ -292,16 +288,12 @@ class TangentVector:
 
     def __matmul__(self, other):
 
-        # Vector multiplication
-        if isinstance(other, np.ndarray):
-            raise Exception("Undefined __matmul__ behavior for TangentVector acting on matrices")
         # Undefined interaction
-        else:
-            raise Exception("Undefined __mul__ behavior for TangentVector acting on " + type(other))
+        raise Exception("Undefined __mul__ behavior for TangentVector acting on " + type(other))
 
     def __rmatmul__(self, other):
 
-        # Vector multiplication
+        # Matrix-vector multiplication
         if isinstance(other, np.ndarray):
             output_vector = self.matrix_multiplication(other)
         # Undefined interaction
@@ -314,9 +306,6 @@ class TangentVector:
         # Scalar multiplication
         if np.isscalar(other):
             output_vector = self.scalar_multiplication(1 / other)
-        # Vector multiplication
-        elif isinstance(other, np.ndarray):
-            raise Exception("Undefined __truediv__ behavior for TangentVector acting on matrices")
         # Undefined interaction
         else:
             raise Exception("Undefined __truediv__ behavior for TangentVector acting on " + type(other))
@@ -325,15 +314,7 @@ class TangentVector:
 
     def __rtruediv__(self, other):
 
-        # Scalar multiplication
-        if np.isscalar(other):
-            raise Exception("Undefined __rtruediv__ behavior for TangentVector acting on scalars")
-        # Vector multiplication
-        elif isinstance(other, np.ndarray):
-            raise Exception("Undefined __rtruediv__ behavior for TangentVector acting on matrices")
-        # Undefined interaction
-        else:
-            raise Exception("Undefined __rtruediv__ behavior for TangentVector acting on " + type(other))
+        raise Exception("Undefined __rtruediv__ behavior for TangentVector acting on " + type(other))
 
 
 class TangentVectorSet(md.GeomotionSet):
@@ -368,6 +349,10 @@ class TangentVectorSet(md.GeomotionSet):
                 elif isinstance(config_info, list):
                     config_shape = ut.shape(config_info)
                     config_manifold_shape_match = (config_shape == [manifold.n_dim])
+                elif isinstance(config_info, md.ManifoldElement):
+                    config_manifold_shape_match = None
+                else:
+                    raise Exception("Supplied configuration information is not an ndarray, list, or ManifoldElement.")
 
                 if isinstance(config_info, md.ManifoldElement) or config_manifold_shape_match:
                     single_configuration = True
@@ -386,13 +371,17 @@ class TangentVectorSet(md.GeomotionSet):
                 if not single_configuration:
 
                     # Format the configuration grid
-                    config_info = ut.format_grid(config_info, (manifold.n_dim,), 'element', input_format)
+                    config_info = ut.format_grid(config_info,
+                                                 (manifold.n_dim,),
+                                                 'element',
+                                                 input_format)
 
                     # Verify that the element-wise configuration grid is of matching dimension to the vector grid
                     if vector_grid.shape[:vector_grid.n_outer] == config_info.shape[:config_info.n_outer]:
                         pass
                     else:
-                        raise Exception("Vector grid and configuration grid do not have matching element structures")
+                        raise Exception("Vector grid and configuration grid do not have matching element-wise "
+                                        "structures")
 
                 # Convert element-outer grids to a list of TangentVectors, including passing any initial chart and
                 # basis to the manifold element function
@@ -475,66 +464,61 @@ class TangentVectorSet(md.GeomotionSet):
 
         return vector_component_outer_grid_array, config_component_outer_grid_array
 
+    def transition(self,
+                   new_basis,
+                   configuration_transition):
+
+        transition_method = methodcaller('transition', new_basis, configuration_transition)
+
+        new_set = ut.object_list_eval(transition_method,
+                                      self.value)
+
+        return self.__class__(new_set)
+
+    def vector_addition(self, other):
+        transition_method = methodcaller('vector_addition', other)
+
+        new_set = ut.object_list_eval(transition_method,
+                                      self.value)
+
+        return self.__class__(new_set)
+
+    def scalar_multiplication(self, other):
+        transition_method = methodcaller('scalar_multiplication', other)
+
+        new_set = ut.object_list_eval(transition_method,
+                                      self.value)
+
+        return self.__class__(new_set)
+
+    def matrix_multiplication(self, other):
+        transition_method = methodcaller('matrix_multiplication', other)
+
+        new_set = ut.object_list_eval(transition_method,
+                                      self.value)
+
+        return self.__class__(new_set)
+
 
 class TangentBasis(TangentVectorSet):
     """Class that stores a basis in a tangent space as a TangentVectorSet whose vectors are all at the same point"""
 
     def __init__(self, *args):
-        # vector_list,
-        # configuration=None,
-        # initial_underlying_basis=0,
-        # initial_chart=0,
-        # manifold: md.Manifold = None):
 
         # Pass the inputs to the TangentVectorSet init function
-        self().__init__(*args)
-
-        # Verify that all of the configuration values are the same
-
-        # # Check type of elements in vector_list, and convert them to vectors at the specified configuration if they
-        # # are not already TangentVectors
-        #
-        # # If vector_list is already a list of TangentVectors, do nothing
-        # if all(isinstance(vector_list[i], md.TangentVector) for i in vector_list):
-        #     pass
-        # # If vector_list is a matrix or a list of vectors, and a configuration is provided, convert it to a list of
-        # # TangentVectors
-        # elif configuration is not None:
-        #
-        #     # Make sure that vector_list is a list of ndarrays that can be interpreted as vectors
-        #
-        #     # If vector_list is provided as an ndarray, separate it into a list of its columns
-        #     if isinstance(vector_list, np.ndarray):
-        #         vector_list = (vector_list[:][i] for i in vector_list)
-        #     elif all(isinstance(vector_list[i], np.ndarray) for i in vector_list):
-        #         pass
-        #     else:
-        #         raise Exception("Input vector_list is not a list of TangentVectors, a matrix, or a list of ndarrays "
-        #                         "that can be interpreted as vectors")
-        #
-        #     # Convert vector list to a list of TangentVectors
-        #     vector_list = [
-        #         md.TangentVector(vector_list[i], configuration, initial_underlying_basis, initial_chart, manifold)
-        #         for i in vector_list]
-        #
-        # else:
-        #     raise Exception("Input vector_list is not a list of TangentVectors, but no configuration was provided at "
-        #                     "which to construct the basis")
-        #
-        # # Save the list of TangentVector elements as the value of the basis
-        # self.vector_list = vector_list
+        super().__init__(*args)
 
     @property
     def matrix(self):
 
-        """Produce a square matrix in which each column is the value of the corresponding TangentVector in the basis"""
-        matrix_form = [self.vector_list[j].value for j in range(self.n_vectors)]
+        """Produce a matrix in which each column is the value of the corresponding TangentVector in the basis"""
+        basis_matrix = np.concatenate([self.vector_list[j].column for j in range(self.n_vectors)], axis=1)
 
-        return matrix_form
+        return basis_matrix
 
     @property
     def configuration(self):
-        return (self.vector_list[1]).configuration
+        return (self.vector_list[0]).configuration
 
     @property
     def manifold(self):
@@ -570,33 +554,7 @@ class TangentBasis(TangentVectorSet):
             raise Exception("Vector basis has " + str(self.n_vectors) +
                             " elements, but array of coefficients is " + str(other.shape))
 
-    def __add__(self, other):
-        """Add two basis elements together if they are at the same location. Based on the rules encoded in the vector
-        addition operation, the output will be in the chart and underlying basis of 'self'"""
-
-        if self.n_vectors == other.n_vectors:
-
-            # Add the corresponding vectors together
-            output_vector_list = [self.vector_list[i] + other.vector_list[i] for i in range(self.n_vectors)]
-
-            # Create a basis from the output vector list
-            output_tangent_basis = TangentBasis(output_vector_list)
-
-            return output_tangent_basis
-
-        else:
-            raise Exception("Cannot add vector bases with different numbers of elements")
-
-    def transition(self, new_basis, configuration_transition='match'):
-        """Apply transition to each vector"""
-
-        output_vector_list = [self.vector_list[i].transition(new_basis, configuration_transition) for i in
-                              range(self.n_vectors)]
-
-        # Create a basis from the output vector list
-        output_tangent_basis = TangentBasis(output_vector_list)
-
-        return output_tangent_basis
+   
 
 
 class TangentVectorField:
@@ -845,7 +803,7 @@ class TangentVectorField:
 
         def flow_function(t, x):
             v = self.evaluate_vector_field(x, t, output_type='array')
-            return np.squeeze(v)  # required to match dimension of vector with dimension of state
+            return np.ravel(v)  # required to match dimension of vector with dimension of state
 
         sol = solve_ivp(flow_function, timespan, initial_config, dense_output=True, **kwargs)
 
