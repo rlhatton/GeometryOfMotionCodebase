@@ -255,66 +255,61 @@ class TangentVector:
 
     def __add__(self, other):
 
-        return self.vector_addition(other)
+        if isinstance(other, TangentVector) and (self.manifold == other.manifold):
+            return self.vector_addition(other)
+        else:
+            return NotImplemented
 
     def __radd__(self, other):
 
-        return self.vector_addition(other)
+        if isinstance(other, TangentVector) and (self.manifold == other.manifold):
+            return self.vector_addition(other)
+        else:
+            return NotImplemented
 
     def __mul__(self, other):
 
         # Scalar multiplication
         if np.isscalar(other):
-            output_vector = self.scalar_multiplication(other)
+            return self.scalar_multiplication(other)
         # Undefined interaction
         else:
-            raise Exception("Undefined __mul__ behavior for TangentVector acting on " + type(other))
-
-        return output_vector
+            return NotImplemented
 
     def __rmul__(self, other):
 
         # Scalar multiplication
         if np.isscalar(other):
-            output_vector = self.scalar_multiplication(other)
-        # Matrix-vector multiplication
-        elif isinstance(other, np.ndarray):
-            output_vector = self.matrix_multiplication(other)
+            return self.scalar_multiplication(other)
         # Undefined interaction
         else:
-            raise Exception("Undefined __rmul__ behavior for TangentVector acting on " + type(other))
-
-        return output_vector
+            return NotImplemented
 
     def __matmul__(self, other):
 
         # Undefined interaction
-        raise Exception("Undefined __mul__ behavior for TangentVector acting on " + type(other))
+        return NotImplemented
 
     def __rmatmul__(self, other):
 
         # Matrix-vector multiplication
         if isinstance(other, np.ndarray):
-            output_vector = self.matrix_multiplication(other)
+            return self.matrix_multiplication(other)
         # Undefined interaction
         else:
-            raise Exception("Undefined __rmatmul__ behavior for TangentVector acting on " + type(other))
-
-        return output_vector
+            return NotImplemented
 
     def __truediv__(self, other):
         # Scalar multiplication
         if np.isscalar(other):
-            output_vector = self.scalar_multiplication(1 / other)
+            return self.scalar_multiplication(1 / other)
         # Undefined interaction
         else:
-            raise Exception("Undefined __truediv__ behavior for TangentVector acting on " + type(other))
-
-        return output_vector
+            return NotImplemented
 
     def __rtruediv__(self, other):
 
-        raise Exception("Undefined __rtruediv__ behavior for TangentVector acting on " + type(other))
+        return NotImplemented
 
 
 class TangentVectorSet(md.GeomotionSet):
@@ -464,6 +459,25 @@ class TangentVectorSet(md.GeomotionSet):
 
         return vector_component_outer_grid_array, config_component_outer_grid_array
 
+    def vector_set_action(self, other, action_name):
+
+        if hasattr(other, 'shape'):
+
+            if self.shape == other.shape:
+
+                new_set = ut.object_list_method_eval_pairwise(action_name, self.value, other.value)
+
+            else:
+
+                raise Exception("Cannot apply a set of TangentVectors to a set of a different size")
+
+        else:
+
+            action = methodcaller(action_name, other)
+            new_set = ut.object_list_eval(action, self.value)
+
+        return self.__class__(new_set)
+
     def transition(self,
                    new_basis,
                    configuration_transition):
@@ -476,28 +490,73 @@ class TangentVectorSet(md.GeomotionSet):
         return self.__class__(new_set)
 
     def vector_addition(self, other):
-        transition_method = methodcaller('vector_addition', other)
-
-        new_set = ut.object_list_eval(transition_method,
-                                      self.value)
-
-        return self.__class__(new_set)
+        return self.vector_set_action(other, 'vector_addition')
 
     def scalar_multiplication(self, other):
-        transition_method = methodcaller('scalar_multiplication', other)
-
-        new_set = ut.object_list_eval(transition_method,
-                                      self.value)
-
-        return self.__class__(new_set)
+        return self.vector_set_action(other, 'scalar_multiplication')
 
     def matrix_multiplication(self, other):
-        transition_method = methodcaller('matrix_multiplication', other)
+        return self.vector_set_action(other, 'matrix_multiplication')
 
-        new_set = ut.object_list_eval(transition_method,
-                                      self.value)
+    def __add__(self, other):
 
-        return self.__class__(new_set)
+        if ((isinstance(other, TangentVector) or isinstance(other, TangentVectorSet))
+                and (self.manifold == other.manifold)):
+            return self.vector_addition(other)
+        else:
+            return NotImplemented
+
+    def __radd__(self, other):
+
+        if ((isinstance(other, TangentVector) or isinstance(other, TangentVectorSet))
+                and (self.manifold == other.manifold)):
+            return self.vector_addition(other)
+        else:
+            return NotImplemented
+
+    def __mul__(self, other):
+
+        # Scalar multiplication
+        if np.isscalar(other):
+            return self.scalar_multiplication(other)
+        # Undefined interaction
+        else:
+            return NotImplemented
+
+    def __rmul__(self, other):
+
+        # Scalar multiplication
+        if np.isscalar(other):
+            return self.scalar_multiplication(other)
+        # Undefined interaction
+        else:
+            return NotImplemented
+
+    def __matmul__(self, other):
+
+        # Undefined interaction
+        return NotImplemented
+
+    def __rmatmul__(self, other):
+
+        # Matrix-vector multiplication
+        if isinstance(other, np.ndarray):
+            return self.matrix_multiplication(other)
+        # Undefined interaction
+        else:
+            return NotImplemented
+
+    def __truediv__(self, other):
+        # Scalar multiplication
+        if np.isscalar(other):
+            return self.scalar_multiplication(1 / other)
+        # Undefined interaction
+        else:
+            return NotImplemented
+
+    def __rtruediv__(self, other):
+
+        return NotImplemented
 
 
 class TangentBasis(TangentVectorSet):
@@ -540,7 +599,7 @@ class TangentBasis(TangentVectorSet):
         """Multiplying a TangentBasis by a column array should produce a TangentVector whose value is the
          weighted sum of the basis elements"""
 
-        # Attempt to cast other as an ndarray of floats
+        # Attempt to cast other as a 1-d ndarray of floats
         other = np.array(other, dtype=float)
 
         if other.shape == (self.n_vectors, 1):
@@ -553,8 +612,6 @@ class TangentBasis(TangentVectorSet):
         else:
             raise Exception("Vector basis has " + str(self.n_vectors) +
                             " elements, but array of coefficients is " + str(other.shape))
-
-   
 
 
 class TangentVectorField:

@@ -120,6 +120,7 @@ class GroupElement(md.ManifoldElement):
         AD_g_other = self * other * g_inv
         return AD_g_other
 
+    # noinspection SpellCheckingInspection
     def ADinv(self, other):
         g_inv = self.inverse
         ADi_g_other = g_inv * other * self
@@ -139,18 +140,17 @@ class GroupElement(md.ManifoldElement):
 
     def __mul__(self, other):
 
-        if isinstance(other, GroupElement):
+        if isinstance(other, GroupElement) and (self.manifold == other.manifold):
             return self.L(other)
         else:
             return NotImplemented
 
     def __rmul__(self, other):
 
-        if isinstance(other, GroupElement):
+        if isinstance(other, GroupElement) and (self.manifold == other.manifold):
             return self.R(other)
         else:
             return NotImplemented
-
 
 
 def commutator(g: GroupElement, h: GroupElement):
@@ -190,6 +190,7 @@ class GroupElementSet(md.ManifoldElementSet):
 
         return self.group_set_action(other, 'AD')
 
+    # noinspection SpellCheckingInspection
     def ADinv(self, other):
 
         return self.group_set_action(other, 'R')
@@ -200,8 +201,14 @@ class GroupElementSet(md.ManifoldElementSet):
 
     def __mul__(self, other):
 
-        return self.group_set_action(other, '__mul__')
+        if (isinstance(other, GroupElement) or isinstance(other, GroupElementSet)) and (self.manifold == other.manifold):
+            return self.group_set_action(other, '__mul__')
+        else:
+            return NotImplemented
 
     def __rmul__(self, other):
 
-        return self.group_set_action(other, '__rmul__')
+        if (isinstance(other, GroupElement) or isinstance(other, GroupElementSet)) and (self.manifold == other.manifold):
+            return self.group_set_action(other, '__rmul__')
+        else:
+            return NotImplemented

@@ -89,4 +89,6 @@ v_set9 = v_set6 + v_set6
 print("Successfully added TangentVectorSet \n", v_set6, "to itself, resulting"
       "\nin ", v_set9)
 
+# v_set10 = v_set1 + v11
+
 plt.show()
