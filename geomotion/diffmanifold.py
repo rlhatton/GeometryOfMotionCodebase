@@ -407,10 +407,11 @@ class TangentVectorSet(md.GeomotionSet):
 
                 else:
                     def tangent_vector_construction_function(vector_value, configuration_value):
-                        return manifold.vector(vector_value,
-                                               configuration_value,
-                                               initial_basis,
-                                               initial_chart)
+                        tangent_vector = manifold.vector(vector_value,
+                                                         configuration_value,
+                                                         initial_basis,
+                                                         initial_chart)
+                        return tangent_vector
 
                     value = ut.object_list_eval_pairwise(tangent_vector_construction_function,
                                                          vector_grid,
@@ -438,7 +439,7 @@ class TangentVectorSet(md.GeomotionSet):
                                                                  self.value))
 
         # Convert this array into a GridArray
-        element_outer_grid_array = ut.GridArray(element_outer_grid, n_inner=2)
+        element_outer_grid_array = ut.GridArray(element_outer_grid, n_inner=1)
 
         vector_component_outer_grid_array = element_outer_grid_array.everse
 
@@ -626,12 +627,12 @@ class TangentVectorField:
         sig = signature(defining_function)
         if len(sig.parameters) == 2:
             def def_function(q, t):
-                return defining_function(q, t)
+                return ut.ensure_ndarray(defining_function(q, t))
 
         elif len(sig.parameters) == 1:
             # noinspection PyUnusedLocal
             def def_function(q, t):
-                return defining_function(q)
+                return ut.ensure_ndarray(defining_function(q))
         else:
             raise Exception("Defining function should take either two (configuration, time) or one (configuration) "
                             "input")
@@ -639,7 +640,9 @@ class TangentVectorField:
         self.defining_function = def_function
         self.manifold = manifold
         self.defining_basis = defining_basis
+        self.current_basis = defining_basis
         self.defining_chart = defining_chart
+        self.current_chart = defining_chart
 
     def evaluate_vector_field(self,
                               configuration,
@@ -658,7 +661,7 @@ class TangentVectorField:
         if isinstance(configuration, md.ManifoldElement):
             configuration_value = configuration.value
         else:
-            configuration_value = np.array(configuration, dtype=float)
+            configuration_value = ut.ensure_ndarray(configuration)
 
         # Evaluate the defining function
         defining_vector = self.defining_function(configuration_value, time)
@@ -685,7 +688,14 @@ class TangentVectorField:
                                    configuration_grid: ut.GridArray,
                                    time=0,
                                    basis=None,
-                                   chart=None):
+                                   chart=None,
+                                   output_format='grid'):
+
+        # If basis and chart are not specified, use tangent vector field's defining basis and chart
+        if basis is None:
+            basis = self.defining_basis
+        if chart is None:
+            chart = self.defining_chart
 
         # Take in data formatted with the outer grid indices corresponding to the dimensionality of the data and the
         # inner grid indices corresponding to the location of those data points
@@ -706,18 +716,29 @@ class TangentVectorField:
         # indices correspond to the dimensionality of the data
         configuration_at_points = configuration_grid.everse
 
+        # # Determine vector evaluation format based on output format
+        # if output_format == 'grid':
+        #     output_type = 'array'
+        # elif output_format == 'set':
+        #     output_type = 'vector'
+        # else:
+        #     return Exception("Unknown output format")
+
         # Evaluate the defining function at each data location to get the vector at that location
         def v_function(x):
             v_at_x = self.evaluate_vector_field(x, time, basis, chart, 'array')
             return v_at_x
 
+        # Perform the evaluation
         vectors_at_points = configuration_at_points.grid_eval(v_function)
 
-        # Convert the vector representation so that its outer indices correspond to the vector dimensions and the
-        # inner indices the spatial location of the data
         vector_grid = vectors_at_points.everse
 
-        return vector_grid
+        # Output format
+        if output_format == 'grid':
+            return vector_grid
+        elif output_format == 'set':
+            return TangentVectorSet(self.manifold, vector_grid, configuration_grid, basis, chart, 'component')
 
     def __call__(self,
                  configuration,

@@ -17,7 +17,7 @@ def ensure_ndarray(value):
     if not isinstance(value, np.ndarray):
         if not isinstance(value, list):
             value = [value]
-        value = np.array(value, dtype=float)
+    value = np.array(value, dtype=float)
 
     return value
 
@@ -107,7 +107,7 @@ def object_list_eval_pairwise(f, object_list_1, object_list_2, n_outer=None, dep
     # If we've reached the target level of the list, evaluate the specified method for each point at this level and
     # store the results in a list
     else:
-        return [f(object_list_1[i], object_list_1[i]) for i in range(sh)]
+        return [f(object_list_1[i], object_list_2[i]) for i in range(sh)]
 
 
 def object_list_method_eval_pairwise(method_name, object_list_1, object_list_2, n_outer=None, depth=0):
