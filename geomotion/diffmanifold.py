@@ -136,8 +136,8 @@ class TangentVector:
                    new_basis,
                    configuration_transition='match'):
 
-        # Get the current configuration in the coordinates that match the current coordinate basis
-        matched_config = self.configuration.transition(self.current_basis)
+        # Get the current configuration in the coordinates that match the new coordinate basis
+        #matched_config = self.configuration.transition(self.current_basis)
 
         # Unless the transition is the trivial transition, get the Jacobian of the corresponding transition map and
         # multiply it by the current value
@@ -148,13 +148,13 @@ class TangentVector:
         else:
 
             transition_jacobian = self.configuration.manifold.transition_Jacobian_table[self.current_basis][new_basis]
-            new_value = np.matmul(transition_jacobian(matched_config.value), self.value)
+            new_value = np.matmul(transition_jacobian(self.configuration.value), self.value)
 
         # Transition the vector's configuration if called for
         if isinstance(configuration_transition, str):
             # 'match' says to match the configuration chart to the new basis
             if configuration_transition == 'match':
-                output_configuration = matched_config
+                output_configuration = self.configuration.transition(new_basis)
                 output_chart = new_basis
             # 'keep' says to leave the configuration chart as whatever it is currently
             elif configuration_transition == 'keep':
