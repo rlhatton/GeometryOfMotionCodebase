@@ -57,7 +57,7 @@ plt.arrow(traj2[0][-1], traj2[1][-1], traj2[0][-1]-traj2[0][-2], traj2[1][-1]-tr
 ax.set_aspect('equal')
 ax.set_xlim(-3, 3)
 ax.set_ylim(-3, 3)
-ax.set_title("Cartesian chart outward")
+ax.set_title("Saddle field flows")
 
 
 # Final point integration of a flow on the cartesian field
