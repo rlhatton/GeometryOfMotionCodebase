@@ -190,3 +190,86 @@ class ManifoldElementSet(GeomotionSet):
                                       self.value)
 
         return self.__class__(new_set)
+
+
+class ManifoldFunction:
+
+    def __init__(self,
+                 manifold,
+                 defining_function,
+                 defining_chart=0):
+        self.manifold = manifold
+        self.defining_function = defining_function
+        self.defining_chart = defining_chart
+
+    def __call__(self, configuration_value, *args, **kwargs):
+        # If the input is a ManifoldElement, extract its value
+        if isinstance(configuration_value, ManifoldElement):
+            configuration_value = configuration_value.transition(self.defining_chart)
+            configuration_value = configuration_value.value
+
+        # Pass the configuration value, and any additional input values, into the defining function
+        return self.defining_function(configuration_value, *args, **kwargs)
+
+    def transition(self, new_chart):
+
+        # Pull back the function by mapping the input from the new chart into the old chart where the function was
+        # defined
+        def new_defining_function(configuration_value, *args, **kwargs):
+
+            old_configuration_value = self.manifold.transition_table[new_chart][self.defining_chart](
+                configuration_value)
+
+            return self.defining_function(old_configuration_value,
+                                          *args,
+                                          **kwargs)
+
+        return self.__class__(self.manifold,
+                              new_defining_function,
+                              new_chart)
+
+    def grid(self,
+             configuration_grid: ut.GridArray,
+             chart=None,
+             output_format='grid',
+             *args,
+             **kwargs):
+
+        # If chart is not specified, use tangent vector field's defining chart
+        if chart is None:
+            chart = self.defining_chart
+
+        # Take in data formatted with the outer grid indices corresponding to the dimensionality of the data and the
+        # inner grid indices corresponding to the location of those data points
+
+        # Verify that the configuration grid is a one-dimensional GridArray and that the dimensionality matches that
+        # of the manifold
+        if not isinstance(configuration_grid, ut.GridArray):
+            raise Exception("Expected configuration_grid to be of type GridArray.")
+
+        if configuration_grid.n_outer != 1:
+            raise Exception("Expected n_outer to be 1 for the GridArray provided as configuration_grid.")
+
+        if configuration_grid.shape[0] != self.manifold.n_dim:
+            raise Exception("Expected the first axis of the GridArray provided as configuration_grid to match the "
+                            "dimensionality of the manifold.")
+
+        # Convert the data grid so that the outer indices correspond the location of the data points and the inner
+        # indices correspond to the dimensionality of the data
+        configuration_at_points = configuration_grid.everse
+
+        # Evaluate the defining function at each data location to get the function value at that location
+        def f(x):
+            f_at_x = self.__call__(x, *args, **kwargs)
+            return f_at_x
+
+        # Perform the evaluation
+        function_at_points = configuration_at_points.grid_eval(f)
+
+        function_grid = function_at_points.everse
+
+        # Output format
+        if output_format == 'grid':
+            return function_grid
+        else:
+            raise Exception("Unknown output format for ManifoldFunction.grid")

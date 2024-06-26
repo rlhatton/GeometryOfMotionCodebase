@@ -136,9 +136,6 @@ class TangentVector:
                    new_basis,
                    configuration_transition='match'):
 
-        # Get the current configuration in the coordinates that match the new coordinate basis
-        #matched_config = self.configuration.transition(self.current_basis)
-
         # Unless the transition is the trivial transition, get the Jacobian of the corresponding transition map and
         # multiply it by the current value
         if new_basis == self.current_basis:
@@ -684,12 +681,12 @@ class TangentVectorField:
 
         return output_tangent_vector
 
-    def grid_evaluate_vector_field(self,
-                                   configuration_grid: ut.GridArray,
-                                   time=0,
-                                   basis=None,
-                                   chart=None,
-                                   output_format='grid'):
+    def grid(self,
+             configuration_grid: ut.GridArray,
+             time=0,
+             basis=None,
+             chart=None,
+             output_format='grid'):
 
         # If basis and chart are not specified, use tangent vector field's defining basis and chart
         if basis is None:
@@ -716,13 +713,6 @@ class TangentVectorField:
         # indices correspond to the dimensionality of the data
         configuration_at_points = configuration_grid.everse
 
-        # # Determine vector evaluation format based on output format
-        # if output_format == 'grid':
-        #     output_type = 'array'
-        # elif output_format == 'set':
-        #     output_type = 'vector'
-        # else:
-        #     return Exception("Unknown output format")
 
         # Evaluate the defining function at each data location to get the vector at that location
         def v_function(x):
@@ -768,7 +758,9 @@ class TangentVectorField:
         """Take a vector field defined in one basis and chart combination and convert it
          to a different basis and chart combination"""
 
-        # Parse the configuration_transition option
+        # Parse the configuration_transition option. It would be nice to just pass it into
+        # the vector transition (pushforward), but we need to process it here for the pullback
+        # of the vector field function itself
         if isinstance(configuration_transition, str):
             # 'match' says to match the configuration to the new basis
             if configuration_transition == 'match':
@@ -784,13 +776,24 @@ class TangentVectorField:
 
         # Modify the defining function by pushing forward through the transition maps
         def output_defining_function(x, t):
-            # pull back function through transition map
-            y = self.manifold.transition_table[new_chart][self.defining_chart](x)
-            u = self.defining_function(y, t)
-            # push forward vector through transition map
-            v = np.matmul(self.manifold.transition_Jacobian_table[self.defining_basis][new_basis](y), u)
+            # Pull back function through transition map
 
-            return v
+            # Convert configuration from new chart to current chart
+            y = self.manifold.transition_table[new_chart][self.defining_chart](x)
+
+            # Evaluate defining function in current chart
+            u = self.defining_function(y, t)
+
+            # Convert evaluated vector into a TangentVector
+            v = TangentVector(self.manifold, u, y, self.defining_basis, self.defining_chart)
+
+            # Transition the vector into the new chart and basis
+            v_new = v.transition(new_basis, configuration_transition)
+
+            # extract the value from the transitioned vector
+            u_new = v_new.value
+
+            return u_new
 
         # Create a TangentVectorField from the output_defining_function
         output_tangent_vector_field = TangentVectorField(output_defining_function, self.manifold, new_basis, new_chart)
