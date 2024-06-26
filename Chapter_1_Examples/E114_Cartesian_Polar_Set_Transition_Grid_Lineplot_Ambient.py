@@ -123,11 +123,11 @@ yg = cart_grid_rotated_points[1]
 r = np.linspace(.25, 4, 7)
 theta = np.linspace(-3, 3, 21)
 
-# Build a meshgrid from x and y, using the meshgrid_array function, which generates a GridArray with the
+# Build a meshgrid from r and theta, using the meshgrid_array function, which generates a GridArray with the
 # n_outer value generated automatically
 polar_grid_points = ut.meshgrid_array(r, theta)
 
-# Turn the meshgrid into a ManifoldElementSet, specified in the Cartesian chart
+# Turn the meshgrid into a ManifoldElementSet, specified in the polar chart
 polar_grid_manifold_elements = md.ManifoldElementSet(R2, polar_grid_points, 1)
 
 # Convert the grid into the ambient-space coordinates
@@ -137,7 +137,7 @@ polar_grid_embedded_manifold_elements = polar_grid_cartesian_manifold_elements.t
 # Get the grid representation of the ambient-space meshgrid points
 polar_grid_embedded_points = polar_grid_embedded_manifold_elements.grid
 
-# Extract the r and theta components of the rotated grid
+# Extract the r and theta components of the embedded grid
 rg = polar_grid_embedded_points[0]
 thetag = polar_grid_embedded_points[1]
 
@@ -195,8 +195,8 @@ ax_polar = plt.subplot(3, 3, 6)
 ax_polar.plot(q_set_ambient.grid[0], q_set_ambient.grid[1], color=spot_color)
 ax_polar.pcolormesh(rg, thetag, np.zeros([rg.shape[0]-1, rg.shape[1]-1]), edgecolor='grey', facecolor='none', linewidth=0.25)
 ax_polar.set_aspect('equal')
-ax_polar.plot(xg[2][1:5], yg[2][1:5], color='black')
-ax_polar.plot(xg.T[2][1:5], yg.T[2][1:5], color='black')
+ax_polar.plot(xg[2][2:], yg[2][2:], color='black')
+#ax_polar.plot(xg.T[2][1:5], yg.T[2][1:5], color='black')
 
 ax_polar_chart = plt.subplot(3, 3, 9)
 ax_polar_chart.plot(q_set_polar.grid[0], q_set_polar.grid[1], color=spot_color)
