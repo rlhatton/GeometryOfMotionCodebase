@@ -27,13 +27,13 @@ def cartesian_to_polar(cartesian_coords):
 
 
 def ambient_to_cartesian(ambient_coords):
-    theta = np.pi/6
+    theta = np.pi/3
     rotmatrix = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
     cartesian_coords = np.squeeze(np.matmul(rotmatrix, ambient_coords[:, None]))
     return cartesian_coords
 
 def cartesian_to_ambient(ambient_coords):
-    theta = -np.pi/6
+    theta = -np.pi/3
     rotmatrix = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
     cartesian_coords = np.squeeze(np.matmul(rotmatrix, ambient_coords[:, None]))
     return cartesian_coords
@@ -53,11 +53,11 @@ Q = R2
 # Construct the points describing a rotated rectangle in the ambient space
 
 # Specify the rectangle's geometry in the ambient-space chart
-box_width = 3
-box_height = 1
-box_angle = np.pi/3
-box_offset_x = 1
-box_offset_y = -.5
+box_width = 1
+box_height = 3
+box_angle = -np.pi/3
+box_offset_x = 2
+box_offset_y = .5
 
 # Build the edges of the box counterclockwise from the lower-right corner
 edge1_x = np.full(20, box_width/2)
@@ -95,7 +95,7 @@ q_set_polar = q_set_cartesian.transition(1)
 
 
 ############
-# For plotting purposes, create a rotated cartesian grid
+# For plotting purposes, create a rotated cartesian grid and a polar grid
 
 # Generate a loosely spaced set of points on two axes
 x = np.linspace(-2, 4, 7)
@@ -117,6 +117,29 @@ cart_grid_rotated_points = cart_grid_rotated_manifold_elements.grid
 # Extract the x and y components of the rotated grid
 xg = cart_grid_rotated_points[0]
 yg = cart_grid_rotated_points[1]
+
+##
+# Generate a loosely-spaced set of points for polar axes
+r = np.linspace(.25, 4, 7)
+theta = np.linspace(-3, 3, 21)
+
+# Build a meshgrid from x and y, using the meshgrid_array function, which generates a GridArray with the
+# n_outer value generated automatically
+polar_grid_points = ut.meshgrid_array(r, theta)
+
+# Turn the meshgrid into a ManifoldElementSet, specified in the Cartesian chart
+polar_grid_manifold_elements = md.ManifoldElementSet(R2, polar_grid_points, 1)
+
+# Convert the grid into the ambient-space coordinates
+polar_grid_cartesian_manifold_elements = polar_grid_manifold_elements.transition(0)
+polar_grid_embedded_manifold_elements = polar_grid_cartesian_manifold_elements.transition(2)
+
+# Get the grid representation of the ambient-space meshgrid points
+polar_grid_embedded_points = polar_grid_embedded_manifold_elements.grid
+
+# Extract the r and theta components of the rotated grid
+rg = polar_grid_embedded_points[0]
+thetag = polar_grid_embedded_points[1]
 
 ##############
 # Plot the calculated terms
@@ -167,13 +190,23 @@ ax_cart_chart.axvline(0, color='black', zorder=.75)
 
 
 ###
-# Plot the polar representation of the rectangle as it appears in the Cartesian chart
-ax_polar = plt.subplot(3, 3, 6, projection='polar')
-ax_polar.plot(q_set_polar.grid[1], q_set_polar.grid[0], color=spot_color)
-ax_polar.set_rlim(0, 6)
-ut.convert_polar_xticks_to_radians(ax_polar)
+# Plot the polar representation of the rectangle as it appears in the ambient space
+ax_polar = plt.subplot(3, 3, 6)
+ax_polar.plot(q_set_ambient.grid[0], q_set_ambient.grid[1], color=spot_color)
+ax_polar.pcolormesh(rg, thetag, np.zeros([rg.shape[0]-1, rg.shape[1]-1]), edgecolor='grey', facecolor='none', linewidth=0.25)
+ax_polar.set_aspect('equal')
+ax_polar.plot(xg[2][1:5], yg[2][1:5], color='black')
+ax_polar.plot(xg.T[2][1:5], yg.T[2][1:5], color='black')
 
 ax_polar_chart = plt.subplot(3, 3, 9)
-ax_polar_chart.plot(q_set_polar.grid[1], q_set_polar.grid[0], color=spot_color)
+ax_polar_chart.plot(q_set_polar.grid[0], q_set_polar.grid[1], color=spot_color)
+ax_polar_chart.set_xlim(0, 4)
+ax_polar_chart.set_ylim(-3, 3)
+ax_polar_chart.set_xticks([0, 1, 2, 3, 4])
+ax_polar_chart.set_yticks([-4, -2, 0, 2, 4])
+ax_polar_chart.axhline(0, color='black', zorder=.75)
+ax_polar_chart.axvline(0, color='black', zorder=.75)
+ax_polar_chart.set_axisbelow(True)
+ax_polar_chart.grid(True)
 
 plt.show()

@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.ma as ma
 import matplotlib.pyplot as plt
 from geomotion import manifold as md
 from geomotion import utilityfunctions as ut
@@ -26,14 +27,14 @@ def cartesian_to_polar(cartesian_coords):
 
 
 def ambient_to_cartesian(ambient_coords):
-    theta = np.pi / 6
+    theta = np.pi / 3
     rotmatrix = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
     cartesian_coords = np.squeeze(np.matmul(rotmatrix, ambient_coords[:, None]))
     return cartesian_coords
 
 
 def cartesian_to_ambient(ambient_coords):
-    theta = -np.pi / 6
+    theta = -np.pi / 3
     rotmatrix = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
     cartesian_coords = np.squeeze(np.matmul(rotmatrix, ambient_coords[:, None]))
     return cartesian_coords
@@ -72,25 +73,39 @@ f_ambient = f_xy.transition(2)
 x = np.linspace(-10, 10)
 y = np.linspace(-10, 10)
 
-# Build a meshgrid from x and y, using the meshgrid_array function, which generates a GridArray with the
+# Generate a loosely spaced set of points on two axes
+x_l = np.linspace(-10, 10, 7)
+y_l = np.linspace(-10, 10, 7)
+
+# Build meshgrids from x and y, using the meshgrid_array function, which generates a GridArray with the
 # n_outer value generated automatically
 cart_grid_points = ut.meshgrid_array(x, y)
+cart_grid_points_l = ut.meshgrid_array(x_l, y_l)
 
-# Turn the meshgrid into a ManifoldElementSet, specified in the Cartesian chart
+# Turn the meshgrids into  ManifoldElementSets, specified in the Cartesian chart
 cart_grid_manifold_elements = md.ManifoldElementSet(R2, cart_grid_points, 0)
+cart_grid_manifold_elements_l = md.ManifoldElementSet(R2, cart_grid_points_l, 0)
 
 # Convert (i.e. rotate) the grid into the ambient-space coordinates
 cart_grid_rotated_manifold_elements = cart_grid_manifold_elements.transition(2)
+cart_grid_rotated_manifold_elements_l = cart_grid_manifold_elements_l.transition(2)
 
-# Get the grid representation of the ambient-space meshgrid points
+# Get the grid representation of the ambient-space loose Cartesian meshgrid points
 cart_grid_rotated_points = cart_grid_rotated_manifold_elements.grid
+cart_grid_rotated_points_l = cart_grid_rotated_manifold_elements_l.grid
 
 # Extract the x and y components of the grids
 xg_ambient = cart_grid_points[0]
 yg_ambient = cart_grid_points[1]
 
+xg_ambient_l = cart_grid_points_l[0]
+yg_ambient_l = cart_grid_points_l[1]
+
 xg_cart = cart_grid_rotated_points[0]
 yg_cart = cart_grid_rotated_points[1]
+
+xg_cart_l = cart_grid_rotated_points_l[0]
+yg_cart_l = cart_grid_rotated_points_l[1]
 
 ##############
 # Plot the calculated terms
@@ -111,24 +126,28 @@ ax_ambient.set_aspect('equal')
 ax_ambient.set_axisbelow(True)
 
 
-# Plot the Cartesian grid and the rectangle as they appear in ambient space
+# Plot the Cartesian grid and the function as they appear in ambient space
 ax_cart = plt.subplot(3, 3, 4)
 ax_cart.pcolormesh(xg_cart, yg_cart, f_xy(cart_grid_points))
-ax_cart.pcolormesh(xg_cart, yg_cart, np.zeros([xg_cart.shape[0] - 1, xg_cart.shape[1] - 1]), edgecolor='grey', facecolor='none',
+ax_cart.pcolormesh(xg_cart_l, yg_cart_l, np.zeros([xg_cart_l.shape[0] - 1, xg_cart_l.shape[1] - 1]), edgecolor='grey', facecolor='none',
                    linewidth=0.25)
-ax_cart.plot(xg_cart[2], yg_cart[2], color='black')
-ax_cart.plot(xg_cart.T[2], yg_cart.T[2], color='black')
-#ax_cart.set_xlim(-2, 4)
-#ax_cart.set_ylim(-3, 3)
+ax_cart.plot(xg_cart_l[3][2:], yg_cart_l[3][2:], color='black')
+ax_cart.plot(xg_cart_l.T[3][2:], yg_cart_l.T[3][2:], color='black')
+ax_cart.set_xlim(-10, 10)
+ax_cart.set_ylim(-10, 10)
 ax_cart.set_xticks([])
 ax_cart.set_yticks([])
 ax_cart.set_aspect('equal')
 ax_cart.set_axisbelow(True)
 
 ###
-# Plot the Cartesian representation of the rectangle as it appears in the Cartesian chart
+# Plot the Cartesian representation of the function as it appears in the Cartesian chart
+f_cart_chart = ma.masked_array(f_xy(cart_grid_points), mask=((xg_cart > 10) | (yg_cart > 10) | (xg_cart < -10) | (yg_cart < -10)))
+
 ax_cart_chart = plt.subplot(3, 3, 7)
-ax_cart_chart.pcolormesh(xg_ambient, yg_ambient, f_xy(cart_grid_points))
+ax_cart_chart.pcolormesh(xg_ambient, yg_ambient, f_cart_chart)
+ax_cart_chart.pcolormesh(xg_ambient_l, yg_ambient_l, np.zeros([xg_ambient_l.shape[0] - 1, xg_ambient_l.shape[1] - 1]), edgecolor='grey', facecolor='none',
+                   linewidth=0.25)
 # ax_cart_chart.set_xlim(-2, 2)
 # ax_cart_chart.set_ylim(-2, 2)
 # ax_cart_chart.set_xticks([-1, 0, 1, 2, 3, 4])
