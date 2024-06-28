@@ -2,6 +2,8 @@
 import warnings
 import numpy as np
 
+def passthrough(x):
+    return x
 
 def ensure_tuple(value):
     """ Function that wraps an input value in a tuple if it is not already a tuple"""
@@ -36,7 +38,11 @@ def evert_array(arr, n_outer):
     return np.moveaxis(arr, list(range(n_outer)), list(range(-n_outer, 0)))
 
 
-def array_eval(func, arr, n_outer, depth=0):
+def array_eval(func, arr, n_outer=None, depth=0):
+
+    if n_outer is None:
+        n_outer = arr.n_outer
+
     # Get the length of the array at the current depth
     sh = arr.shape[0]
 

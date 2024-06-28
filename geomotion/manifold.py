@@ -191,19 +191,82 @@ class ManifoldFunction:
     def __init__(self,
                  manifold,
                  defining_function,
-                 defining_chart=0):
+                 defining_chart=0,
+                 postprocess_function=None):
+
+        if postprocess_function is None:
+            postprocess_function = [ut.passthrough, ut.passthrough]
+
         self.manifold = manifold
         self.defining_function = defining_function
         self.defining_chart = defining_chart
+        self.postprocess_function = postprocess_function
 
     def __call__(self, configuration_value, *args, **kwargs):
-        # If the input is a ManifoldElement, extract its value
-        if isinstance(configuration_value, ManifoldElement):
-            configuration_value = configuration_value.transition(self.defining_chart)
-            configuration_value = configuration_value.value
 
-        # Pass the configuration value, and any additional input values, into the defining function
-        return self.defining_function(configuration_value, *args, **kwargs)
+        # Convert the configuration value into a GridArray of numeric data
+        configuration_grid, value_type = self.preprocess(configuration_value)
+
+        # Evaluate the function for its numeric value
+        function_grid = self.process(configuration_grid, *args, **kwargs)
+
+        # Apply any post-process formatting
+        function_value = self.postprocess(function_grid, value_type)
+
+        return function_value
+
+    def preprocess(self, configuration_value):
+
+        if isinstance(configuration_value, ManifoldElement) or isinstance(configuration_value, np.ndarray):
+
+            # Record the single-input for post-processing
+            value_type = 'single'
+
+            # Extract the value if the provided input is a ManifoldElement
+            if isinstance(configuration_value, ManifoldElement):
+                configuration_value = configuration_value.value
+
+            # Make the value an element-first grid array for processing
+            configuration_value = ut.GridArray([configuration_value], 1)
+
+        elif isinstance(configuration_value, ManifoldElementSet) or isinstance(configuration_value, ut.GridArray):
+
+            # Record the multiple-input for post-processing
+            value_type = 'multiple'
+
+            # Extract the list of vectors to an element-first GridArray if the input is a ManifoldElementSet
+            if isinstance(configuration_value, ManifoldElementSet):
+                configuration_value = configuration_value.grid
+
+            # Format the grid to be element-first
+            configuration_value = ut.format_grid(configuration_value, self.manifold.element_shape, 'element')
+
+        else:
+
+            raise Exception(
+                "Configuration_value input does not appear to be a ManifoldElement, ManifoldElementSet, or a numeric "
+                "type of an appropriate format (ndarray for singleton values, or GridArray for multiple values")
+
+        return configuration_value, value_type
+
+    def process(self, configuration_grid, *args, **kwargs):
+
+        def defining_function_with_inputs(config):
+            return self.defining_function(config, *args, **kwargs)
+
+        function_grid = configuration_grid.grid_eval(defining_function_with_inputs)
+
+        return function_grid
+
+    def postprocess(self, function_grid, value_type):
+
+        if value_type == 'single':
+            function_value = function_grid[0]  # Extract the single output from the grid array
+            return self.postprocess_function[0](function_value)
+        elif value_type == 'multiple':
+            return self.postprocess_function[1](function_grid)
+        else:
+            raise Exception("Value_type should be 'single' or 'multiple'.")
 
     def transition(self, new_chart):
 

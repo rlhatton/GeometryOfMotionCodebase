@@ -59,10 +59,6 @@ class GroupElement(md.ManifoldElement):
                  value,
                  initial_chart=0):
 
-        # # Store the group into the group element attributes
-        # self.group = group
-
-
         # Handle the identity-element value keyword
         if isinstance(value, str) and (value == 'identity'):
             if group.identity_list[initial_chart] is not None:
@@ -75,7 +71,6 @@ class GroupElement(md.ManifoldElement):
         super().__init__(group,
                          value,
                          initial_chart)
-
 
     def L(self,
           g_right):
@@ -211,14 +206,16 @@ class GroupElementSet(md.ManifoldElementSet):
 
     def __mul__(self, other):
 
-        if (isinstance(other, GroupElement) or isinstance(other, GroupElementSet)) and (self.manifold == other.manifold):
+        if (isinstance(other, GroupElement) or isinstance(other, GroupElementSet)) and (
+                self.manifold == other.manifold):
             return self.group_set_action(other, '__mul__')
         else:
             return NotImplemented
 
     def __rmul__(self, other):
 
-        if (isinstance(other, GroupElement) or isinstance(other, GroupElementSet)) and (self.manifold == other.manifold):
+        if (isinstance(other, GroupElement) or isinstance(other, GroupElementSet)) and (
+                self.manifold == other.manifold):
             return self.group_set_action(other, '__rmul__')
         else:
             return NotImplemented
