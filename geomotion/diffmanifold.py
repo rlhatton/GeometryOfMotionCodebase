@@ -71,39 +71,30 @@ class TangentVector(core.GeomotionElement):
         # If configuration is a manifold element, verify that no manifold was specified or that the configuration's
         # manifold matches the manifold specified for this vector
         if isinstance(configuration, md.ManifoldElement):
+
             if (manifold is None) or (configuration.manifold == manifold):
                 self.manifold = configuration.manifold
             else:
                 raise Exception("Configuration specified for vector is not an element of the manifold to which the "
                                 "vector is attached")
 
-        # If configuration is not a manifold element, attempt to cast it to an np.array, check its size against the
-        # manifold dimensionality, and if it is of the right size, use it to construct a configuration element of the
-        # appropriate size in the appropriate chart
+        # If configuration is not a manifold element, set this TangentVector's manifold to the provided manifold,
+        # then attempt to use the provided configuration to generate a manifold element
         elif manifold is not None:
             self.manifold = manifold
-            configuration = ut.ensure_ndarray(configuration)
-            if configuration.size == manifold.n_dim:
-                # Use the initial chart, defaulting to the first chart
-                if initial_chart is None:
-                    initial_chart = 0
-                # Generate the configuration as a manifold element at the specified configuration and chart
-                configuration = manifold.element(configuration, initial_chart)
-            else:
-                raise Exception("Provided configuration coordinates do not match dimensionality of specified manifold")
+            configuration = manifold.element(configuration, initial_chart)
         else:
             raise Exception("Manifold not specified and provided configuration does not have an associated manifold")
 
-        # Check that the shape of the provided value matches the expected form
-        if value.shape == self.manifold.element_shape:
-            pass
-        else:
-            raise Exception("Value should be of shape ", self.manifold.vector_shape, " not ", value.shape)
-
         # Set the value, initial basis, and configuration for the vector
-        self.value = value
+        self.value = value  # Format is verified/ensured by the format_value method
         self.current_basis = initial_basis
         self.configuration = configuration
+
+    def format_value(self, val):
+
+        # TangentVectors have the same 1-d data format as their associated ManifoldElements
+        return self.configuration.format_value(val)
 
     @property
     def value(self):
@@ -310,7 +301,7 @@ class TangentVector(core.GeomotionElement):
         return NotImplemented
 
 
-class TangentVectorSet(md.GeomotionSet):
+class TangentVectorSet(core.GeomotionSet):
 
     def __init__(self, *args):
 
@@ -713,7 +704,6 @@ class TangentVectorField:
         # Convert the data grid so that the outer indices correspond the location of the data points and the inner
         # indices correspond to the dimensionality of the data
         configuration_at_points = configuration_grid.everse
-
 
         # Evaluate the defining function at each data location to get the vector at that location
         def v_function(x):
