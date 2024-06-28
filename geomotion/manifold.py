@@ -1,10 +1,9 @@
 #! /usr/bin/python3
-import copy
-import warnings
 from collections import UserList
 import numpy as np
 from operator import methodcaller
 from . import utilityfunctions as ut
+from . import core
 
 
 class Manifold:
@@ -14,7 +13,8 @@ class Manifold:
 
     def __init__(self,
                  transition_table,
-                 n_dim):
+                 n_dim,
+                 immersion_table=None):
         # Save the provided chart transition table as a class instance attribute
         self.transition_table = transition_table
         # Extract the number of charts implied by the transition table
@@ -88,19 +88,7 @@ class ManifoldElement:
         return str(self.value)
 
 
-class GeomotionSet(UserList):
-    """ Generic class for sets of elements"""
-
-    @property
-    def shape(self):
-        return ut.shape(self.value)
-
-    @property
-    def value(self):
-        return self.data
-
-
-class ManifoldElementSet(GeomotionSet):
+class ManifoldElementSet(core.GeomotionSet):
     """ Argument list should either be a list of manifold elements or
     Manifold, GridArray, initial_chart, component-or-element """
 
@@ -216,7 +204,6 @@ class ManifoldFunction:
         # Pull back the function by mapping the input from the new chart into the old chart where the function was
         # defined
         def new_defining_function(configuration_value, *args, **kwargs):
-
             old_configuration_value = self.manifold.transition_table[new_chart][self.defining_chart](
                 configuration_value)
 
