@@ -6,6 +6,7 @@ from inspect import signature
 from typing import Union
 from scipy.integrate import solve_ivp
 
+from . import core
 from . import manifold as md
 from . import utilityfunctions as ut
 
@@ -55,7 +56,7 @@ class DiffManifold(md.Manifold):
         return (self.n_dim,)
 
 
-class TangentVector:
+class TangentVector(core.GeomotionElement):
 
     def __init__(self,
                  manifold: DiffManifold,

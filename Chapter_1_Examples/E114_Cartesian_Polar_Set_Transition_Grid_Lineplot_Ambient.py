@@ -197,6 +197,10 @@ ax_polar.pcolormesh(rg, thetag, np.zeros([rg.shape[0]-1, rg.shape[1]-1]), edgeco
 ax_polar.set_aspect('equal')
 ax_polar.plot(xg[2][2:], yg[2][2:], color='black')
 #ax_polar.plot(xg.T[2][1:5], yg.T[2][1:5], color='black')
+ax_polar.set_xlim(-2, 4)
+ax_polar.set_ylim(-3, 3)
+ax_polar.set_xticks([])  # [-1, 0, 1, 2, 3, 4])
+ax_polar.set_yticks([])  # [-1, 0, 1, 2, 3, 4])
 
 ax_polar_chart = plt.subplot(3, 3, 9)
 ax_polar_chart.plot(q_set_polar.grid[0], q_set_polar.grid[1], color=spot_color)

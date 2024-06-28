@@ -57,6 +57,17 @@ class ManifoldElement(core.GeomotionElement):
         self.current_chart = initial_chart
         self.value = value
 
+    def format_value(self, val):
+
+        val = ut.ensure_ndarray(val)
+
+        # Check element shape
+        if val.shape == self.manifold.element_shape:
+            pass
+        else:
+            raise Exception("Provided value does not match element shape for manifold")
+
+        return val
 
     def transition(self, new_chart):
         """
@@ -81,8 +92,6 @@ class ManifoldElement(core.GeomotionElement):
             new_value = self.manifold.transition_table[self.current_chart][new_chart](self.value)
 
         return self.__class__(self.manifold, new_value, new_chart)
-
-
 
 
 class ManifoldElementSet(core.GeomotionSet):
