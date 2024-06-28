@@ -36,7 +36,7 @@ class Manifold:
         return (self.n_dim,)
 
 
-class ManifoldElement:
+class ManifoldElement(core.GeomotionElement):
     """
     Class for manifold elements
     """
@@ -54,8 +54,9 @@ class ManifoldElement:
             value = [value]
 
         # Make sure the value is a numpy float array
-        self.value = np.array(value, dtype=float)
         self.current_chart = initial_chart
+        self.value = value
+
 
     def transition(self, new_chart):
         """
@@ -81,11 +82,7 @@ class ManifoldElement:
 
         return self.__class__(self.manifold, new_value, new_chart)
 
-    def __getitem__(self, item):
-        return self.value[item]
 
-    def __str__(self):
-        return str(self.value)
 
 
 class ManifoldElementSet(core.GeomotionSet):

@@ -31,11 +31,10 @@ class RepresentationGroup(gp.Group):
         # Make sure that we have both the representation of the identity (for constructing the group) and its
         # derepresentation (for determining the dimensionality)
 
-        # Make sure that the identity is specified as a list or ndarray
-        if not (isinstance(identity, list) or isinstance(identity, np.ndarray)):
-            identity = [identity]
+        # Make sure that the identity is specified an ndarray
+        identity = ut.ensure_ndarray(identity)
 
-        identity = np.array(identity, dtype=float)
+        # make sure that we have the identity in both the matrix and coordinate-list forms
         if identity.ndim == 2:
             identity_representation = identity
             identity_derepresentation = derepresentation_function_list[specification_chart](identity)
@@ -57,7 +56,7 @@ class RepresentationGroup(gp.Group):
         self.derepresentation_function_list = derepresentation_function_list
 
         # Store the identity input as the group identity representation
-        self.identity_rep = np.array(identity_representation, dtype=float)
+        self.identity_rep = identity_representation
 
     def element(self,
                 representation,
@@ -86,28 +85,19 @@ class RepresentationGroupElement(gp.GroupElement):
                  group,
                  representation,
                  initial_chart=0):
+
         # Handle the identity-element value keyword
         if isinstance(representation, str) and (representation == 'identity'):
             representation = group.identity_rep
 
         # Use the provided inputs to generate the group-element properties of the group element
+        # Don't pass in an initial value; we are making value a property that depends on the representation and chart
         super().__init__(group,
-                         None,  # Don't pass in an initial value; we are making value a property that depends on the
-                         # representation and chart
+                         group.identity_list[0],
                          initial_chart)
 
-        # Make sure that the representation is a list or ndarray
-        if not (isinstance(representation, list) or isinstance(representation, np.ndarray)):
-            representation = [representation]
-
-        # Store the representation, passing it through the representation function if necessary
-        representation = np.array(representation, dtype=float)
-        if representation.ndim == 2:  #(np.squeeze(representation)).ndim == 2:
-            pass
-        else:
-            representation = group.representation_function_list[initial_chart](representation)
-
-        self.rep = np.array(representation, dtype=float)
+        # Save the representation (using the type enforcement in the setter)
+        self.rep = representation
 
     def L(self,
           g_right):
@@ -136,19 +126,37 @@ class RepresentationGroupElement(gp.GroupElement):
         return g_inv
 
     @property
+    def rep(self):
+        return self._representation
+
+    @rep.setter
+    def rep(self,
+            representation):
+
+        # Make sure that the provided representation is an ndarray
+        representation = ut.ensure_ndarray(representation)
+
+        # Force the representation into matrix form if it is not already in matrix form
+        if representation.ndim == 2:
+            pass
+        else:
+            representation = self.group.representation_function_list[self.current_chart](representation)
+
+        # Store the matrix representation
+        self._representation = representation
+
+    @property
     def value(self):
 
         val_raw = self.group.derepresentation_function_list[self.current_chart](self.rep)
 
         # Make sure that the value is a list or ndarray
-        if not (isinstance(val_raw, list) or isinstance(val_raw, np.ndarray)):
-            val_raw = [val_raw]
-
-        # Make sure the value is an ndarray
-        val = np.array(val_raw, dtype=float)
+        val = ut.ensure_ndarray(val_raw)
 
         return val
 
     @value.setter
     def value(self, val):
-        pass
+
+        # Pass the value input into the representation setter (which will force it to matrix form)
+        self.rep = val

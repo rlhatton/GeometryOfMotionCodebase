@@ -59,6 +59,10 @@ class GroupElement(md.ManifoldElement):
                  value,
                  initial_chart=0):
 
+        # # Store the group into the group element attributes
+        # self.group = group
+
+
         # Handle the identity-element value keyword
         if isinstance(value, str) and (value == 'identity'):
             if group.identity_list[initial_chart] is not None:
@@ -72,8 +76,6 @@ class GroupElement(md.ManifoldElement):
                          value,
                          initial_chart)
 
-        # Store the group into the group element attributes
-        self.group = group
 
     def L(self,
           g_right):
@@ -137,6 +139,14 @@ class GroupElement(md.ManifoldElement):
         g_inv = self.group.element(g_inv_value, self.current_chart)
 
         return g_inv
+
+    @property
+    def group(self):
+        return self.manifold
+
+    @group.setter
+    def group(self, gp):
+        self.manifold = gp
 
     def __mul__(self, other):
 
