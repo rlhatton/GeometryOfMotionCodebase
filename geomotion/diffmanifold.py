@@ -594,9 +594,6 @@ class TangentVectorField(md.ManifoldFunction):
                  defining_chart=0,
                  defining_basis=0):
 
-
-
-
         # Make sure that the defining function can take at least two inputs (configuration and time)
         sig = signature(defining_function)
         if len(sig.parameters) == 1:
@@ -629,44 +626,6 @@ class TangentVectorField(md.ManifoldFunction):
                  **kwargs):
 
         return super().__call__(config, time, *args, **kwargs)
-
-    # def transition(self, new_basis, configuration_transition: Union[str, int] = 'match'):
-    #
-    #     # Parse the configuration_transition option. It would be nice to just pass it into
-    #     # the vector transition (pushforward), but we need to process it here for the pullback
-    #     # of the vector field function itself
-    #     if isinstance(configuration_transition, str):
-    #         # 'match' says to match the configuration to the new basis
-    #         if configuration_transition == 'match':
-    #             new_chart = new_basis
-    #         elif configuration_transition == 'keep':
-    #             new_chart = self.defining_chart
-    #         else:
-    #             raise Exception("Unknown option " + configuration_transition + "for transitioning the configuration "
-    #                                                                            "while transitioning a "
-    #                                                                            "TangentVectorField")
-    #     else:
-    #         new_chart = configuration_transition
-    #
-    #
-    #     # Add a transitioning step to post-processessing
-    #     if self.postprocess_function is not None:
-    #         old_postprocess_function = self.postprocess_function
-    #
-    #         def postprocess_function_single(q, v):
-    #             return old_postprocess_function[0](q, v).transition(new_basis, new_chart)
-    #
-    #         def postprocess_function_multiple(q, v):
-    #             return old_postprocess_function[1](q, v).transition(new_basis, new_chart)
-    #
-    #         postprocess_function = [postprocess_function_single, postprocess_function_multiple]
-    #
-    #         # Create a TangentVectorField from the output_defining_function
-    #         output_tangent_vector_field = self.__class__(self.manifold,
-    #                                                      output_defining_function,
-    #                                                      self.defining_basis,
-    #                                                      self.defining_chart,
-    #                                                      postprocess_function)
 
     def transition(self, new_basis, configuration_transition: Union[str, int] = 'match'):
         """Take a vector field defined in one basis and chart combination and convert it

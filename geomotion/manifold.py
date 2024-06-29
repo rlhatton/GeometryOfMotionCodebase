@@ -293,48 +293,24 @@ class ManifoldFunction:
                               new_defining_function,
                               new_chart)
 
-    # def grid(self,
-    #          configuration_grid: ut.GridArray,
-    #          chart=None,
-    #          output_format='grid',
-    #          *args,
-    #          **kwargs):
-    #
-    #     # If chart is not specified, use tangent vector field's defining chart
-    #     if chart is None:
-    #         chart = self.defining_chart
-    #
-    #     # Take in data formatted with the outer grid indices corresponding to the dimensionality of the data and the
-    #     # inner grid indices corresponding to the location of those data points
-    #
-    #     # Verify that the configuration grid is a one-dimensional GridArray and that the dimensionality matches that
-    #     # of the manifold
-    #     if not isinstance(configuration_grid, ut.GridArray):
-    #         raise Exception("Expected configuration_grid to be of type GridArray.")
-    #
-    #     if configuration_grid.n_outer != 1:
-    #         raise Exception("Expected n_outer to be 1 for the GridArray provided as configuration_grid.")
-    #
-    #     if configuration_grid.shape[0] != self.manifold.n_dim:
-    #         raise Exception("Expected the first axis of the GridArray provided as configuration_grid to match the "
-    #                         "dimensionality of the manifold.")
-    #
-    #     # Convert the data grid so that the outer indices correspond the location of the data points and the inner
-    #     # indices correspond to the dimensionality of the data
-    #     configuration_at_points = configuration_grid.everse
-    #
-    #     # Evaluate the defining function at each data location to get the function value at that location
-    #     def f(x):
-    #         f_at_x = self.__call__(x, *args, **kwargs)
-    #         return f_at_x
-    #
-    #     # Perform the evaluation
-    #     function_at_points = configuration_at_points.grid_eval(f)
-    #
-    #     function_grid = function_at_points.everse
-    #
-    #     # Output format
-    #     if output_format == 'grid':
-    #         return function_grid
-    #     else:
-    #         raise Exception("Unknown output format for ManifoldFunction.grid")
+
+class ManifoldMap(ManifoldFunction):
+
+    def __init__(self,
+                 input_manifold: Manifold,
+                 output_manifold: Manifold,
+                 defining_function,
+                 input_defining_chart,
+                 output_defining_chart):
+        def postprocess_function_single(q_input, q_output):
+            return output_manifold.element(q_output, output_defining_chart)
+
+        def postprocess_function_multiple(q_input, q_output):
+            return output_manifold.element_set(q_output, output_defining_chart)
+
+        postprocess_function = [postprocess_function_single, postprocess_function_multiple]
+
+        super().__init__(input_manifold,
+                         defining_function,
+                         input_defining_chart,
+                         postprocess_function)
