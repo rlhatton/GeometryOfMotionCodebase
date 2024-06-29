@@ -63,8 +63,8 @@ vector_set_xy = X_outward_xy(grid_xy)
 vector_set_rt = X_outward_rt(grid_rt)
 
 # Extract the grids from the set-evaluated vector fields
-vs_xy_v, vs_xy_c = vector_set_xy.grid
-vs_rt_v, vs_rt_c = vector_set_rt.grid
+vs_xy_c, vs_xy_v = vector_set_xy.grid
+vs_rt_c, vs_rt_v = vector_set_rt.grid
 
 
 # print("Shape of vector grids is ", vs_rtxy_v.shape)
@@ -90,7 +90,7 @@ ax.set_title("Polar from set")
 
 # Transition the polar vectors back to Cartesian coordinates
 vector_set_rtxy = vector_set_rt.transition(0, 'match')
-vs_rtxy_v, vs_rtxy_c = vector_set_rtxy.grid
+vs_rtxy_c, vs_rtxy_v = vector_set_rtxy.grid
 
 ax = plt.subplot(3, 2, 5)
 c_grid = vs_rtxy_c

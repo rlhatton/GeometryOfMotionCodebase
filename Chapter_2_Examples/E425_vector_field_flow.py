@@ -38,7 +38,7 @@ print("Flow solution in polar coordinates is: \n", sol2.y)
 grid_xy = ut.meshgrid_array(np.linspace(-2, 2, 5), np.linspace(-2, 2, 5))
 
 # Evaluate the saddle vector field on its grid
-vector_grid = X_saddle.grid(grid_xy)
+vector_grid = X_saddle(grid_xy).grid[1]
 
 # Evaluate solutions at a dense grid of time points
 traj1 = sol1.sol(np.linspace(start1, end1))
