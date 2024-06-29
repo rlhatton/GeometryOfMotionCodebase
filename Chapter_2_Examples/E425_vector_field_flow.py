@@ -18,7 +18,7 @@ def v_saddle(q):
 
 
 # Use the vector field function to construct a vector field
-X_saddle = tb.TangentVectorField(v_saddle, Q)
+X_saddle = tb.TangentVectorField(Q, v_saddle)
 
 # Integrate a flow on the vector field
 start1 = 0

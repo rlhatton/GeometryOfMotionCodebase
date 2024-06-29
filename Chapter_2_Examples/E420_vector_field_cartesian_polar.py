@@ -14,13 +14,13 @@ def v_outward_xy(q):
 
 
 # Use the vector field function to construct a vector field
-X_outward_xy = tb.TangentVectorField(v_outward_xy, Q)
+X_outward_xy = tb.TangentVectorField(Q, v_outward_xy)
 
 # Build a grid over which to evaluate the vector field
 grid_xy = ut.meshgrid_array(np.linspace(-2, 2, 5), np.linspace(-2, 2, 5))
 
 # Evaluate the vector field on the grid
-vector_grid = X_outward_xy.grid(grid_xy)
+vector_grid = X_outward_xy(grid_xy).grid[1]
 print("The Cartesian components of the outward field are the same as the underlying Cartesian coordinates: \n",
       vector_grid,
       "\n")
@@ -32,26 +32,26 @@ X_outward_rt = X_outward_xy.transition(1)
 grid_rt = ut.meshgrid_array([.5, 1, 2], [0, np.pi / 2, np.pi])
 
 # Evaluate the polar-coordinate-expressed field on the polar grid
-vector_grid_rt = X_outward_rt.grid(grid_rt)
+vector_grid_rt = X_outward_rt(grid_rt).grid
 
 print("The polar components of the outward field are all in the radial direction: \n", vector_grid_rt)
 
 # Adding vector fields with casting
 X_doubled = X_outward_xy + X_outward_rt
-vector_grid_doubled = X_doubled.grid(grid_xy)
+vector_grid_doubled = X_doubled(grid_xy).grid[1]
 
 print("Adding vector fields expressed in different coordinates produces a vector field in the first field's "
       "coordinates: \n", vector_grid_doubled)
 
 # Scalar multiplying vector fields
 X_tripled = X_outward_xy * 3
-vector_grid_tripled = X_tripled.grid(grid_xy)
+vector_grid_tripled = X_tripled(grid_xy).grid[1]
 
 print("Multiplying a scalar by a vector field scales the output: \n", vector_grid_tripled)
 
 # Dividing a vector field by a scalar
 X_halved = X_outward_xy / 2
-vector_grid_halved = X_halved.grid(grid_xy)
+vector_grid_halved = X_halved(grid_xy).grid[1]
 
 print("Dividing a vector field by a scalar scales down the value \n", vector_grid_halved, "\n")
 
@@ -59,9 +59,10 @@ print("Dividing a vector field by a scalar scales down the value \n", vector_gri
 # them as sets and then transitioning them
 
 # Evaluate the Cartesian and polar expressions of the vector fields as sets
-vector_set_xy = X_outward_xy.grid(grid_xy, 0, None, None, 'set')
-vector_set_rt = X_outward_rt.grid(grid_rt, 0, None, None, 'set')
+vector_set_xy = X_outward_xy(grid_xy)
+vector_set_rt = X_outward_rt(grid_rt)
 
+# Transition the polar set to Cartesian form
 vector_set_rtxy = vector_set_rt.transition(0, 'match')
 
 # Extract the grids from the set-evaluated vector fields

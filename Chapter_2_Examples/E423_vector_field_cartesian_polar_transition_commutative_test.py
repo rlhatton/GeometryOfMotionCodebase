@@ -15,7 +15,7 @@ def v_outward_xy(q):
 
 
 # Use the vector field function to construct a vector field
-X_outward_xy = tb.TangentVectorField(v_outward_xy, Q)
+X_outward_xy = tb.TangentVectorField(Q, v_outward_xy)
 
 # Transition the vector field into polar coordinates
 X_outward_rt = X_outward_xy.transition(1)
@@ -27,7 +27,7 @@ grid_xy = ut.meshgrid_array(np.linspace(-2, 2, 5), np.linspace(-2, 2, 5))
 grid_rt = (md.ManifoldElementSet(Q, grid_xy).transition(1)).grid
 
 # Evaluate the Cartesian vector field on its grid
-vector_grid = X_outward_xy.grid(grid_xy)
+vector_grid = X_outward_xy(grid_xy).grid[1]
 print("The Cartesian components of the outward field are the same as the underlying Cartesian coordinates: \n",
       vector_grid,
       "\n")
@@ -42,7 +42,7 @@ ax.set_ylim(-4, 4)
 ax.set_title("Cartesian chart outward")
 
 # Evaluate the polar-coordinate-expressed field on the polar grid
-vector_grid_rt = X_outward_rt.grid(grid_rt)
+vector_grid_rt = X_outward_rt(grid_rt).grid[1]
 
 print("The polar components of the outward field are all in the radial direction: \n", vector_grid_rt)
 
@@ -59,8 +59,8 @@ ax.set_title("Polar chart radial")
 # them as sets and then transitioning them
 
 # Evaluate the Cartesian and polar expressions of the vector fields as sets
-vector_set_xy = X_outward_xy.grid(grid_xy, 0, None, None, 'set')
-vector_set_rt = X_outward_rt.grid(grid_rt, 0, None, None, 'set')
+vector_set_xy = X_outward_xy(grid_xy)
+vector_set_rt = X_outward_rt(grid_rt)
 
 # Extract the grids from the set-evaluated vector fields
 vs_xy_v, vs_xy_c = vector_set_xy.grid
