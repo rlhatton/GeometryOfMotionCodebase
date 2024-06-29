@@ -297,20 +297,54 @@ class ManifoldFunction:
 class ManifoldMap(ManifoldFunction):
 
     def __init__(self,
-                 input_manifold: Manifold,
+                 manifold: Manifold,
                  output_manifold: Manifold,
                  defining_function,
-                 input_defining_chart,
-                 output_defining_chart):
+                 defining_chart=0,
+                 output_defining_chart=0,
+                 output_chart=None):
+
+        if output_chart is None:
+            output_chart = output_defining_chart
         def postprocess_function_single(q_input, q_output):
-            return output_manifold.element(q_output, output_defining_chart)
+            return output_manifold.element(q_output, output_defining_chart).transition(output_chart)
 
         def postprocess_function_multiple(q_input, q_output):
-            return output_manifold.element_set(q_output, output_defining_chart)
+            return output_manifold.element_set(q_output, output_defining_chart).transition(output_chart)
 
         postprocess_function = [postprocess_function_single, postprocess_function_multiple]
 
-        super().__init__(input_manifold,
+        super().__init__(manifold,
                          defining_function,
-                         input_defining_chart,
+                         defining_chart,
                          postprocess_function)
+
+        self.output_defining_chart = output_defining_chart
+        self.output_chart = output_chart
+        self.output_manifold = output_manifold
+
+    def transition(self, new_chart):
+        # Pull back the function by mapping the input from the new chart into the old chart where the function was
+        # defined
+        def new_defining_function(configuration_value, *args, **kwargs):
+            old_configuration_value = self.manifold.transition_table[new_chart][self.defining_chart](
+                configuration_value)
+
+            return self.defining_function(old_configuration_value,
+                                          *args,
+                                          **kwargs)
+
+        return self.__class__(self.manifold,
+                              self.output_manifold,
+                              new_defining_function,
+                              new_chart,
+                              self.output_defining_chart,
+                              self.output_chart)
+
+    def transition_output(self, new_output_chart):
+        return self.__class__(self.manifold,
+                              self.output_manifold,
+                              self.defining_function,
+                              self.defining_chart,
+                              self.output_defining_chart,
+                              new_output_chart)

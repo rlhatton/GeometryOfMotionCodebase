@@ -39,6 +39,8 @@ Q_amb = R2
 param_map_xy = md.ManifoldMap(Q_amb, Q, ambient_to_cartesian, 0, 0)
 embed_map_xy = md.ManifoldMap(Q, Q_amb, cartesian_to_ambient, 0, 0)
 
+param_map_rt = param_map_xy.transition_output(1)
+embed_map_rt = embed_map_xy.transition(1)
 
 #####################
 # Construct the points describing a rotated rectangle in the ambient space
@@ -141,7 +143,7 @@ spot_color = gplt.crimson
 ###
 # Plot the rectangle in the ambient space, with no coordinate grid (because the ambient space in principle is
 # coordinate-free, and we've only supplied it with coordinates so we can actually tell the computer to plot things
-ax_ambient = plt.subplot(3, 3, 2)
+ax_ambient = plt.subplot(3, 4, 2)
 ax_ambient.plot(q_set_ambient.grid[0], q_set_ambient.grid[1], color=spot_color)
 ax_ambient.set_xlim(-2, 4)
 ax_ambient.set_ylim(-3, 3)
@@ -151,7 +153,7 @@ ax_ambient.set_aspect('equal')
 ax_ambient.set_axisbelow(True)
 
 # Plot the Cartesian grid and the rectangle as they appear in ambient space
-ax_cart = plt.subplot(3, 3, 4)
+ax_cart = plt.subplot(3, 4, 5)
 ax_cart.plot(q_set_ambient.grid[0], q_set_ambient.grid[1], color=spot_color)
 ax_cart.pcolormesh(xg, yg, np.zeros([xg.shape[0] - 1, xg.shape[1] - 1]), edgecolor='grey', facecolor='none',
                    linewidth=0.25)
@@ -166,7 +168,7 @@ ax_cart.set_axisbelow(True)
 
 ###
 # Plot the Cartesian representation of the rectangle as it appears in the Cartesian chart
-ax_cart_chart = plt.subplot(3, 3, 7)
+ax_cart_chart = plt.subplot(3, 4, 9)
 ax_cart_chart.plot(q_set_cartesian.grid[0], q_set_cartesian.grid[1], color=spot_color)
 ax_cart_chart.set_xlim(-2, 2)
 ax_cart_chart.set_ylim(-2, 2)
@@ -180,7 +182,7 @@ ax_cart_chart.axvline(0, color='black', zorder=.75)
 
 ###
 # Plot the polar representation of the rectangle as it appears in the ambient space
-ax_polar = plt.subplot(3, 3, 6)
+ax_polar = plt.subplot(3, 4, 7)
 ax_polar.plot(q_set_ambient.grid[0], q_set_ambient.grid[1], color=spot_color)
 ax_polar.pcolormesh(rg, thetag, np.zeros([rg.shape[0] - 1, rg.shape[1] - 1]), edgecolor='grey', facecolor='none',
                     linewidth=0.25)
@@ -192,7 +194,7 @@ ax_polar.set_ylim(-3, 3)
 ax_polar.set_xticks([])  # [-1, 0, 1, 2, 3, 4])
 ax_polar.set_yticks([])  # [-1, 0, 1, 2, 3, 4])
 
-ax_polar_chart = plt.subplot(3, 3, 9)
+ax_polar_chart = plt.subplot(3, 4, 11)
 ax_polar_chart.plot(q_set_polar.grid[0], q_set_polar.grid[1], color=spot_color)
 ax_polar_chart.set_xlim(0, 4)
 ax_polar_chart.set_ylim(-3, 3)
@@ -202,5 +204,36 @@ ax_polar_chart.axhline(0, color='black', zorder=.75)
 ax_polar_chart.axvline(0, color='black', zorder=.75)
 ax_polar_chart.set_axisbelow(True)
 ax_polar_chart.grid(True)
+
+###
+# Directly embed the polar grid in the ambient space
+rg, thetag = embed_map_rt(polar_grid_manifold_elements).grid
+
+ax_polar2 = plt.subplot(3, 4, 8)
+ax_polar2.plot(q_set_ambient.grid[0], q_set_ambient.grid[1], color='grey')
+ax_polar2.pcolormesh(rg, thetag, np.zeros([rg.shape[0] - 1, rg.shape[1] - 1]), edgecolor=spot_color, facecolor='none',
+                     linewidth=0.25)
+ax_polar2.set_aspect('equal')
+ax_polar2.plot(xg[2][2:], yg[2][2:], color='black')
+#ax_polar.plot(xg.T[2][1:5], yg.T[2][1:5], color='black')
+ax_polar2.set_xlim(-2, 4)
+ax_polar2.set_ylim(-3, 3)
+ax_polar2.set_xticks([])  # [-1, 0, 1, 2, 3, 4])
+ax_polar2.set_yticks([])  # [-1, 0, 1, 2, 3, 4])
+
+###
+# Directly parameterize the rectangle into the polar chart
+q_set_polar_param = param_map_rt(q_set_ambient)
+
+ax_polar_chart2 = plt.subplot(3, 4, 12)
+ax_polar_chart2.plot(q_set_polar.grid[0], q_set_polar.grid[1], color='grey')
+ax_polar_chart2.set_xlim(0, 4)
+ax_polar_chart2.set_ylim(-3, 3)
+ax_polar_chart2.set_xticks([0, 1, 2, 3, 4])
+ax_polar_chart2.set_yticks([-4, -2, 0, 2, 4])
+ax_polar_chart2.axhline(0, color='black', zorder=.75)
+ax_polar_chart2.axvline(0, color='black', zorder=.75)
+ax_polar_chart2.set_axisbelow(True)
+ax_polar_chart2.grid(True)
 
 plt.show()
