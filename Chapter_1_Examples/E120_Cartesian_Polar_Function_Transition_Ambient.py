@@ -154,7 +154,7 @@ spot_color = gplt.crimson
 # Plot the rectangle in the ambient space, with no coordinate grid (because the ambient space in principle is
 # coordinate-free, and we've only supplied it with coordinates so we can actually tell the computer to plot things
 ax_ambient = plt.subplot(3, 3, 2)
-ax_ambient.pcolormesh(xg_ambient, yg_ambient, f_ambient.grid(cart_grid_points), cmap=cmp)
+ax_ambient.pcolormesh(xg_ambient, yg_ambient, f_ambient(cart_grid_points), cmap=cmp)
 #ax_ambient.set_xlim(-2, 4)
 #ax_ambient.set_ylim(-3, 3)
 ax_ambient.set_xticks([])  # [-1, 0, 1, 2, 3, 4])
@@ -164,7 +164,7 @@ ax_ambient.set_axisbelow(True)
 
 # Plot the Cartesian grid and the function as they appear in ambient space
 ax_cart = plt.subplot(3, 3, 4)
-ax_cart.pcolormesh(xg_cart, yg_cart, f_xy.grid(cart_grid_points), cmap=cmp)
+ax_cart.pcolormesh(xg_cart, yg_cart, f_xy(cart_grid_points), cmap=cmp)
 ax_cart.pcolormesh(xg_cart_l, yg_cart_l, np.zeros([xg_cart_l.shape[0] - 1, xg_cart_l.shape[1] - 1]), edgecolor='grey',
                    facecolor='none',
                    linewidth=0.25)
@@ -179,7 +179,7 @@ ax_cart.set_axisbelow(True)
 
 ###
 # Plot the Cartesian representation of the function as it appears in the Cartesian chart
-func_cart_chart = ma.masked_array(f_xy.grid(cart_grid_points),
+func_cart_chart = ma.masked_array(f_xy(cart_grid_points),
                                   mask=((xg_cart > 10) | (yg_cart > 10) | (xg_cart < -10) | (yg_cart < -10)))
 
 ax_cart_chart = plt.subplot(3, 3, 7)
@@ -202,7 +202,7 @@ ax_cart_chart.plot(xg_ambient_l.T[3][2:], yg_ambient_l.T[3][2:], color='black')
 
 ###
 # Plot the polar representation of the function as it appears in the ambient space
-func_polar_ambient = f_rt.grid(polar_grid_points)
+func_polar_ambient = f_rt(polar_grid_points)
 
 ax_polar = plt.subplot(3, 3, 6)
 ax_polar.pcolormesh(rg, thetag, func_polar_ambient, cmap=cmp)
@@ -210,6 +210,8 @@ ax_polar.pcolormesh(rg_l, thetag_l, np.zeros([rg_l.shape[0] - 1, rg_l.shape[1] -
                     facecolor='none', linewidth=0.1)
 ax_polar.set_aspect('equal')
 ax_polar.plot(xg_cart_l[3][3:], yg_cart_l[3][3:], color='black')
+ax_polar.set_xticks([])
+ax_polar.set_yticks([])
 
 ax_polar_chart = plt.subplot(3, 3, 9)
 ax_polar_chart.pcolormesh(polar_grid_points[0], polar_grid_points[1], func_polar_ambient, cmap=cmp)
