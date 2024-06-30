@@ -13,8 +13,8 @@ class Manifold:
 
     def __init__(self,
                  transition_table,
-                 n_dim,
-                 immersion_table=None):
+                 n_dim):
+
         # Save the provided chart transition table as a class instance attribute
         self.transition_table = transition_table
         # Extract the number of charts implied by the transition table
