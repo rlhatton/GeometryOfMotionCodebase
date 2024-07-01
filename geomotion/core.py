@@ -38,3 +38,51 @@ class GeomotionSet(UserList):
     @property
     def value(self):
         return self.data
+
+
+class PullbackFunction:
+    """Base class for function pullbacks"""
+
+    def __init__(self,
+                 outer_function,
+                 inner_function,
+                 *outer_args,
+                 **outer_kwargs):
+        self.outer_function = outer_function
+        self.inner_function = inner_function
+        self.outer_args = outer_args
+        self.outer_kwargs = outer_kwargs
+
+    def __call__(self, *args, **kwargs):
+        inner_eval = ut.ensure_tuple(self.inner_function(*args, **kwargs))
+
+        outer_eval = self.outer_function(*inner_eval, *self.outer_args, *self.outer_kwargs)
+
+        return outer_eval
+
+    def transition(self, *args, **kwargs):
+
+        if hasattr(self.inner_function, 'transition'):
+            new_inner_function = self.inner_function.transition(*args, **kwargs)
+            return self.__class__(self.outer_function,
+                                  new_inner_function,
+                                  *self.outer_args,
+                                  **self.outer_kwargs)
+        else:
+            raise Exception("Inner function has no method 'transition'.")
+
+    def transition_output(self, *args, **kwargs):
+
+        if hasattr(self.outer_function, 'transition_output'):
+            new_outer_function = self.outer_function.transition_output(*args, **kwargs)
+            return self.__class__(new_outer_function,
+                                  self.inner_function,
+                                  *self.outer_args,
+                                  **self.outer_kwargs)
+
+    def pullback(self, other, *args, **kwargs):
+
+        return self.__class__(self,
+                              other,
+                              *args,
+                              **kwargs)

@@ -14,7 +14,6 @@ class Manifold:
     def __init__(self,
                  transition_table,
                  n_dim):
-
         # Save the provided chart transition table as a class instance attribute
         self.transition_table = transition_table
         # Extract the number of charts implied by the transition table
@@ -198,39 +197,20 @@ class ManifoldFunction:
                  manifold,
                  defining_function,
                  defining_chart=0,
-                 postprocess_function=None,
-                 pullback_function=None,
-                 process_args=None,
-                 process_kwargs=None):
+                 postprocess_function=None):
 
         self.manifold = manifold
         self.defining_function = defining_function
         self.defining_chart = defining_chart
         self.postprocess_function = postprocess_function
 
-        # Set up the ability to handle function pullbacks
-        self.pullback_function = pullback_function
-        self.process_args = process_args
-        self.process_kwargs = process_kwargs
-
     def __call__(self, configuration_value, *args, **kwargs):
-
-        # pass the inputs through the pullback function if it exists
-        if self.pullback_function is not None:
-            configuration_value = self.pullback_function(configuration_value, *args, **kwargs)
 
         # Convert the configuration value into a GridArray of numeric data
         configuration_grid, value_type = self.preprocess(configuration_value)
 
-        # Evaluate the function for its numeric value
-        if self.pullback_function is None:
-            process_args = args
-            process_kwargs = kwargs
-        else:
-            process_args = self.process_args
-            process_kwargs = self.process_kwargs
-
-        function_grid = self.process(configuration_grid, *process_args, **process_kwargs)
+        # Evaluate
+        function_grid = self.process(configuration_grid, *args, **kwargs)
 
         # Apply any post-process formatting
         function_value = self.postprocess(configuration_grid, function_grid, value_type)
@@ -311,36 +291,11 @@ class ManifoldFunction:
         return self.__class__(self.manifold,
                               new_defining_function,
                               new_chart,
-                              self.postprocess_function,
-                              self.pullback_function,
-                              self.process_args,
-                              self.process_kwargs)
+                              self.postprocess_function)
 
     def pullback(self, pullback_function, *args, **kwargs):
 
-        # If there isn't already a pullback function, create one and save any additional inputs provided to be used
-        # as inputs to the defining function
-        if self.pullback_function is None:
-
-            new_pullback_function = pullback_function
-
-            # Save any additional arguments supplied while pulling back the function
-            self.process_args = args
-            self.process_kwargs = kwargs
-
-        # Otherwise, pull back the existing pullback function through the new pullback function
-        # (this will work recursively)
-        else:
-
-            new_pullback_function = self.pullback_function.pullback(pullback_function, *args, **kwargs)
-
-        return self.__class__(self.manifold,
-                              self.defining_function,
-                              self.defining_chart,
-                              self.postprocess_function,
-                              new_pullback_function,
-                              self.process_args,       # These will either be set above, or carry over from a previous pullback
-                              self.process_kwargs)
+        return core.PullbackFunction(self, pullback_function, *args, **kwargs)
 
 
 class ManifoldMap(ManifoldFunction):
@@ -351,10 +306,7 @@ class ManifoldMap(ManifoldFunction):
                  defining_function,
                  defining_chart=0,
                  output_defining_chart=0,
-                 output_chart=None,
-                 pullback_function=None,
-                 process_args=None,
-                 process_kwargs=None):
+                 output_chart=None):
 
         if output_chart is None:
             output_chart = output_defining_chart
@@ -370,10 +322,7 @@ class ManifoldMap(ManifoldFunction):
         super().__init__(manifold,
                          defining_function,
                          defining_chart,
-                         postprocess_function,
-                         pullback_function,
-                         process_args,
-                         process_kwargs)
+                         postprocess_function)
 
         self.output_defining_chart = output_defining_chart
         self.output_chart = output_chart
@@ -395,10 +344,7 @@ class ManifoldMap(ManifoldFunction):
                               new_defining_function,
                               new_chart,
                               self.output_defining_chart,
-                              self.output_chart,
-                              self.pullback_function,
-                              self.process_args,
-                              self.process_kwargs)
+                              self.output_chart)
 
     def transition_output(self, new_output_chart):
         return self.__class__(self.manifold,
@@ -406,35 +352,8 @@ class ManifoldMap(ManifoldFunction):
                               self.defining_function,
                               self.defining_chart,
                               self.output_defining_chart,
-                              new_output_chart,
-                              self.pullback_function,
-                              self.process_args,
-                              self.process_kwargs)
+                              new_output_chart)
 
     def pullback(self, pullback_function, *args, **kwargs):
 
-        # If there isn't already a pullback function, create one and save any additional inputs provided to be used
-        # as inputs to the defining function
-        if self.pullback_function is None:
-
-            new_pullback_function = pullback_function
-
-            # Save any additional arguments supplied while pulling back the function
-            self.process_args = args
-            self.process_kwargs = kwargs
-
-        # Otherwise, pull back the existing pullback function through the new pullback function
-        # (this will work recursively)
-        else:
-
-            new_pullback_function = self.pullback_function.pullback(pullback_function, *args, **kwargs)
-
-        return self.__class__(self.manifold,
-                              self.output_manifold,
-                              self.defining_function,
-                              self.defining_chart,
-                              self.output_defining_chart,
-                              self.output_chart,
-                              new_pullback_function,
-                              self.process_args,
-                              self.process_kwargs)
+        return core.PullbackFunction(self, pullback_function, *args, **kwargs)
