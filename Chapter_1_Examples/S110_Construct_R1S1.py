@@ -9,14 +9,14 @@ from geomotion import manifold as md
 
 # Define tranition maps between the two charts
 def front_to_back(front_coords):
-    back_coords = front_coords
+    back_coords = np.empty_like(front_coords)
     back_coords[0] = np.mod(front_coords[0] + 0.5, 1)
 
     return back_coords
 
 
 def back_to_front(back_coords):
-    front_coords = back_coords
+    front_coords = np.empty_like(back_coords)
     front_coords[0] = np.mod(back_coords[0] - 0.5)
 
     return front_coords

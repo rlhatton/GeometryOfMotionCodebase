@@ -2,8 +2,10 @@
 import warnings
 import numpy as np
 
+
 def passthrough(x):
     return x
+
 
 def ensure_tuple(value):
     """ Function that wraps an input value in a tuple if it is not already a tuple"""
@@ -23,11 +25,13 @@ def ensure_ndarray(value):
 
     return value
 
+
 def row(vec):
     return vec[None]
 
+
 def column(vec):
-    return vec[:,None]
+    return vec[:, None]
 
 
 def evert_array(arr, n_outer):
@@ -35,11 +39,12 @@ def evert_array(arr, n_outer):
     dimensions correspond to a secondary grid, and return an array in which the primary and secondary grids are
     swapped"""
 
-    return np.moveaxis(arr, list(range(n_outer)), list(range(-n_outer, 0)))
+    output_array = arr
+
+    return np.moveaxis(output_array, list(range(n_outer)), list(range(-n_outer, 0)))
 
 
 def array_eval(func, arr, n_outer=None, depth=0):
-
     if n_outer is None:
         n_outer = arr.n_outer
 
@@ -336,6 +341,11 @@ def format_grid(grid, element_shape, target_format, input_format=None):
         grid = grid.everse
 
     return grid
+
+
+# Zero-centered modulus operation
+def cmod(value, span):
+    return (np.mod(value + (.5 * span), span)) - (0.5 * span)
 
 
 def format_radians_label(float_in):
