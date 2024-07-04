@@ -812,7 +812,15 @@ class DifferentialMap(md.ManifoldFunction):
                     transition(output_chart, output_basis))
 
         def defining_function_safe(*args):
-            return np.array(defining_function(*args))
+
+            q_out_raw = defining_function(*args)
+
+            if isinstance(q_out_raw, md.ManifoldElement):
+                q_out = q_out_raw.value
+            else:
+                q_out = ut.ensure_ndarray(q_out_raw)
+
+            return q_out
 
         postprocess_function = [postprocess_function_single, postprocess_function_multiple]
 
@@ -917,7 +925,7 @@ class DifferentialMap(md.ManifoldFunction):
         output_configuration_grid = config_grid_e.grid_eval(defining_function_with_inputs).everse
 
         def diffdefining_function_with_inputs(q, v):
-            function_jacobian = ndt.Jacobian(self.defining_function)
+            function_jacobian = ndt.Jacobian(defining_function_with_inputs)
             v_out = np.matmul(function_jacobian(q), v)
 
             return v_out

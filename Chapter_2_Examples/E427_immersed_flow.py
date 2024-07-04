@@ -22,18 +22,18 @@ unit_flow_field = tb.TangentVectorField(R1, unit_flow_func)
 
 # Define an immersion from R1 to R2
 def immerse_R1_in_R2(s):
-    output = [np.cos(s[0]), np.sin(s[0])]
+    output = [np.sin(s[0])+.5*s[0], np.cos(s[0])]
     return output
 
 
 immersion_map_R1_into_R2 = md.ManifoldMap(R1, R2, immerse_R1_in_R2)
 
 # Define the differential map associated with the immersion map
-diffimmersion_map_R1_into_R2 = tb.DifferentialMap(R1, R2, immerse_R1_in_R2)
+diffimmersion_map_R1_into_R2 = tb.DifferentialMap(R1, R2, immersion_map_R1_into_R2)
 
 # Generate sparse and dense sets of points along a curve
-s_sparse = ut.GridArray([np.linspace(0, np.pi, 5)], n_outer=1)
-s_dense = ut.GridArray([np.linspace(0, np.pi)], n_outer=1)
+s_sparse = ut.GridArray([np.linspace(0, 2*np.pi, 9)], n_outer=1)
+s_dense = ut.GridArray([np.linspace(0, 2*np.pi)], n_outer=1)
 
 q_R1_sparse = R1.element_set(s_sparse)
 q_R1_dense = R1.element_set(s_dense)
@@ -48,7 +48,7 @@ v_xy_sparse = diffimmersion_map_R1_into_R2(v_sparse)
 
 ax = plt.subplot(1, 1, 1)
 ax.plot(*xy_dense.grid, color=spot_color)
-ax.quiver(*v_xy_sparse.grid[0], *v_xy_sparse.grid[1])
+ax.quiver(*v_xy_sparse.grid[0], *v_xy_sparse.grid[1], scale=10)
 ax.set_aspect('equal')
 
 plt.show()
