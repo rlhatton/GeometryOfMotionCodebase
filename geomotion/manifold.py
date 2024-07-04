@@ -54,9 +54,8 @@ class ManifoldElement(core.GeomotionElement):
         # Save the provided manifold, configuration, and initial chart as class instance attributes
         self.manifold = manifold
 
-        # Make sure that the value is a list or ndarray
-        if not (isinstance(value, list) or isinstance(value, np.ndarray)):
-            value = [value]
+        # Make sure that the value is an ndarray
+        value = ut.ensure_ndarray(value)
 
         # Make sure the value is a numpy float array
         self.current_chart = initial_chart

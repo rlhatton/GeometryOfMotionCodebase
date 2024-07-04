@@ -44,7 +44,7 @@ vector_grid = X_saddle(grid_xy).grid[1]
 traj1 = sol1.sol(np.linspace(start1, end1))
 traj2 = sol2.sol(np.linspace(start2, end2))
 
-ax = plt.subplot(1, 2, 1)
+ax = plt.subplot(1, 1, 1)
 c_grid = grid_xy
 v_grid = vector_grid
 ax.quiver(c_grid[0], c_grid[1], v_grid[0], v_grid[1], scale=20, linewidth=10)

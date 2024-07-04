@@ -52,8 +52,8 @@ class DiffManifold(md.Manifold):
                    input_grid_format=None):
 
         v = TangentVectorSet(self,
-                             value,
                              configuration,
+                             value,
                              initial_chart,
                              initial_basis,
                              input_grid_format)
@@ -305,7 +305,7 @@ class TangentVectorSet(core.GeomotionSet):
         if isinstance(manifold, list):
             if ut.object_list_all_instance(TangentVector, manifold):
                 value = manifold
-                manifold = ut.object_list_extract_first_entry(value[0]).manifold
+                manifold = ut.object_list_extract_first_entry(value).manifold
             else:
                 raise Exception("List input to TangentVectorSet should contain TangentVector objects")
 
@@ -378,8 +378,8 @@ class TangentVectorSet(core.GeomotionSet):
 
                 else:
                     def tangent_vector_construction_function(configuration_value, vector_value):
-                        tangent_vector = manifold.vector(vector_value,
-                                                         configuration_value,
+                        tangent_vector = manifold.vector(configuration_value,
+                                                         vector_value,
                                                          initial_chart,
                                                          initial_basis)
                         return tangent_vector
@@ -625,7 +625,8 @@ class TangentVectorField(md.ManifoldFunction):
                  *args,
                  **kwargs):
 
-        return super().__call__(config, time, *args, **kwargs)
+        output = super().__call__(config, time, *args, **kwargs)
+        return output
 
     def transition(self, new_basis, configuration_transition: Union[str, int] = 'match'):
         """Take a vector field defined in one basis and chart combination and convert it
@@ -803,17 +804,20 @@ class DifferentialMap(md.ManifoldFunction):
             output_basis = output_defining_basis
 
         def postprocess_function_single(q, v):
-            return (manifold.vector(q, v, output_defining_chart, output_defining_basis).
+            return (output_manifold.vector(q, v, output_defining_chart, output_defining_basis).
                     transition(output_chart, output_basis))
 
         def postprocess_function_multiple(q, v):
-            return (manifold.vector_set(q, v, output_defining_chart, output_defining_basis).
+            return (output_manifold.vector_set(q, v, output_defining_chart, output_defining_basis).
                     transition(output_chart, output_basis))
+
+        def defining_function_safe(*args):
+            return np.array(defining_function(*args))
 
         postprocess_function = [postprocess_function_single, postprocess_function_multiple]
 
         super().__init__(manifold,
-                         defining_function,
+                         defining_function_safe,
                          defining_chart,
                          postprocess_function)
 
@@ -823,6 +827,7 @@ class DifferentialMap(md.ManifoldFunction):
         self.output_defining_basis = output_defining_basis
         self.output_chart = output_chart
         self.output_basis = output_basis
+        self.input_grid_format = 'component'
 
     def preprocess(self, *call_args):
         """Input vector information is provided as the first entries of call_args, and can be one of:
@@ -884,8 +889,8 @@ class DifferentialMap(md.ManifoldFunction):
 
         elif isinstance(call_args[0], ut.GridArray):
 
-            configuration_grid = call_args[0]
-            vector_grid = call_args[1]
+            configuration_grid = ut.format_grid(call_args[0], self.manifold.element_shape, 'component')
+            vector_grid = ut.format_grid(call_args[1], self.manifold.element_shape, 'component')
 
             process_args = call_args[3:]
             value_type = 'multiple'
@@ -905,7 +910,11 @@ class DifferentialMap(md.ManifoldFunction):
 
             return q_out
 
-        output_configuration_grid = configuration_grid.grid_eval(defining_function_with_inputs)
+        # Make the configuration grid element-wise
+        config_grid_e = configuration_grid.everse
+
+        # Evaluate the function over the configurations
+        output_configuration_grid = config_grid_e.grid_eval(defining_function_with_inputs).everse
 
         def diffdefining_function_with_inputs(q, v):
             function_jacobian = ndt.Jacobian(self.defining_function)
@@ -913,22 +922,17 @@ class DifferentialMap(md.ManifoldFunction):
 
             return v_out
 
-        config_grid_e = ut.format_grid(configuration_grid,
-                                       self.manifold.element_shape,
-                                       'element,',
-                                       self.input_grid_format)
 
-        vector_grid_e = ut.format_grid(vector_grid,
-                                       self.manifold.element_shape,
-                                       'element,',
-                                       self.input_grid_format)
+        # Make the vector grid element-wise
+        vector_grid_e = vector_grid.everse
 
+        # Evaluate the Jacobian at each point with the vector at that point
         output_vector_grid_e = ut.object_list_eval_pairwise(diffdefining_function_with_inputs,
                                                             config_grid_e,
                                                             vector_grid_e,
                                                             n_outer=config_grid_e.n_outer)
 
-        output_vector_grid = output_vector_grid_e.everse
+        output_vector_grid = ut.GridArray(output_vector_grid_e, vector_grid_e.n_outer).everse
 
         return output_configuration_grid, output_vector_grid
 
