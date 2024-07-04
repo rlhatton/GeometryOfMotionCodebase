@@ -103,7 +103,7 @@ yg_cart = cart_grid_rotated_points[1]
 xg_cart_l = cart_grid_rotated_points_l[0]
 yg_cart_l = cart_grid_rotated_points_l[1]
 
-## Polar grid
+# Polar grid
 # Generate a densely-spaced set of points for polar axes
 r = np.linspace(.25, 10, 100)
 theta = np.linspace(-3, 3, 100)
@@ -140,16 +140,13 @@ thetag_l = polar_grid_embedded_points_l[1]
 ##############
 # Plot the calculated terms
 
-# Use my red color for the plots
-spot_color = gplt.crimson
-
 ###
 # Plot the function in the ambient space, with no coordinate grid (because the ambient space in principle is
 # coordinate-free, and we've only supplied it with coordinates so we can actually tell the computer to plot things
 ax_ambient = plt.subplot(3, 4, 3)
 ax_ambient.pcolormesh(xg_ambient, yg_ambient, f_ambient(cart_grid_points), cmap=cmp)
-#ax_ambient.set_xlim(-2, 4)
-#ax_ambient.set_ylim(-3, 3)
+# ax_ambient.set_xlim(-2, 4)
+# ax_ambient.set_ylim(-3, 3)
 ax_ambient.set_xticks([])  # [-1, 0, 1, 2, 3, 4])
 ax_ambient.set_yticks([])  # [-1, 0, 1, 2, 3, 4])
 ax_ambient.set_aspect('equal')

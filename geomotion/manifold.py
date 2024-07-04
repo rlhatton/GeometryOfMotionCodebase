@@ -104,16 +104,29 @@ class ManifoldElementSet(core.GeomotionSet):
     Manifold, GridArray, initial_chart, component-or-element """
 
     def __init__(self, *args):
-        """ args is either a list of Elements or
-        a Manifold
-        a GridArray of values
-        an initial chart
-        (optional) component or element specification for grid"""
+        """ args is one of:
+        1. A ManifoldElementSet (which gets passed through into a copy of the original)
+        2. A ManifoldElement (which gets wrapped into a single-element list)
+        3. A nested list-of-lists of ManifoldElements
+        4. a Manifold
+           a GridArray of values
+           an initial chart
+           (optional) component-outer or element-outer specification for grid"""
 
         n_args = len(args)
 
+        # Check if the first argument is a ManifoldElementSet already, and if so, extract its value
+        if isinstance(args[0], ManifoldElementSet):
+            value = args[0].value
+            manifold = args[0].manifold
+
+        # Check if the first argument is a bare manifold element, and if so, wrap it in a list
+        if isinstance(args[0], ManifoldElement):
+            value = [args[0].value]
+            manifold = args[0].manifold
+
         # Check if the first argument is a list of Elements of the specified type, and if so, use it directly
-        if isinstance(args[0], list):
+        elif isinstance(args[0], list):
             if ut.object_list_all_instance(ManifoldElement, args[0]):
                 value = args[0]
                 manifold = ut.object_list_extract_first_entry(args[0]).manifold
