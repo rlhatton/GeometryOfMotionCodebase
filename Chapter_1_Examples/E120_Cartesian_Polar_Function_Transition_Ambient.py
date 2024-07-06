@@ -54,7 +54,8 @@ def monkey_saddle(coords):
     return f
 
 
-# Make the monkey saddle function into a manifold function
+# Make the monkey saddle function into a manifold function defined in the
+# polar chart on the manifold
 f_rt = md.ManifoldFunction(Q, monkey_saddle, 1)
 
 # Convert the function to Cartesian and ambient coordinates
@@ -75,33 +76,22 @@ y_l = np.linspace(-10, 10, 7)
 
 # Build meshgrids from x and y, using the meshgrid_array function, which generates a GridArray with the
 # n_outer value generated automatically
-cart_grid_points = ut.meshgrid_array(x, y)
-cart_grid_points_l = ut.meshgrid_array(x_l, y_l)
+cart_grid = ut.meshgrid_array(x, y)
+cart_grid_l = ut.meshgrid_array(x_l, y_l)
 
-# Turn the meshgrids into  ManifoldElementSets, specified in the Cartesian chart
-cart_grid_manifold_elements = md.ManifoldElementSet(R2, cart_grid_points, 0)
-cart_grid_manifold_elements_l = md.ManifoldElementSet(R2, cart_grid_points_l, 0)
+# Turn the meshgrids into  ManifoldElementSets, specified in the Cartesian chart on the ambient space
+ambient_cartesian_points = md.ManifoldElementSet(Q_amb, cart_grid, 0)
+ambient_cartesian_points_l = md.ManifoldElementSet(Q_amb, cart_grid_l, 0)
 
-# Convert (i.e. rotate) the grid into the ambient-space coordinates
-cart_grid_rotated_manifold_elements = embed_map_xy(cart_grid_manifold_elements)
-cart_grid_rotated_manifold_elements_l = embed_map_xy(cart_grid_manifold_elements_l)
+# Turn the meshgrids into  ManifoldElementSets, specified in the Cartesian chart on the manifold
+manifold_cartesian_points = md.ManifoldElementSet(Q, cart_grid, 0)
+manifold_cartesian_points_l = md.ManifoldElementSet(Q, cart_grid_l, 0)
 
-# Get the grid representation of the ambient-space loose Cartesian meshgrid points
-cart_grid_rotated_points = cart_grid_rotated_manifold_elements.grid
-cart_grid_rotated_points_l = cart_grid_rotated_manifold_elements_l.grid
+# Convert (i.e. rotate) the grid of points on the manifold into the ambient-space coordinates
+manifold_cartesian_points_amb = embed_map_xy(manifold_cartesian_points)
+manifold_cartesian_points_amb_l = embed_map_xy(manifold_cartesian_points_l)
 
-# Extract the x and y components of the grids
-xg_ambient = cart_grid_points[0]
-yg_ambient = cart_grid_points[1]
 
-xg_ambient_l = cart_grid_points_l[0]
-yg_ambient_l = cart_grid_points_l[1]
-
-xg_cart = cart_grid_rotated_points[0]
-yg_cart = cart_grid_rotated_points[1]
-
-xg_cart_l = cart_grid_rotated_points_l[0]
-yg_cart_l = cart_grid_rotated_points_l[1]
 
 # Polar grid
 # Generate a densely-spaced set of points for polar axes
@@ -114,28 +104,18 @@ theta_l = np.linspace(-3, 3, 21)
 
 # Build meshgrids from r and theta, using the meshgrid_array function, which generates a GridArray with the
 # n_outer value generated automatically
-polar_grid_points = ut.meshgrid_array(r, theta)
-polar_grid_points_l = ut.meshgrid_array(r_l, theta_l)
+polar_grid = ut.meshgrid_array(r, theta)
+polar_grid_l = ut.meshgrid_array(r_l, theta_l)
 
 # Turn the meshgrids into ManifoldElementSets, specified in the polar chart
-polar_grid_manifold_elements = md.ManifoldElementSet(R2, polar_grid_points, 1)
-polar_grid_manifold_elements_l = md.ManifoldElementSet(R2, polar_grid_points_l, 1)
+polar_grid_points = md.ManifoldElementSet(Q, polar_grid, 1)
+polar_grid_points_l = md.ManifoldElementSet(Q, polar_grid_l, 1)
 
-# Convert the grid into the ambient-space coordinates
-polar_grid_embedded_manifold_elements = embed_map_rt(polar_grid_manifold_elements)
+# Convert the polar grid into the ambient-space coordinates
+polar_grid_points_amb = embed_map_rt(polar_grid_points)
 
-polar_grid_embedded_manifold_elements_l = embed_map_rt(polar_grid_manifold_elements_l)
+polar_grid_points_amb_l = embed_map_rt(polar_grid_points_l)
 
-# Get the grid representation of the ambient-space meshgrid points
-polar_grid_embedded_points = polar_grid_embedded_manifold_elements.grid
-polar_grid_embedded_points_l = polar_grid_embedded_manifold_elements_l.grid
-
-# Extract the r and theta components of the embedded grid
-rg = polar_grid_embedded_points[0]
-thetag = polar_grid_embedded_points[1]
-
-rg_l = polar_grid_embedded_points_l[0]
-thetag_l = polar_grid_embedded_points_l[1]
 
 ##############
 # Plot the calculated terms
@@ -144,22 +124,21 @@ thetag_l = polar_grid_embedded_points_l[1]
 # Plot the function in the ambient space, with no coordinate grid (because the ambient space in principle is
 # coordinate-free, and we've only supplied it with coordinates so we can actually tell the computer to plot things
 ax_ambient = plt.subplot(3, 4, 3)
-ax_ambient.pcolormesh(xg_ambient, yg_ambient, f_ambient(cart_grid_points), cmap=cmp)
-# ax_ambient.set_xlim(-2, 4)
-# ax_ambient.set_ylim(-3, 3)
-ax_ambient.set_xticks([])  # [-1, 0, 1, 2, 3, 4])
-ax_ambient.set_yticks([])  # [-1, 0, 1, 2, 3, 4])
+ax_ambient.pcolormesh(*ambient_cartesian_points.grid, f_ambient(ambient_cartesian_points), cmap=cmp)
 ax_ambient.set_aspect('equal')
 ax_ambient.set_axisbelow(True)
 
-# Plot the Cartesian grid and the function as they appear in ambient space
+
+
+# Plot the embedding of the Cartesian grid on the manifold and the ambient function evaluated over the
+# ambient embedding of that grid
 ax_cart = plt.subplot(3, 4, 6)
-ax_cart.pcolormesh(xg_cart, yg_cart, f_xy(cart_grid_points), cmap=cmp)
-ax_cart.pcolormesh(xg_cart_l, yg_cart_l, np.zeros([xg_cart_l.shape[0] - 1, xg_cart_l.shape[1] - 1]), edgecolor='grey',
+ax_cart.pcolormesh(*manifold_cartesian_points_amb.grid, f_ambient(manifold_cartesian_points_amb), cmap=cmp)
+ax_cart.pcolormesh(*manifold_cartesian_points_amb_l.grid, np.zeros([manifold_cartesian_points_amb_l.shape[0] - 1, manifold_cartesian_points_amb_l.shape[1] - 1]), edgecolor='grey',
                    facecolor='none',
                    linewidth=0.25)
-ax_cart.plot(xg_cart_l[3][2:], yg_cart_l[3][2:], color='black')
-ax_cart.plot(xg_cart_l.T[3][2:], yg_cart_l.T[3][2:], color='black')
+ax_cart.plot(manifold_cartesian_points_amb_l.grid[0][3][2:], manifold_cartesian_points_amb_l.grid[1][3][2:], color='black')
+ax_cart.plot(manifold_cartesian_points_amb_l.grid[0].T[3][2:], manifold_cartesian_points_amb_l.grid[1].T[3][2:], color='black')
 ax_cart.set_xlim(-10, 10)
 ax_cart.set_ylim(-10, 10)
 ax_cart.set_xticks([])
@@ -167,81 +146,88 @@ ax_cart.set_yticks([])
 ax_cart.set_aspect('equal')
 ax_cart.set_axisbelow(True)
 
-# Plot the Cartesian grid and the doubly-pulledback function as they appear in ambient space
+
+# Plot the Cartesian grid embedded into the ambient space, along with the value at each point on the grid of the
+# function pulled back to the manifold
 ax_cart = plt.subplot(3, 4, 5)
-ax_cart.pcolormesh(xg_cart, yg_cart, f_xy_double_pullback(cart_grid_points), cmap=cmp)
-ax_cart.pcolormesh(xg_cart_l, yg_cart_l, np.zeros([xg_cart_l.shape[0] - 1, xg_cart_l.shape[1] - 1]), edgecolor='grey',
+ax_cart.pcolormesh(*manifold_cartesian_points_amb.grid, f_xy_double_pullback(manifold_cartesian_points), cmap=cmp)
+ax_cart.pcolormesh(*manifold_cartesian_points_amb_l.grid, np.zeros([manifold_cartesian_points_amb_l.shape[0] - 1, manifold_cartesian_points_amb_l.shape[1] - 1]), edgecolor='grey',
                    facecolor='none',
                    linewidth=0.25)
-ax_cart.plot(xg_cart_l[3][2:], yg_cart_l[3][2:], color='black')
-ax_cart.plot(xg_cart_l.T[3][2:], yg_cart_l.T[3][2:], color='black')
+ax_cart.plot(manifold_cartesian_points_amb_l.grid[0][3][2:], manifold_cartesian_points_amb_l.grid[1][3][2:], color='black')
+ax_cart.plot(manifold_cartesian_points_amb_l.grid[0].T[3][2:], manifold_cartesian_points_amb_l.grid[1].T[3][2:], color='black')
 ax_cart.set_xlim(-10, 10)
 ax_cart.set_ylim(-10, 10)
 ax_cart.set_xticks([])
 ax_cart.set_yticks([])
 ax_cart.set_aspect('equal')
 ax_cart.set_axisbelow(True)
+
+
+
+
 
 ###
-# Plot the Cartesian representation of the function as it appears in the Cartesian chart
-func_cart_chart = ma.masked_array(f_xy(cart_grid_points),
-                                  mask=((xg_cart > 10) | (yg_cart > 10) | (xg_cart < -10) | (yg_cart < -10)))
+# Plot the Cartesian representation of the function as it appears in the Cartesian chart, masking out any
+# values for points that are outside the ambient-space bounds
+func_cart_chart = ma.masked_array(f_xy(manifold_cartesian_points),
+                                  mask=((np.abs(manifold_cartesian_points_amb.grid[0]) > 10) | (np.abs(manifold_cartesian_points_amb.grid[1]) > 10) ))
 
 ax_cart_chart = plt.subplot(3, 4, 10)
-ax_cart_chart.pcolormesh(xg_ambient, yg_ambient, func_cart_chart, cmap=cmp)
-ax_cart_chart.pcolormesh(xg_ambient_l, yg_ambient_l, np.zeros([xg_ambient_l.shape[0] - 1, xg_ambient_l.shape[1] - 1]),
+ax_cart_chart.pcolormesh(*manifold_cartesian_points.grid, func_cart_chart, cmap=cmp)
+ax_cart_chart.pcolormesh(*manifold_cartesian_points_l.grid, np.zeros([manifold_cartesian_points_l.shape[0] - 1, manifold_cartesian_points_l.shape[1] - 1]),
                          edgecolor='grey', facecolor='none',
                          linewidth=0.1)
 
+
 ax_cart_chart.set_aspect('equal')
 ax_cart_chart.set_axisbelow(True)
-ax_cart_chart.grid(True)
-ax_cart_chart.axhline(0, color='black', zorder=.75)
-ax_cart_chart.axvline(0, color='black', zorder=.75)
 
-ax_cart_chart.plot(xg_ambient_l[3][2:], yg_ambient_l[3][2:], color='black')
-ax_cart_chart.plot(xg_ambient_l.T[3][2:], yg_ambient_l.T[3][2:], color='black')
+
+ax_cart_chart.plot(manifold_cartesian_points_l.grid[0][3][2:], manifold_cartesian_points_l.grid[1][3][2:], color='black')
+ax_cart_chart.plot(manifold_cartesian_points_l.grid[0].T[3][2:], manifold_cartesian_points_l.grid[1].T[3][2:], color='black')
+
+
 
 # Plot the Cartesian representation of the doubly-pulledback function as it appears in the Cartesian chart
-func_cart_chart = ma.masked_array(f_xy_double_pullback(cart_grid_points),
-                                  mask=((xg_cart > 10) | (yg_cart > 10) | (xg_cart < -10) | (yg_cart < -10)))
+func_cart_chart = ma.masked_array(f_xy_double_pullback(manifold_cartesian_points),
+                                  mask=((np.abs(manifold_cartesian_points_amb.grid[0]) > 10) | (np.abs(manifold_cartesian_points_amb.grid[1]) > 10) ))
 
 ax_cart_chart = plt.subplot(3, 4, 9)
-ax_cart_chart.pcolormesh(xg_ambient, yg_ambient, func_cart_chart, cmap=cmp)
-ax_cart_chart.pcolormesh(xg_ambient_l, yg_ambient_l, np.zeros([xg_ambient_l.shape[0] - 1, xg_ambient_l.shape[1] - 1]),
+ax_cart_chart.pcolormesh(*manifold_cartesian_points.grid, func_cart_chart, cmap=cmp)
+ax_cart_chart.pcolormesh(*manifold_cartesian_points_l.grid, np.zeros([manifold_cartesian_points_l.shape[0] - 1, manifold_cartesian_points_l.shape[1] - 1]),
                          edgecolor='grey', facecolor='none',
                          linewidth=0.1)
 
 ax_cart_chart.set_aspect('equal')
 ax_cart_chart.set_axisbelow(True)
-ax_cart_chart.grid(True)
-ax_cart_chart.axhline(0, color='black', zorder=.75)
-ax_cart_chart.axvline(0, color='black', zorder=.75)
 
-ax_cart_chart.plot(xg_ambient_l[3][2:], yg_ambient_l[3][2:], color='black')
-ax_cart_chart.plot(xg_ambient_l.T[3][2:], yg_ambient_l.T[3][2:], color='black')
+ax_cart_chart.plot(manifold_cartesian_points_l.grid[0][3][2:], manifold_cartesian_points_l.grid[1][3][2:], color='black')
+ax_cart_chart.plot(manifold_cartesian_points_l.grid[0].T[3][2:], manifold_cartesian_points_l.grid[1].T[3][2:], color='black')
+
+
+
 
 ###
 # Plot the polar representation of the function as it appears in the ambient space
-func_polar_ambient = f_rt(polar_grid_points)
-
 ax_polar = plt.subplot(3, 4, 8)
-ax_polar.pcolormesh(rg, thetag, func_polar_ambient, cmap=cmp)
-ax_polar.pcolormesh(rg_l, thetag_l, np.zeros([rg_l.shape[0] - 1, rg_l.shape[1] - 1]), edgecolor='grey',
+#ax_polar.pcolormesh(*polar_grid_points_amb.grid, f_rt(polar_grid_points), cmap=cmp)
+ax_polar.pcolormesh(*polar_grid_points_amb.grid, f_ambient(polar_grid_points_amb), cmap=cmp)
+ax_polar.pcolormesh(*polar_grid_points_amb_l.grid, np.zeros([polar_grid_points_amb_l.shape[0] - 1, polar_grid_points_amb_l.shape[1] - 1]), edgecolor='grey',
                     facecolor='none', linewidth=0.1)
 ax_polar.set_aspect('equal')
-ax_polar.plot(xg_cart_l[3][3:], yg_cart_l[3][3:], color='black')
+ax_polar.plot(polar_grid_points_amb_l.grid[0][10][1:], polar_grid_points_amb_l.grid[1][10][1:], color='black')
 ax_polar.set_xticks([])
 ax_polar.set_yticks([])
 
+
 ax_polar_chart = plt.subplot(3, 4, 12)
-ax_polar_chart.pcolormesh(polar_grid_points[0], polar_grid_points[1], func_polar_ambient, cmap=cmp)
-ax_polar_chart.pcolormesh(polar_grid_points_l[0], polar_grid_points_l[1],
-                          np.zeros([polar_grid_points_l[0].shape[0] - 1, polar_grid_points_l[0].shape[1] - 1]),
+ax_polar_chart.pcolormesh(*polar_grid_points.grid, f_rt(polar_grid_points), cmap=cmp)
+ax_polar_chart.pcolormesh(*polar_grid_points_l.grid,
+                          np.zeros([polar_grid_points_l.shape[0] - 1, polar_grid_points_l.shape[1] - 1]),
                           edgecolor='grey', facecolor='none',
                           linewidth=0.1)
 
-ax_polar_chart.set_aspect('equal')
 ax_polar_chart.set_axisbelow(True)
 ax_polar_chart.axhline(0, color='black', zorder=2)
 ax_polar_chart.axvline(0, color='black', zorder=.75)
