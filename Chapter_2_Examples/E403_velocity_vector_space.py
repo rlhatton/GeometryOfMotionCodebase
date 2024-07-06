@@ -11,14 +11,14 @@ Q = R2
 # Construct an element of R2
 q1 = Q.element([2, 0], 0)
 
-# Construct two vectors at q1; note the column structure
-v11 = Q.vector([0, 1], q1)
-v12 = Q.vector([1, 1], q1)
+# Construct two vectors at q1; note the one-dimensional structure
+v11 = Q.vector(q1, [0, 1])
+v12 = Q.vector(q1, [1, 1])
 
 # Test summing the vectors
 v1sum = v11 + v12
 
-print("Sum of v11=\n", v11, "\n and v12=", v12, " is \n", v1sum)
+print("Sum of v11=", v11, "\n and v12=", v12, " is \n", v1sum)
 
 # Test scaling the vectors (we assume that scalar multiplication of real numbers works)
 v11scaled = 5 * v11
@@ -30,13 +30,13 @@ print("5 * v11 is\n", v11scaled, "\n and v12 * -2 is\n", v12scaled)
 q2 = Q.element([1, 1], 0)
 
 # Construct a vector at this point
-v21 = Q.vector([1, 1], q2)
-v22 = Q.vector([1, 1], q2)
+v21 = Q.vector(q2, [1, 1])
+v22 = Q.vector(q2, [1, 1])
 
 # Verify that adding v21 and v22 works, but adding v11 and v21 does not work
 v2sum = v21 + v22
 
-print("\n\nSum of v21=\n", v21, "\n and v22=", v22, " is \n", v2sum)
+print("\n\nSum of v21=", v21, "\n and v22=", v22, " is \n", v2sum)
 
 # Verify that attempting to add vectors at different configurations produces an error
 try:

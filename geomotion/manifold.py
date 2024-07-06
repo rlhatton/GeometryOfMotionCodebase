@@ -140,7 +140,7 @@ class ManifoldElementSet(core.GeomotionSet):
         # Check if the first argument is a bare manifold element, and if so, wrap its value in a list
         elif isinstance(manifold, ManifoldElement):
             manifold_element_input = manifold
-            value = [manifold_element_input.value]
+            value = [manifold_element_input]
             manifold = manifold_element_input.manifold
 
         # Check if the first argument is a list-of-lists of Elements of the specified type, and if so, use it directly

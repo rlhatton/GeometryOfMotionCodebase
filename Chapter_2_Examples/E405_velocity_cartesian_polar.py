@@ -13,7 +13,7 @@ Q = R2
 q1 = Q.element([2, 0], 0)
 
 # Construct a vector at q; note the single-dimension array structure
-v1 = Q.vector([0, 1], q1)
+v1 = Q.vector(q1, [0, 1])
 
 # Convert the vector to the polar basis and polar coordinates
 v1_polar = v1.transition(1)
@@ -24,7 +24,7 @@ print("Polar expression of Cartesian \n", v1, "\n at ", q1, " is \n", v1_polar, 
 q2 = Q.element([1, 1], 0)
 
 # Construct a vector at this point
-v2 = Q.vector([1, 1], q2)
+v2 = Q.vector(q2, [1, 1])
 
 # Convert to polar coordinates and basis
 v2_polar = v2.transition(1)
@@ -38,7 +38,7 @@ v2_polar_cartesian_chart = v2.transition(1, 'keep')
 # Demonstrate that adding two vectors at the same configuration but in different bases works
 v1_cart_v1_polar_sum = v1 + v1_polar
 
-print("Sum of Cartesian v1=\n", v1, "\n and polar v1=", v1_polar, " is Cartesian \n", v1_cart_v1_polar_sum)
+print("Sum of Cartesian v1=", v1, "\n and polar v1=", v1_polar, " is Cartesian \n", v1_cart_v1_polar_sum)
 
 # Demonstrate that adding two vectors at different configurations and in different bases
 # gets the correct error handling

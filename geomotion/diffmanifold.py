@@ -155,18 +155,14 @@ class TangentVector(core.GeomotionElement):
 
         # Verify that 'other' is at the same configuration as self
         if self.configuration.manifold == other.configuration.manifold:
-            if self.configuration.current_chart == other.configuration.current_chart:
-                if all(np.isclose(self.configuration.value, other.configuration.value)):
-                    pass
-                else:
-                    raise Exception("Cannot add two TangentVectors at different configurations")
+
+            # Test if configurations are equal when expressed in same chart
+            if all(np.isclose(self.configuration.value,
+                              (other.configuration.transition(self.configuration.current_chart)).value)):
+                pass
             else:
-                # Test if configurations are equal when expressed in same chart
-                if np.isclose(self.configuration.value,
-                              (other.configuration.transition(self.configuration.current_chart)).value):
-                    pass
-                else:
-                    raise Exception("Cannot add two TangentVectors at different configurations")
+                raise Exception("Cannot add two TangentVectors at different configurations")
+
         else:
             raise Exception("Cannot add two TangentVectors attached to different manifolds")
 
@@ -367,8 +363,8 @@ class TangentVectorSet(core.GeomotionSet):
                 if single_configuration:
 
                     def tangent_vector_construction_function(vector_value):
-                        return manifold.vector(vector_value,
-                                               configuration,
+                        return manifold.vector(configuration,
+                                               vector_value,
                                                initial_chart,
                                                initial_basis)
 
@@ -452,7 +448,7 @@ class TangentVectorSet(core.GeomotionSet):
 
     def transition(self,
                    new_basis,
-                   configuration_transition):
+                   configuration_transition='match'):
 
         transition_method = methodcaller('transition', new_basis, configuration_transition)
 
@@ -592,7 +588,15 @@ class TangentVectorField(md.ManifoldFunction):
                  manifold: DiffManifold,
                  defining_function,
                  defining_chart=0,
-                 defining_basis=0):
+                 output_defining_basis=0,
+                 output_chart=None,
+                 output_basis=None):
+
+        if output_chart is None:
+            output_chart = defining_chart
+
+        if output_basis is None:
+            output_basis = output_defining_basis
 
         # Make sure that the defining function can take at least two inputs (configuration and time)
         sig = signature(defining_function)
@@ -605,10 +609,10 @@ class TangentVectorField(md.ManifoldFunction):
                 return ut.ensure_ndarray(defining_function(q, t, *args))
 
         def postprocess_function_single(q, v):
-            return manifold.vector(q, v, defining_chart, defining_basis)
+            return manifold.vector(q, v, defining_chart, output_defining_basis).transition(output_basis, output_chart)
 
         def postprocess_function_multiple(q, v):
-            return manifold.vector_set(q, v, defining_chart, defining_basis)
+            return manifold.vector_set(q, v, defining_chart, output_defining_basis).transition(output_basis, output_chart)
 
         postprocess_function = [postprocess_function_single, postprocess_function_multiple]
 
@@ -617,7 +621,9 @@ class TangentVectorField(md.ManifoldFunction):
                          defining_chart,
                          postprocess_function)
 
-        self.defining_basis = defining_basis
+        self.output_defining_basis = output_defining_basis
+        self.output_chart = output_chart
+        self.output_basis = output_basis
 
     def __call__(self,
                  config,
@@ -628,54 +634,14 @@ class TangentVectorField(md.ManifoldFunction):
         output = super().__call__(config, time, *args, **kwargs)
         return output
 
-    def transition(self, new_basis, configuration_transition: Union[str, int] = 'match'):
-        """Take a vector field defined in one basis and chart combination and convert it
-         to a different basis and chart combination"""
+    def transition_output(self, new_output_basis, new_output_chart='match'):
 
-        # Parse the configuration_transition option. It would be nice to just pass it into
-        # the vector transition (pushforward), but we need to process it here for the pullback
-        # of the vector field function itself
-        if isinstance(configuration_transition, str):
-            # 'match' says to match the configuration to the new basis
-            if configuration_transition == 'match':
-                new_chart = new_basis
-            elif configuration_transition == 'keep':
-                new_chart = self.defining_chart
-            else:
-                raise Exception("Unknown option " + configuration_transition + "for transitioning the configuration "
-                                                                               "while transitioning a "
-                                                                               "TangentVectorField")
-        else:
-            new_chart = configuration_transition
-
-        # Modify the defining function by pushing forward through the transition maps
-        def output_defining_function(x, t):
-            # Pull back function through transition map
-
-            # Convert configuration from new chart to current chart
-            y = self.manifold.transition_table[new_chart][self.defining_chart](x)
-
-            # Evaluate defining function in current chart
-            u = self.defining_function(y, t)
-
-            # Convert evaluated vector into a TangentVector
-            v = TangentVector(self.manifold, y, u, self.defining_basis, self.defining_chart)
-
-            # Transition the vector into the new chart and basis
-            v_new = v.transition(new_basis, configuration_transition)
-
-            # extract the value from the transitioned vector
-            u_new = v_new.value
-
-            return u_new
-
-        # Create a TangentVectorField from the output_defining_function
-        output_tangent_vector_field = self.__class__(self.manifold,
-                                                     output_defining_function,
-                                                     new_chart,
-                                                     new_basis)
-
-        return output_tangent_vector_field
+        return self.__class__(self.manifold,
+                              self.defining_function,
+                              self.defining_chart,
+                              self.output_defining_basis,
+                              new_output_chart,
+                              new_output_basis)
 
     def addition(self, other):
 
@@ -683,11 +649,7 @@ class TangentVectorField(md.ManifoldFunction):
         if isinstance(other, TangentVectorField):
             # Verify that the vector fields are associated with the same manifold
             if self.manifold == other.manifold:
-                # Bring other into the same basis nd chart if necessary
-                if (self.defining_basis == other.defining_basis) and (self.defining_chart == other.defining_chart):
-                    pass
-                else:
-                    other = other.transition(self.defining_basis, self.defining_chart)
+               pass
             else:
                 raise Exception("Cannot add vector fields associated with different manifolds")
         else:
@@ -702,7 +664,7 @@ class TangentVectorField(md.ManifoldFunction):
         sum_of_fields = self.__class__(self.manifold,
                                        sum_of_functions,
                                        self.defining_chart,
-                                       self.defining_basis)
+                                       self.output_defining_basis)
 
         return sum_of_fields
 
@@ -720,7 +682,7 @@ class TangentVectorField(md.ManifoldFunction):
         scalar_product_with_field = self.__class__(self.manifold,
                                                    scaled_defining_function,
                                                    self.defining_chart,
-                                                   self.defining_basis)
+                                                   self.output_defining_basis)
 
         return scalar_product_with_field
 
@@ -749,6 +711,13 @@ class TangentVectorField(md.ManifoldFunction):
                   output_format=None,
                   **kwargs):
 
+        # Verify that the initial configuration is a manifold element
+        if not isinstance(initial_config, md.ManifoldElement):
+            raise Exception("Initial configuration for vector flow should be a ManifoldElement")
+
+        # Get the chart in which the initial configuration is specified
+        initial_config_chart = initial_config.current_chart
+
         # Parse the output content and format specifications
         if output_content == 'sol':
             if output_format is None:
@@ -760,10 +729,23 @@ class TangentVectorField(md.ManifoldFunction):
             raise Exception("Unsupported output content: ", output_content)
 
         def flow_function(t, x):
-            v = self.__call__(x, t).value
-            return np.ravel(v)  # required to match dimension of vector with dimension of state
 
-        sol = solve_ivp(flow_function, timespan, initial_config, dense_output=True, **kwargs)
+            # Turn the current numerical value into a configuration element in the same chart
+            # as the initial configuration
+            x_config = self.manifold.element(x, initial_config_chart)
+
+            # Evaluate the vector field at that location
+            v = self.__call__(x_config, t)
+
+            v_initial_config = v.transition(initial_config_chart)
+
+            # ravel required to match dimension of vector with dimension of state
+            return np.ravel(v_initial_config.value)
+
+        sol = solve_ivp(flow_function,
+                        timespan,
+                        initial_config.value,
+                        dense_output=True, **kwargs)
 
         if output_content == 'sol':
             return sol
@@ -835,7 +817,6 @@ class DifferentialMap(md.ManifoldFunction):
         self.output_defining_basis = output_defining_basis
         self.output_chart = output_chart
         self.output_basis = output_basis
-        self.input_grid_format = 'component'
 
     def preprocess(self, *call_args):
         """Input vector information is provided as the first entries of call_args, and can be one of:
@@ -929,7 +910,6 @@ class DifferentialMap(md.ManifoldFunction):
             v_out = np.matmul(function_jacobian(q), v)
 
             return v_out
-
 
         # Make the vector grid element-wise
         vector_grid_e = vector_grid.everse

@@ -15,41 +15,43 @@ def v_outward_xy(q):
 
 
 # Use the vector field function to construct a vector field
-X_outward_xy = tb.TangentVectorField(Q, v_outward_xy)
+X_outward = tb.TangentVectorField(Q, v_outward_xy, 0, 0)
 
-# Transition the vector field into polar coordinates
-X_outward_rt = X_outward_xy.transition(1)
+# Transition the vector field to output vectors in polar coordinates
+X_outward_rt = X_outward.transition_output(1)
 
 # Build a grid over which to evaluate the vector field
 grid_xy = ut.meshgrid_array(np.linspace(-2, 2, 5), np.linspace(-2, 2, 5))
 
-# Transition the grid into polar coordinates (ignore for now that xy=(0,0) does not have a corresponding polar point)
-grid_rt = (md.ManifoldElementSet(Q, grid_xy).transition(1)).grid
+# Turn the grid into points on the manifold
+cartesian_points = md.ManifoldElementSet(Q, grid_xy, 0)
+
+# Get the polar locations of the cartesian grid points
+polar_points = cartesian_points.transition(1)
 
 # Evaluate the Cartesian vector field on its grid
-vector_grid = X_outward_xy(grid_xy).grid[1]
+cartesian_set = X_outward(cartesian_points)
 print("The Cartesian components of the outward field are the same as the underlying Cartesian coordinates: \n",
-      vector_grid,
+      cartesian_set.grid[1],
       "\n")
 
 ax = plt.subplot(3, 2, 1)
-c_grid = grid_xy
-v_grid = vector_grid
-ax.quiver(c_grid[0], c_grid[1], v_grid[0], v_grid[1], scale=20, linewidth=10)
+c_grid, v_grid = cartesian_set.grid
+ax.quiver(*c_grid, *v_grid, scale=20, linewidth=10)
 ax.set_aspect('equal')
 ax.set_xlim(-4, 4)
 ax.set_ylim(-4, 4)
 ax.set_title("Cartesian chart outward")
 
-# Evaluate the polar-coordinate-expressed field on the polar grid
-vector_grid_rt = X_outward_rt(grid_rt).grid[1]
+# Convert the vector field to polar output, then evaluate the polar-coordinate-expressed field on the polar grid
+x_outward_rt = X_outward.transition_output(1, 1)
+polar_set = X_outward_rt(polar_points)
 
-print("The polar components of the outward field are all in the radial direction: \n", vector_grid_rt)
+print("The polar components of the outward field are all in the radial direction: \n", polar_set.grid[1])
 
 ax = plt.subplot(3, 2, 2)
-c_grid = grid_rt
-v_grid = vector_grid_rt
-ax.quiver(c_grid[0], c_grid[1], v_grid[0], v_grid[1], scale=5, units='xy')
+c_grid, v_grid = polar_set.grid
+ax.quiver(*c_grid, *v_grid, scale=5, units='xy')
 ax.set_aspect('equal')
 ax.set_xlim(0, 3)
 ax.set_ylim(0, 4)
@@ -58,13 +60,11 @@ ax.set_title("Polar chart radial")
 # Test that transitioning the vector fields and then evaluating them is the same as evaluating
 # them as sets and then transitioning them
 
-# Evaluate the Cartesian and polar expressions of the vector fields as sets
-vector_set_xy = X_outward_xy(grid_xy)
-vector_set_rt = X_outward_rt(grid_rt)
+
 
 # Extract the grids from the set-evaluated vector fields
-vs_xy_c, vs_xy_v = vector_set_xy.grid
-vs_rt_c, vs_rt_v = vector_set_rt.grid
+vs_xy_c, vs_xy_v = cartesian_set.grid
+vs_rt_c, vs_rt_v = polar_set.grid
 
 
 # print("Shape of vector grids is ", vs_rtxy_v.shape)
@@ -73,7 +73,7 @@ vs_rt_c, vs_rt_v = vector_set_rt.grid
 ax = plt.subplot(3, 2, 3)
 c_grid = vs_xy_c
 v_grid = vs_xy_v
-ax.quiver(c_grid[0], c_grid[1], v_grid[0], v_grid[1], scale=20)
+ax.quiver(*c_grid, *v_grid, scale=20)
 ax.set_aspect('equal')
 ax.set_xlim(-4, 4)
 ax.set_ylim(-4, 4)
@@ -82,20 +82,20 @@ ax.set_title("Cartesian from set")
 ax = plt.subplot(3, 2, 4)
 c_grid = vs_rt_c
 v_grid = vs_rt_v
-ax.quiver(c_grid[0], c_grid[1], v_grid[0], v_grid[1], scale=5, units='xy')
+ax.quiver(*c_grid, *v_grid, scale=5, units='xy')
 ax.set_aspect('equal')
 ax.set_xlim(0, 3)
 ax.set_ylim(0, 4)
 ax.set_title("Polar from set")
 
 # Transition the polar vectors back to Cartesian coordinates
-vector_set_rtxy = vector_set_rt.transition(0, 'match')
-vs_rtxy_c, vs_rtxy_v = vector_set_rtxy.grid
+polar_set_cartesian_rep = cartesian_set.transition(0, 'match')
+vs_rtxy_c, vs_rtxy_v = polar_set_cartesian_rep.grid
 
 ax = plt.subplot(3, 2, 5)
 c_grid = vs_rtxy_c
 v_grid = vs_rtxy_v
-ax.quiver(c_grid[0], c_grid[1], v_grid[0], v_grid[1], scale=20)
+ax.quiver(*c_grid, *v_grid, scale=20)
 ax.set_aspect('equal')
 ax.set_xlim(-4, 4)
 ax.set_ylim(-4, 4)
