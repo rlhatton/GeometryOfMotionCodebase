@@ -50,9 +50,9 @@ def third_embedding(chart_coords):
 
 
 # Generate the embedding functions corresponding to the charts
-embed_first = md.ManifoldMap(Q, Q_amb, first_embedding)
-embed_second = md.ManifoldMap(Q, Q_amb, second_embedding)
-embed_third = md.ManifoldMap(Q, Q_amb, third_embedding)
+embed_first = md.ManifoldMap(Q, Q_amb, first_embedding, 0)
+embed_second = md.ManifoldMap(Q, Q_amb, second_embedding, 1)
+embed_third = md.ManifoldMap(Q, Q_amb, third_embedding, 2)
 
 # Make a grid of coordinate values
 coordinate_grid = ut.meshgrid_array(np.linspace(-.4, .4, 25), np.linspace(-.4, .4, 25))
@@ -63,21 +63,21 @@ second_points = md.ManifoldElementSet(Q, coordinate_grid, 1)
 third_points = md.ManifoldElementSet(Q, coordinate_grid, 2)
 
 # Embed coordinate grids for three two charts into R3
-first_grid_Q_amb = embed_first(first_points).grid
-second_grid_Q_amb = embed_second(second_points).grid
-third_grid_Q_amb = embed_third(third_points).grid
+first_points_Q_amb = embed_first(first_points)
+second_points_Q_amb = embed_second(second_points)
+third_points_Q_amb = embed_third(third_points)
 
 # Pull back the points defined in the second and third charts into the first chart
-first_chart_second_grid = second_points.transition(0).grid
-first_chart_third_grid = third_points.transition(0).grid
+first_chart_second_points = second_points.transition(0)
+first_chart_third_points = third_points.transition(0)
 
 # Pull back the points defined in the first and third charts into the second chart
-second_chart_first_grid = first_points.transition(1).grid
-second_chart_third_grid = third_points.transition(1).grid
+second_chart_first_points = first_points.transition(1)
+second_chart_third_points = third_points.transition(1)
 
 # Pull back the points defined in the first and second charts into the third chart
-third_chart_first_grid = first_points.transition(2).grid
-third_chart_second_grid = second_points.transition(2).grid
+third_chart_first_points = first_points.transition(2)
+third_chart_second_points = second_points.transition(2)
 
 fig = plt.figure()
 
@@ -85,35 +85,35 @@ fig = plt.figure()
 # * syntax unpacks the grid values along the first axis, so I don't need to write out each index
 ax_ambient1 = fig.add_subplot(331, projection='3d')
 ax = ax_ambient1
-ax.plot_surface(*first_grid_Q_amb, facecolor='white', edgecolor=spot_color)
+ax.plot_surface(*first_points_Q_amb.grid, facecolor='white', edgecolor=spot_color)
 ax.grid(False)
 ax.set_xticks([])
 ax.set_yticks([])
 ax.set_zticks([])
 ax.set_aspect('equal')
 
-ax_ambient2 = fig.add_subplot(332, projection='3d')
+ax_ambient2 = fig.add_subplot(335, projection='3d')
 ax = ax_ambient2
-ax.plot_surface(*second_grid_Q_amb, facecolor='white', edgecolor='black')
+ax.plot_surface(*second_points_Q_amb.grid, facecolor='white', edgecolor='black')
 ax.grid(False)
 ax.set_xticks([])
 ax.set_yticks([])
 ax.set_zticks([])
 ax.set_aspect('equal')
 
-ax_ambient3 = fig.add_subplot(333, projection='3d')
+ax_ambient3 = fig.add_subplot(339, projection='3d')
 ax = ax_ambient3
-ax.plot_surface(*third_grid_Q_amb, facecolor='white', edgecolor='grey')
+ax.plot_surface(*third_points_Q_amb.grid, facecolor='white', edgecolor='grey')
 ax.grid(False)
 ax.set_xticks([])
 ax.set_yticks([])
 ax.set_zticks([])
 ax.set_aspect('equal')
 
-ax_flat1 = fig.add_subplot(334)
+ax_flat1 = fig.add_subplot(332)
 ax = ax_flat1
-ax.pcolormesh(*coordinate_grid, np.zeros([coordinate_grid.shape[1] - 1, coordinate_grid.shape[2] - 1]), facecolor='none', edgecolor=spot_color)
-ax.scatter(*first_chart_second_grid, color='black', s=1) #
+ax.pcolormesh(*first_points.grid, np.zeros([coordinate_grid.shape[1] - 1, coordinate_grid.shape[2] - 1]), facecolor='none', edgecolor=spot_color)
+ax.scatter(*first_chart_second_points.grid, color='black', s=1) #
 ax.grid(False)
 # ax.set_xticks([])
 # ax.set_yticks([])
@@ -121,10 +121,12 @@ ax.set_xlim(-.5, .5)
 ax.set_ylim(-.5, .5)
 ax.set_aspect('equal')
 
-ax_flat2 = fig.add_subplot(337)
+
+
+ax_flat2 = fig.add_subplot(333)
 ax = ax_flat2
-ax.pcolormesh(*coordinate_grid, np.zeros([coordinate_grid.shape[1] - 1, coordinate_grid.shape[2] - 1]), facecolor='none', edgecolor=spot_color)
-ax.scatter(*first_chart_third_grid, color='grey', s=1) #
+ax.pcolormesh(*first_points.grid, np.zeros([coordinate_grid.shape[1] - 1, coordinate_grid.shape[2] - 1]), facecolor='none', edgecolor=spot_color)
+ax.scatter(*first_chart_third_points.grid, color='grey', s=1) #
 ax.grid(False)
 # ax.set_xticks([])
 # ax.set_yticks([])
@@ -132,11 +134,10 @@ ax.set_xlim(-.5, .5)
 ax.set_ylim(-.5, .5)
 ax.set_aspect('equal')
 
-
-ax_flat3 = fig.add_subplot(335)
+ax_flat3 = fig.add_subplot(334)
 ax = ax_flat3
-ax.pcolormesh(*coordinate_grid, np.zeros([coordinate_grid.shape[1] - 1, coordinate_grid.shape[2] - 1]), facecolor='none', edgecolor='black')
-ax.scatter(*second_chart_first_grid, color=spot_color, s=1)
+ax.pcolormesh(*second_points.grid, np.zeros([coordinate_grid.shape[1] - 1, coordinate_grid.shape[2] - 1]), facecolor='none', edgecolor='black')
+ax.scatter(*second_chart_first_points.grid, color=spot_color, s=1)
 ax.grid(False)
 # ax.set_xticks([])
 # ax.set_yticks([])
@@ -144,10 +145,12 @@ ax.set_xlim(-.5, .5)
 ax.set_ylim(-.5, .5)
 ax.set_aspect('equal')
 
-ax_flat4 = fig.add_subplot(338)
+
+
+ax_flat4 = fig.add_subplot(336)
 ax = ax_flat4
-ax.pcolormesh(*coordinate_grid, np.zeros([coordinate_grid.shape[1] - 1, coordinate_grid.shape[2] - 1]), facecolor='none', edgecolor='black')
-ax.scatter(*second_chart_third_grid, color='grey', s=1)
+ax.pcolormesh(*second_points.grid, np.zeros([coordinate_grid.shape[1] - 1, coordinate_grid.shape[2] - 1]), facecolor='none', edgecolor='black')
+ax.scatter(*second_chart_third_points.grid, color='grey', s=1)
 ax.grid(False)
 # ax.set_xticks([])
 # ax.set_yticks([])
@@ -155,10 +158,11 @@ ax.set_xlim(-.5, .5)
 ax.set_ylim(-.5, .5)
 ax.set_aspect('equal')
 
-ax_flat5 = fig.add_subplot(336)
+
+ax_flat5 = fig.add_subplot(337)
 ax = ax_flat5
-ax.pcolormesh(*coordinate_grid, np.zeros([coordinate_grid.shape[1] - 1, coordinate_grid.shape[2] - 1]), facecolor='none', edgecolor='grey')
-ax.scatter(*third_chart_first_grid, color=spot_color, s=1) #
+ax.pcolormesh(*third_points.grid, np.zeros([coordinate_grid.shape[1] - 1, coordinate_grid.shape[2] - 1]), facecolor='none', edgecolor='grey')
+ax.scatter(*third_chart_first_points.grid, color=spot_color, s=1) #
 ax.grid(False)
 # ax.set_xticks([])
 # ax.set_yticks([])
@@ -166,23 +170,24 @@ ax.set_xlim(-.5, .5)
 ax.set_ylim(-.5, .5)
 ax.set_aspect('equal')
 
-ax_flat6 = fig.add_subplot(339)
+ax_flat6 = fig.add_subplot(338)
 ax = ax_flat6
-ax.pcolormesh(*coordinate_grid, np.zeros([coordinate_grid.shape[1] - 1, coordinate_grid.shape[2] - 1]), facecolor='none', edgecolor='grey')
-ax.scatter(*third_chart_second_grid, color='black', s=1) #
+ax.pcolormesh(*third_points.grid, np.zeros([coordinate_grid.shape[1] - 1, coordinate_grid.shape[2] - 1]), facecolor='none', edgecolor='grey')
+ax.scatter(*third_chart_second_points.grid, color='black', s=1) #
 ax.grid(False)
 # ax.set_xticks([])
 # ax.set_yticks([])
 ax.set_xlim(-.5, .5)
 ax.set_ylim(-.5, .5)
 ax.set_aspect('equal')
+
 
 fig = plt.figure()
 ax_flat7 = fig.add_subplot(111)
 ax = ax_flat7
-ax.pcolormesh(*coordinate_grid, np.zeros([coordinate_grid.shape[1] - 1, coordinate_grid.shape[2] - 1]), facecolor='none', edgecolor='grey')
-ax.scatter(*third_chart_second_grid, color='black', s=1)
-ax.scatter(*third_chart_first_grid, color=spot_color, s=1)
+ax.pcolormesh(*third_points.grid, np.zeros([coordinate_grid.shape[1] - 1, coordinate_grid.shape[2] - 1]), facecolor='none', edgecolor='grey')
+ax.scatter(*third_chart_second_points.grid, color='black', s=1)
+ax.scatter(*third_chart_first_points.grid, color=spot_color, s=1)
 ax.grid(False)
 # ax.set_xticks([])
 # ax.set_yticks([])
