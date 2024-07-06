@@ -79,7 +79,7 @@ y_l = np.linspace(-10, 10, 7)
 cart_grid = ut.meshgrid_array(x, y)
 cart_grid_l = ut.meshgrid_array(x_l, y_l)
 
-# Turn the meshgrids into  ManifoldElementSets, specified in the Cartesian chart on the ambient space
+# Turn the meshgrids into ManifoldElementSets, specified in the Cartesian chart on the ambient space
 ambient_cartesian_points = md.ManifoldElementSet(Q_amb, cart_grid, 0)
 ambient_cartesian_points_l = md.ManifoldElementSet(Q_amb, cart_grid_l, 0)
 

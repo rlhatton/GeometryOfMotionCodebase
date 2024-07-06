@@ -48,7 +48,7 @@ class ManifoldElement(core.GeomotionElement):
 
     def __init__(self,
                  manifold,
-                 value,
+                 value=None,
                  initial_chart=0):
 
         # Check if the first argument is a ManifoldElementSet already, and if so, extract its value and manifold
@@ -110,61 +110,53 @@ class ManifoldElementSet(core.GeomotionSet):
     """ Argument list should either be a list of manifold elements or
     Manifold, GridArray, initial_chart, component-or-element """
 
-    def __init__(self, *args):
-        """ args is one of:
+    def __init__(self,
+                 manifold,
+                 value=None,
+                 initial_chart=0,
+                 input_format=None):
+        """ First input is one of:
         1. A ManifoldElementSet (which gets passed through into a copy of the original)
         2. A ManifoldElement (which gets wrapped into a single-element list)
         3. A nested list-of-lists of ManifoldElements
-        4. a Manifold
+        4. a Manifold, followed by
            a GridArray of values
            an initial chart
            (optional) component-outer or element-outer specification for grid"""
 
-        n_args = len(args)
 
         # Check if the first argument is a ManifoldElementSet already, and if so, extract its value and manifold
-        if isinstance(args[0], ManifoldElementSet):
-            value = args[0].value
-            manifold = args[0].manifold
+        if isinstance(manifold, ManifoldElementSet):
+            manifold_element_set_input = manifold
+            value = manifold_element_set_input.value
+            manifold = manifold_element_set_input.manifold
 
-        # Check if the first argument is a bare manifold element, and if so, wrap it in a list
-        elif isinstance(args[0], ManifoldElement):
-            value = [args[0].value]
-            manifold = args[0].manifold
+        # Check if the first argument is a bare manifold element, and if so, wrap its value in a list
+        elif isinstance(manifold, ManifoldElement):
+            manifold_element_input = manifold
+            value = [manifold_element_input.value]
+            manifold = manifold_element_input.manifold
 
         # Check if the first argument is a list-of-lists of Elements of the specified type, and if so, use it directly
-        elif isinstance(args[0], list):
-            if ut.object_list_all_instance(ManifoldElement, args[0]):
-                value = args[0]
-                manifold = ut.object_list_extract_first_entry(args[0]).manifold
+        elif isinstance(manifold, list):
+            list_input = manifold
+            if ut.object_list_all_instance(ManifoldElement, list_input):
+                value = list_input
+                manifold = ut.object_list_extract_first_entry(list_input).manifold
             else:
                 raise Exception("List input to ManifoldElementSet should contain ManifoldElement objects",
-                                "not ", type(ut.object_list_extract_first_entry(args[0])))
+                                "not ", type(ut.object_list_extract_first_entry(list_input)))
 
         # If the first argument is a manifold, process the inputs as if they were ManifoldElement inputs
         # with values provided in a GridArray
-        elif isinstance(args[0], Manifold):
-            manifold = args[0]
-            if isinstance(args[1], ut.GridArray):
+        elif isinstance(manifold, Manifold):
+            if isinstance(value, ut.GridArray):
 
                 # Extract the grid array from the argument list
-                grid = args[1]
-
-                # Check if the format of the grids has been specified
-                if n_args > 3:
-                    input_format = args[3]
-                else:
-                    input_format = None
+                grid = value
 
                 # Make sure that the grid is in element-outer format
                 grid = ut.format_grid(grid, manifold.element_shape, 'element', input_format)
-
-                # Convert element-outer grid to a list of ManifoldElements, including passing any initial chart to
-                # the manifold element function
-                if n_args > 2:
-                    initial_chart = args[2]
-                else:
-                    initial_chart = 0
 
                 def manifold_element_construction_function(manifold_element_value):
                     return manifold.element(manifold_element_value, initial_chart)
