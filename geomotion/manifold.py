@@ -253,8 +253,11 @@ class ManifoldFunction:
         # Put the input into ManifoldElementSet form (no change is made if it is already a set)
         configuration_set = ManifoldElementSet(configuration)
 
+        # Transition the ManifoldElementSet into the defining chart
+        configuration_set_defining_chart = configuration_set.transition(self.defining_chart)
+
         # Extract a component-wise grid from the ManifoldElementSet and evert it to element-wise
-        configuration_grid_e = configuration_set.grid.everse
+        configuration_grid_e = configuration_set_defining_chart.grid.everse
 
         return configuration_grid_e, value_type
 
@@ -282,23 +285,6 @@ class ManifoldFunction:
         else:
             # Default is to return a component-wise grid of the function value
             return function_grid_e.everse
-
-    def transition(self, new_chart):
-
-        # Pull back the function by mapping the input from the new chart into the old chart where the function was
-        # defined
-        def new_defining_function(configuration_value, *args, **kwargs):
-            old_configuration_value = self.manifold.transition_table[new_chart][self.defining_chart](
-                configuration_value)
-
-            return self.defining_function(old_configuration_value,
-                                          *args,
-                                          **kwargs)
-
-        return self.__class__(self.manifold,
-                              new_defining_function,
-                              new_chart,
-                              self.postprocess_function)
 
     def pullback(self, pullback_function, *args, **kwargs):
 
@@ -333,24 +319,6 @@ class ManifoldMap(ManifoldFunction):
         self.output_defining_chart = output_defining_chart
         self.output_chart = output_chart
         self.output_manifold = output_manifold
-
-    def transition(self, new_chart):
-        # Pull back the function by mapping the input from the new chart into the old chart where the function was
-        # defined
-        def new_defining_function(configuration_value, *args, **kwargs):
-            old_configuration_value = self.manifold.transition_table[new_chart][self.defining_chart](
-                configuration_value)
-
-            return self.defining_function(old_configuration_value,
-                                          *args,
-                                          **kwargs)
-
-        return self.__class__(self.manifold,
-                              self.output_manifold,
-                              new_defining_function,
-                              new_chart,
-                              self.output_defining_chart,
-                              self.output_chart)
 
     def transition_output(self, new_output_chart):
         return self.__class__(self.manifold,
