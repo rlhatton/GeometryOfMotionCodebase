@@ -1,6 +1,6 @@
 #! /usr/bin/python3
 import numpy as np
-from geomotion import representationgroup as rgp
+from geomotion import representationgroup as rgp, utilityfunctions as ut
 
 np.set_printoptions(precision=2)  # Make things print nicely
 
@@ -19,7 +19,7 @@ g2 = R1plus.element(3)
 
 g3 = g1 * g2
 
-print("Addition-group composition of \n", g1.rep, "\n and \n", g2.rep, "\n is \n", g3.rep)
+rint("Addition-group composition of \n", g1.rep, "\n and \n", g2.rep, "\n is \n", g3.rep)
 
 """ Scalar addition """
 

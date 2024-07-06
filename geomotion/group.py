@@ -42,6 +42,17 @@ class Group(md.Manifold):
                          initial_chart)
         return g
 
+    def element_set(self,
+                    value=None,
+                    initial_chart=0,
+                    input_format=None):
+        g_set = GroupElementSet(self,
+                                value,
+                                initial_chart,
+                                input_format)
+
+        return g_set
+
     def identity_element(self,
                          initial_chart=0):
         """Instantiate a group element at the identity"""

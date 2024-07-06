@@ -43,8 +43,8 @@ spot_color=gplt.crimson
 
 ax_orig = plt.subplot(3, 1, 1)
 ax = ax_orig
-ax.scatter(g1[0], g1[1], edgecolor=spot_color, facecolor='white', label='$g_{1}$')
-ax.scatter(g2[0], g2[1], edgecolor='black', facecolor=spot_color, label='$g_{2}$')
+ax.scatter(*g1, edgecolor=spot_color, facecolor='white', label='$g_{1}$')
+ax.scatter(*g2, edgecolor='black', facecolor=spot_color, label='$g_{2}$')
 ax.scatter(1,0, edgecolor='black', facecolor='black')
 ax.scatter(0, 0, edgecolor='black', facecolor='white', s=20, clip_on=False, zorder=3)
 ax.set_xlim(0, 4)
@@ -60,10 +60,10 @@ ax.legend(loc='upper right', bbox_to_anchor=(2, 1))
 
 ax_g1g2_left = plt.subplot(3, 2, 3)
 ax = ax_g1g2_left
-ax.scatter(g1[0], g1[1], edgecolor=spot_color, facecolor='white')
-ax.scatter(g2[0], g2[1], edgecolor='black', facecolor=spot_color)
-ax.scatter(g3[0], g3[1], edgecolor='black', facecolor='white', marker=r'$\odot$')
-ax.scatter(1,0, edgecolor='black', facecolor='black')
+ax.scatter(*g1, edgecolor=spot_color, facecolor='white')
+ax.scatter(*g2, edgecolor='black', facecolor=spot_color)
+ax.scatter(*g3, edgecolor='black', facecolor='white', marker=r'$\odot$')
+ax.scatter(1, 0, edgecolor='black', facecolor='black')
 ax.scatter(0, 0, edgecolor='black', facecolor='white', s=20, clip_on=False, zorder=3)
 ax.set_xlim(0, 4)
 ax.set_ylim(-2, 5)
@@ -81,10 +81,10 @@ ax.plot([1, g1scale[0], g1[0]], [0-.2, g1scale[1]-.2, g1[1]], color='black', lin
 
 ax_g1g2_right = plt.subplot(3, 2, 4)
 ax = ax_g1g2_right
-ax.scatter(g1[0], g1[1], edgecolor=spot_color, facecolor='white')
-ax.scatter(g2[0], g2[1], edgecolor='black', facecolor=spot_color)
-ax.scatter(g3[0], g3[1], edgecolor='black', facecolor='white', marker=r'$\odot$')
-ax.scatter(1,0, edgecolor='black', facecolor='black')
+ax.scatter(*g1, edgecolor=spot_color, facecolor='white')
+ax.scatter(*g2, edgecolor='black', facecolor=spot_color)
+ax.scatter(*g3, edgecolor='black', facecolor='white', marker=r'$\odot$')
+ax.scatter(1, 0, edgecolor='black', facecolor='black')
 ax.scatter(0, 0, edgecolor='black', facecolor='white', s=20, clip_on=False, zorder=3)
 ax.set_xlim(0, 4)
 ax.set_ylim(-2, 5)
@@ -101,9 +101,9 @@ ax.plot([1, g2shift[0], g2[0]], [0, g2shift[1], g2[1]], color='black', linewidth
 
 ax_g2g1_left = plt.subplot(3, 2, 5)
 ax = ax_g2g1_left
-ax.scatter(g1[0], g1[1], edgecolor=spot_color, facecolor='white')
-ax.scatter(g2[0], g2[1], edgecolor='black', facecolor=spot_color)
-ax.scatter(g4[0], g4[1], edgecolor=spot_color, facecolor='white', marker=r'$\odot$')
+ax.scatter(*g1, edgecolor=spot_color, facecolor='white')
+ax.scatter(*g2, edgecolor='black', facecolor=spot_color)
+ax.scatter(*g4, edgecolor=spot_color, facecolor='white', marker=r'$\odot$')
 ax.scatter(1,0, edgecolor='black', facecolor='black')
 ax.scatter(0, 0, edgecolor='black', facecolor='white', s=20, clip_on=False, zorder=3)
 ax.set_xlim(0, 4)
@@ -122,9 +122,9 @@ ax.plot([1, g2scale[0], g2[0]], [0+.2, g2scale[1]+.2, g2[1]], color='black', lin
 
 ax_g2g1_right = plt.subplot(3, 2, 6)
 ax = ax_g2g1_right
-ax.scatter(g1[0], g1[1], edgecolor=spot_color, facecolor='white')
-ax.scatter(g2[0], g2[1], edgecolor='black', facecolor=spot_color)
-ax.scatter(g4[0], g4[1], edgecolor=spot_color, facecolor='white', marker=r'$\odot$')
+ax.scatter(*g1, edgecolor=spot_color, facecolor='white')
+ax.scatter(*g2, edgecolor='black', facecolor=spot_color)
+ax.scatter(*g4, edgecolor=spot_color, facecolor='white', marker=r'$\odot$')
 ax.scatter(1,0, edgecolor='black', facecolor='black')
 ax.scatter(0, 0, edgecolor='black', facecolor='white', s=20, clip_on=False, zorder=3)
 ax.set_xlim(0, 4)

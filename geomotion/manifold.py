@@ -31,8 +31,14 @@ class Manifold:
         return q
 
     def element_set(self,
-                    *args):
-        q_set = ManifoldElementSet(self, *args)
+                    value=None,
+                    initial_chart=0,
+                    input_format=None):
+
+        q_set = ManifoldElementSet(self,
+                                   value,
+                                   initial_chart,
+                                   input_format)
 
         return q_set
 

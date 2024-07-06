@@ -46,11 +46,11 @@ g1g2g1inv_g2inv_shift = g1g2g1inv * g2inv_shift
 
 ax_CommDiff = plt.subplot(1, 2, 1)
 ax = ax_CommDiff
-ax.scatter(g1[0], g1[1], edgecolor=spot_color, facecolor='white')
-ax.scatter(g2[0], g2[1], edgecolor='black', facecolor=spot_color)
-ax.scatter(g1g2[0], g1g2[1], edgecolor='black', facecolor='white', marker=r'$\odot$')
-ax.scatter(g2g1[0], g2g1[1], edgecolor=spot_color, facecolor='white', marker=r'$\odot$')
-ax.scatter(1,0, edgecolor='black', facecolor='black')
+ax.scatter(*g1, edgecolor=spot_color, facecolor='white')
+ax.scatter(*g2, edgecolor='black', facecolor=spot_color)
+ax.scatter(*g1g2, edgecolor='black', facecolor='white', marker=r'$\odot$')
+ax.scatter(*g2g1, edgecolor=spot_color, facecolor='white', marker=r'$\odot$')
+ax.scatter(1, 0, edgecolor='black', facecolor='black')
 ax.scatter(0, 0, edgecolor='black', facecolor='white', s=20, clip_on=False, zorder=3)
 ax.set_xlim(0, 4)
 ax.set_ylim(-2, 5)
@@ -71,11 +71,11 @@ ax.arrow(g2g1[0], g2g1[1]+.1, .9*(g1g2[0]-g2g1[0]), .9*(g1g2[1]-g2g1[1]), color=
 
 ax_CommPath = plt.subplot(1, 2, 2)
 ax = ax_CommPath
-ax.scatter(g1[0], g1[1], edgecolor=spot_color, facecolor='white')
-# ax.scatter(g2[0], g2[1], edgecolor='black', facecolor=spot_color)
-ax.scatter(g1g2[0], g1g2[1], edgecolor='black', facecolor='white', marker=r'$\odot$')
-ax.scatter(g1g2g1inv[0], g1g2g1inv[1], edgecolor=spot_color, facecolor='black')
-ax.scatter(Comm_g1_g2[0], Comm_g1_g2[1], edgecolor=spot_color, facecolor='white', marker=r'$\otimes$')
+ax.scatter(*g1, edgecolor=spot_color, facecolor='white')
+# ax.scatter(*g2, edgecolor='black', facecolor=spot_color)
+ax.scatter(*g1g2, edgecolor='black', facecolor='white', marker=r'$\odot$')
+ax.scatter(*g1g2g1inv, edgecolor=spot_color, facecolor='black')
+ax.scatter(*Comm_g1_g2, edgecolor=spot_color, facecolor='white', marker=r'$\otimes$')
 ax.scatter(1,0, edgecolor='black', facecolor='black')
 ax.scatter(0, 0, edgecolor='black', facecolor='white', s=20, clip_on=False, zorder=3)
 ax.set_xlim(0, 4)

@@ -140,7 +140,7 @@ class RepresentationGroupElement(gp.GroupElement):
         if representation.ndim == 2:
             pass
         else:
-            representation = self.group.representation_function_list[self.current_chart](representation)
+            representation = ut.ensure_ndarray(self.group.representation_function_list[self.current_chart](representation))
 
         # Store the matrix representation
         self._representation = representation
