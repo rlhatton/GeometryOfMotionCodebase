@@ -933,10 +933,16 @@ class DirectionDerivative(md.ManifoldFunction):
             return self.defining_map_numeric(config, delta, *process_args, **kwargs)
 
         # Evaluate the function over the configurations
-        output_config_grid_e = config_grid_e.grid_eval(lambda q: defining_map_with_inputs(q, [0]))
+        def defining_map_with_inputs_zero(q):
+            return defining_map_with_inputs(q, [0])
+        output_config_grid_e = config_grid_e.grid_eval(defining_map_with_inputs_zero)
 
         def direction_deriv(config):
-            return np.squeeze(ndt.Jacobian(lambda d: defining_map_with_inputs(config, d))([0]))
+
+            def defining_map_at_config(d):
+                return defining_map_with_inputs(config, d)
+
+            return np.squeeze(ndt.Jacobian(defining_map_at_config)([0]))
 
         # Evaluate the defining function over the grid
         vector_grid_e = config_grid_e.grid_eval(direction_deriv)
