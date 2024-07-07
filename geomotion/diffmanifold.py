@@ -824,6 +824,13 @@ class DifferentialMap(md.ManifoldFunction):
 
         return q_out_numeric
 
+    def __call__(self, vector, *args, **kwargs):
+
+        # This changes the name of the first argument in the call function, which is useful for
+        # things like IDE hinting. ManifoldFunction has evolved from the first implementation to
+        # the point where we could probably just copy the call function over and remove the inheritance
+        return super().__call__(vector, *args, **kwargs)
+
     def preprocess(self, vector):
         """Input vector information is provided as one of:
             1. TangentVector
@@ -895,3 +902,82 @@ class DifferentialMap(md.ManifoldFunction):
                 raise Exception("Value_type should be 'single' or 'multiple'.")
         else:
             return function_grid
+
+
+class DirectionDerivative(md.ManifoldFunction):
+
+    def __init__(self,
+                 defining_map: md.ManifoldMap):
+        self.manifold = defining_map.manifold
+        self.defining_map = defining_map
+        self.defining_chart = defining_map.defining_chart
+        self.output_manifold = defining_map.output_manifold
+        self.output_defining_chart = defining_map.output_defining_chart
+        self.output_defining_basis = defining_map.output_defining_chart
+        self.output_chart = defining_map.output_chart
+        self.output_basis = defining_map.output_chart
+        self.postprocess_function = [self.postprocess_function_single, self.postprocess_function_multiple]
+
+    def defining_map_numeric(self, q_numeric, delta, *args, **kwargs):
+        q_manifold = self.manifold.element(q_numeric)
+
+        q_out_manifold = self.defining_map(q_manifold, delta, *args, **kwargs)
+
+        q_out_numeric = q_out_manifold.value
+
+        return q_out_numeric
+
+    def process(self, config_grid_e, *process_args, **kwargs):
+
+        def defining_map_with_inputs(config, delta):
+            return self.defining_map_numeric(config, delta, *process_args, **kwargs)
+
+        # Evaluate the function over the configurations
+        output_config_grid_e = config_grid_e.grid_eval(lambda q: defining_map_with_inputs(q, [0]))
+
+        def direction_deriv(config):
+            return np.squeeze(ndt.Jacobian(lambda d: defining_map_with_inputs(config, d))([0]))
+
+        # Evaluate the defining function over the grid
+        vector_grid_e = config_grid_e.grid_eval(direction_deriv)
+
+        return output_config_grid_e, vector_grid_e
+
+    def postprocess(self, configuration_grid, function_grid, value_type):
+
+        vector_location_grid = function_grid[0]
+        vector_value_grid = function_grid[1]
+
+        if self.postprocess_function is not None:
+            if value_type == 'single':
+                vector_location = vector_location_grid[0]  # Extract the single output from the grid array
+                vector_value = vector_value_grid[0]
+                return self.postprocess_function[0](vector_location, vector_value)
+            elif value_type == 'multiple':
+                return self.postprocess_function[1](vector_location_grid, vector_value_grid)
+            else:
+                raise Exception("Value_type should be 'single' or 'multiple'.")
+        else:
+            return function_grid
+
+    def postprocess_function_single(self, q, v):
+        v_defining_output_chart = self.output_manifold.vector(q,
+                                                              v,
+                                                              self.output_defining_chart,
+                                                              self.output_defining_basis)
+
+        v_output_chart = v_defining_output_chart.transition(self.output_chart,
+                                                            self.output_basis)
+
+        return v_output_chart
+
+    def postprocess_function_multiple(self, q, v):
+        v_defining_output_chart = self.output_manifold.vector_set(q,
+                                                                  v,
+                                                                  self.output_defining_chart,
+                                                                  self.output_defining_basis)
+
+        v_output_chart = v_defining_output_chart.transition(self.output_chart,
+                                                            self.output_basis)
+
+        return v_output_chart
