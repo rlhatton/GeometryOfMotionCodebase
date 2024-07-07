@@ -782,54 +782,54 @@ class TangentVectorField(md.ManifoldFunction):
 class DifferentialMap(md.ManifoldFunction):
 
     def __init__(self,
-                 manifold: md.Manifold,
-                 output_manifold: md.Manifold,
-                 defining_map,
-                 defining_chart=0,
-                 defining_basis=0,
-                 output_defining_chart=0,
-                 output_defining_basis=0,
-                 output_chart=None,
-                 output_basis=None):
+                 defining_map: md.ManifoldMap):
 
-        if output_chart is None:
-            output_chart = output_defining_chart
+        self.manifold = defining_map.manifold
+        self.defining_map = defining_map
+        self.output_manifold = defining_map.output_manifold
+        self.output_defining_chart = defining_map.output_defining_chart
+        self.output_defining_basis = defining_map.output_defining_chart
+        self.output_chart = defining_map.output_chart
+        self.output_basis = defining_map.output_chart
+        self.postprocess_function = [self.postprocess_function_single, self.postprocess_function_multiple]
 
-        if output_basis is None:
-            output_basis = output_defining_basis
+    def postprocess_function_single(self, q, v):
+        v_defining_output_chart = self.output_manifold.vector(q,
+                                                              v,
+                                                              self.output_defining_chart,
+                                                              self.output_defining_basis)
 
-        def postprocess_function_single(q, v):
-            return (output_manifold.vector(q, v, output_defining_chart, output_defining_basis).
-                    transition(output_chart, output_basis))
+        v_output_chart = v_defining_output_chart.transition(self.output_chart,
+                                                            self.output_basis)
 
-        def postprocess_function_multiple(q, v):
-            return (output_manifold.vector_set(q, v, output_defining_chart, output_defining_basis).
-                    transition(output_chart, output_basis))
+        return v_output_chart
 
-        def defining_function_safe(*args):
+    def postprocess_function_multiple(self, q, v):
+        v_defining_output_chart = self.output_manifold.vector_set(q,
+                                                                  v,
+                                                                  self.output_defining_chart,
+                                                                  self.output_defining_basis)
 
-            q_out_raw = defining_function(*args)
-            q_out = q_out_raw.value
-            return q_out
+        v_output_chart = v_defining_output_chart.transition(self.output_chart,
+                                                            self.output_basis)
 
-        postprocess_function = [postprocess_function_single, postprocess_function_multiple]
+        return v_output_chart
 
-        super().__init__(manifold,
-                         defining_function_safe,
-                         defining_chart,
-                         postprocess_function)
+    def defining_map_numeric(self, q_numeric, *args, **kwargs):
+        q_manifold = self.manifold.element(q_numeric)
 
-        self.output_manifold = output_manifold
-        self.defining_basis = defining_basis
-        self.output_defining_chart = output_defining_chart
-        self.output_defining_basis = output_defining_basis
-        self.output_chart = output_chart
-        self.output_basis = output_basis
+        q_out_manifold = self.defining_map(q_manifold, *args, **kwargs)
+
+        q_out_numeric = q_out_manifold.value
+
+        return q_out_numeric
 
     def preprocess(self, vector):
-        """Input vector information is provided as the first entries of call_args, and can be one of:
+        """Input vector information is provided as one of:
             1. TangentVector
-            3. TangentVectorSet"""
+            3. TangentVectorSet
+
+            and should be pushed to being a TangentVectorSet"""
 
         if isinstance(vector, TangentVector):
             value_type = 'single'
@@ -846,40 +846,36 @@ class DifferentialMap(md.ManifoldFunction):
         # Push the vector input into TangentVectorSet form
         vector_set = TangentVectorSet(vector)
 
-        # Transition the TangentVectorSet into the defining chart
-        vector_set_defining_chart = vector_set.transition(self.defining_chart, self.defining_basis)
+        return vector_set, value_type
 
-        # Extract component-wise grids from the TangentVectorSets and evert them to element-wise
-        configuration_grid_c, vector_grid_c = vector_set_defining_chart.grid
-        configuration_grid_e = configuration_grid_c.everse
+    def process(self, vector_set, *process_args, **kwargs):
+
+        # Extract a numeric grid from the vector set
+        config_grid_c, vector_grid_c = vector_set.grid
+
+        config_grid_e = config_grid_c.everse
         vector_grid_e = vector_grid_c.everse
 
-        return (configuration_grid_e, vector_grid_e), value_type
-
-    def process(self, configuration_grids, *process_args, **kwargs):
-
-        config_grid_e = configuration_grids[0]
-        vector_grid_e = configuration_grids[1]
-
-        def defining_function_with_inputs(q):
-            q_out = self.defining_function(q, *process_args, **kwargs)
+        def defining_map_with_inputs(q):
+            q_out = self.defining_map_numeric(q, *process_args, **kwargs)
 
             return q_out
 
         # Evaluate the function over the configurations
-        output_config_grid_e = config_grid_e.grid_eval(defining_function_with_inputs)
+        output_config_grid_e = config_grid_e.grid_eval(defining_map_with_inputs)
 
         def diffdefining_function_with_inputs(q, v):
-            function_jacobian = ndt.Jacobian(defining_function_with_inputs)
+            function_jacobian = ndt.Jacobian(defining_map_with_inputs)
             v_out = np.matmul(function_jacobian(q), v)
 
             return v_out
 
         # Evaluate the Jacobian at each point with the vector at that point
-        output_vector_grid_e = ut.object_list_eval_pairwise(diffdefining_function_with_inputs,
-                                                            config_grid_e,
-                                                            vector_grid_e,
-                                                            n_outer=config_grid_e.n_outer)
+        output_vector_grid_e = ut.GridArray(ut.object_list_eval_pairwise(diffdefining_function_with_inputs,
+                                                                         config_grid_e,
+                                                                         vector_grid_e,
+                                                                         n_outer=config_grid_e.n_outer),
+                                            n_outer=config_grid_e.n_outer)
 
         return output_config_grid_e, output_vector_grid_e
 

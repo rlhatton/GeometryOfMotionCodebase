@@ -29,7 +29,7 @@ def immerse_R1_in_R2(s):
 immersion_map_R1_into_R2 = md.ManifoldMap(R1, R2, immerse_R1_in_R2)
 
 # Define the differential map associated with the immersion map
-diffimmersion_map_R1_into_R2 = tb.DifferentialMap(R1, R2, immersion_map_R1_into_R2)
+diffimmersion_map_R1_into_R2 = tb.DifferentialMap(immersion_map_R1_into_R2)
 
 # Generate sparse and dense sets of points along a curve
 s_sparse = ut.GridArray([np.linspace(0, 2*np.pi, 9)], n_outer=1)
