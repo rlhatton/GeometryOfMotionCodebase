@@ -59,7 +59,7 @@ plt.arrow(traj2[0][-1], traj2[1][-1], traj2[0][-1]-traj2[0][-2], traj2[1][-1]-tr
 ax.set_aspect('equal')
 ax.set_xlim(-3, 3)
 ax.set_ylim(-3, 3)
-ax.set_title("Saddle field flows")
+ax.set_title("Saddle field flows Cartesian")
 
 
 ######################################
@@ -85,7 +85,7 @@ sol2 = X_saddle.integrate([start2, end2], q2_initial_polar)
 print("Flow solution for second flow is: \n", sol2.y)
 
 # Build a grid over which to evaluate the vector field
-grid_rt = ut.meshgrid_array(np.linspace(.5, 3, 5), np.linspace(-np.pi, np.pi, 12))
+grid_rt = ut.meshgrid_array(np.linspace(.5, 3, 5), np.linspace(-np.pi, np.pi, 9))
 polar_points = Q.element_set(grid_rt, 1)
 
 # Evaluate the saddle vector field on the polar grid, then transition all the points to cartesian for plotting
@@ -118,7 +118,7 @@ plt.arrow(traj2_polar_gen[0][-1], traj2_polar_gen[1][-1], traj2_polar_gen[0][-1]
 ax.set_aspect('equal')
 ax.set_xlim(-3, 3)
 ax.set_ylim(-3, 3)
-ax.set_title("Saddle field flows")
+ax.set_title("Saddle field flows polar")
 
 
 
