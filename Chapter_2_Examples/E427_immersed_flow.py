@@ -42,7 +42,7 @@ q_R1_dense = R1.element_set(s_dense)
 xy_dense = immersion_map_R1_into_R2(q_R1_dense)
 
 # Map the sparse set of points to unit vectors, and then immerse them
-v_sparse = unit_flow_field(s_sparse)
+v_sparse = unit_flow_field(q_R1_sparse)
 v_xy_sparse = diffimmersion_map_R1_into_R2(v_sparse)
 
 

@@ -326,5 +326,5 @@ class ManifoldMap(ManifoldFunction):
                               self.output_defining_chart,
                               new_output_chart)
 
-    def pullback(self, pullback_function, *args, **kwargs):
-        return core.PullbackFunction(self, pullback_function, *args, **kwargs)
+    # def pullback(self, pullback_function, *args, **kwargs):
+    #     return core.PullbackFunction(self, pullback_function, *args, **kwargs)
