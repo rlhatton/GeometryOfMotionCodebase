@@ -11,7 +11,7 @@ G = RxRplus
 
 
 def variable_group_composition_R(g_value, h_param, h_index):
-    h_value = G.identity_list[0]
+    h_value = G.identity_list[0].copy()
     h_value[h_index] = h_value[h_index] + h_param[0]
     h = G.element(h_value)
     g = G.element(g_value)
@@ -20,7 +20,7 @@ def variable_group_composition_R(g_value, h_param, h_index):
 
 
 def variable_group_composition_L(g_param, g_index, h_value):
-    g_value = G.identity_list[0]
+    g_value = G.identity_list[0].copy()
     g_value[g_index] = g_value[g_index] + g_param[0]
     g = G.element(g_value)
     h = G.element(h_value)
@@ -54,8 +54,8 @@ for i in range(G.n_dim):
 ax = plt.subplot(1, 2, 1)
 c_grid_0, v_grid_0 = d_dL[0].grid
 c_grid_1, v_grid_1 = d_dL[1].grid
-ax.quiver(*c_grid_0, *v_grid_0, scale=10, color=spot_color)
-ax.quiver(*c_grid_1, *v_grid_1, scale=10, color='black')
+ax.quiver(*c_grid_0, *v_grid_0, scale=20, color=spot_color)
+ax.quiver(*c_grid_1, *v_grid_1, scale=20, color='black')
 ax.set_aspect('equal')
 ax.set_xlim(0, 2.25)
 ax.set_ylim(-1.1, 1.25)
@@ -73,8 +73,8 @@ ax.set_title("Left basis vectors")
 ax = plt.subplot(1, 2, 2)
 c_grid_0, v_grid_0 = d_dR[0].grid
 c_grid_1, v_grid_1 = d_dR[1].grid
-ax.quiver(*c_grid_0, *v_grid_0, scale=10, color=spot_color)
-ax.quiver(*c_grid_1, *v_grid_1, scale=10, color='black')
+ax.quiver(*c_grid_0, *v_grid_0, scale=20, color=spot_color)
+ax.quiver(*c_grid_1, *v_grid_1, scale=20, color='black')
 ax.set_aspect('equal')
 ax.set_xlim(0, 2.25)
 ax.set_ylim(-1.1, 1.25)
