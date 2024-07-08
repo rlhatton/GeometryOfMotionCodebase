@@ -34,7 +34,6 @@ class Manifold:
                     value=None,
                     initial_chart=0,
                     input_format=None):
-
         q_set = ManifoldElementSet(self,
                                    value,
                                    initial_chart,
@@ -130,7 +129,6 @@ class ManifoldElementSet(core.GeomotionSet):
            an initial chart
            (optional) component-outer or element-outer specification for grid"""
 
-
         # Check if the first argument is a ManifoldElementSet already, and if so, extract its value and manifold
         if isinstance(manifold, ManifoldElementSet):
             manifold_element_set_input = manifold
@@ -210,19 +208,27 @@ class ManifoldElementSet(core.GeomotionSet):
 
 
 class ManifoldFunction:
+    """ManifoldFunction acts as a wrapper around a numerical function, such that it takes input as a ManifoldElement
+    or ManifoldElementSet and automatically converts it into the chart in which the function is defined,
+    then into numerical data for the underlying function to act on. There is also the option to provide
+    post-processing functions for elements and sets; this functionality is used by child classes such as
+    ManifoldMap and TangentVectorField"""
 
     def __init__(self,
                  manifold,
-                 defining_function,
-                 defining_chart=0,
-                 postprocess_function=None):
+                 defining_function,                 # Underlying numeric function
+                 defining_chart=0,                  # Chart on which the underlying function is defined
+                 postprocess_function=None):        # How to format the output of the numeric function
 
+        # Save all of the inputs as instance properties
         self.manifold = manifold
         self.defining_function = defining_function
         self.defining_chart = defining_chart
         self.postprocess_function = postprocess_function
 
     def __call__(self, configuration, *args, **kwargs):
+        """Break down the provided configuration element(s) to numeric values in the defining chart, then
+        apply the underlying function and any output processing"""
 
         # Convert the configuration value into an element-wise GridArray of numeric data
         configuration_grid_e, value_type = self.preprocess(configuration)
@@ -240,8 +246,9 @@ class ManifoldFunction:
                     1. ManifoldElement
                     3. ManifoldElementSet"""
 
+        # Record the single- or multiple-input status for post-processing
         if isinstance(configuration, ManifoldElement):
-            # Record the single-input status for post-processing
+
             value_type = 'single'
         elif isinstance(configuration, ManifoldElementSet):
             value_type = 'multiple'
@@ -260,6 +267,8 @@ class ManifoldFunction:
         return configuration_grid_e, value_type
 
     def process(self, configuration_grid_e, *process_args, **kwargs):
+        """Preload any non-configuration inputs that have been provided to the function, evaluate over the provided
+        configurations, and return an element-wise grid of numeric values"""
 
         def defining_function_with_inputs(config):
             return self.defining_function(config, *process_args, **kwargs)
@@ -270,10 +279,12 @@ class ManifoldFunction:
         return function_grid_e
 
     def postprocess(self, configuration_grid_e, function_grid_e, value_type):
+        """If the input was a single element, make the output also single element, and then apply the
+        post-processing operation"""
 
         if self.postprocess_function is not None:
             if value_type == 'single':
-                configuration_value = configuration_grid_e[0] # Extract the single item from the config grid array
+                configuration_value = configuration_grid_e[0]  # Extract the single item from the config grid array
                 function_value = function_grid_e[0]  # Extract the single item from the function grid array
                 return self.postprocess_function[0](configuration_value, function_value)
             elif value_type == 'multiple':
@@ -285,22 +296,28 @@ class ManifoldFunction:
             return function_grid_e.everse
 
     def pullback(self, pullback_function, *args, **kwargs):
+        """Method that is equivalent to using self as the "outer" input to PullbackFunction"""
 
         return core.PullbackFunction(self, pullback_function, *args, **kwargs)
 
 
 class ManifoldMap(ManifoldFunction):
+    """A manifold function that post-processes the output from the numeric function into manifold elements"""
 
     def __init__(self,
-                 manifold: Manifold,
-                 output_manifold: Manifold,
-                 defining_function,
-                 defining_chart=0,
-                 output_defining_chart=0,
-                 output_chart=None):
+                 manifold: Manifold,            # The manifold that input elements are part of
+                 output_manifold: Manifold,     # The manifold that output elements are part of
+                 defining_function,             # The underlying numeric function
+                 defining_chart=0,              # The input-manifold chart in which the function domain is defined
+                 output_defining_chart=0,       # The output-manifold chart in which the function range is defined
+                 output_chart=None):            # An output chart to use, if different from the definition chart
+        
+        # If a separate output chart is not specified, match it to the output defining chart
         if output_chart is None:
             output_chart = output_defining_chart
 
+        # Turn the numerical output of the defining function into manifold elements or
+        # element sets in the output manifold
         def postprocess_function_single(q_input, q_output):
             return output_manifold.element(q_output, output_defining_chart).transition(output_chart)
 
@@ -309,11 +326,13 @@ class ManifoldMap(ManifoldFunction):
 
         postprocess_function = [postprocess_function_single, postprocess_function_multiple]
 
+        # Initialize the standard pieces of a ManifoldFunction
         super().__init__(manifold,
                          defining_function,
                          defining_chart,
                          postprocess_function)
 
+        # Store the extra information associated with having manifold output
         self.output_defining_chart = output_defining_chart
         self.output_chart = output_chart
         self.output_manifold = output_manifold
@@ -325,6 +344,3 @@ class ManifoldMap(ManifoldFunction):
                               self.defining_chart,
                               self.output_defining_chart,
                               new_output_chart)
-
-    # def pullback(self, pullback_function, *args, **kwargs):
-    #     return core.PullbackFunction(self, pullback_function, *args, **kwargs)
