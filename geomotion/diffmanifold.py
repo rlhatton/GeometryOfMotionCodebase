@@ -640,9 +640,12 @@ class TangentVectorField(md.ManifoldFunction):
 
     def __call__(self,
                  config,
-                 time=0,
+                 time=None,
                  *args,
                  **kwargs):
+
+        if time is None:
+            time = 0
 
         output = super().__call__(config, time, *args, **kwargs)
         return output
@@ -904,7 +907,7 @@ class DifferentialMap(md.ManifoldFunction):
             return function_grid
 
 
-class DirectionDerivative(md.ManifoldFunction):
+class DirectionDerivative(TangentVectorField):
 
     def __init__(self,
                  defining_map: md.ManifoldMap):
@@ -927,7 +930,12 @@ class DirectionDerivative(md.ManifoldFunction):
 
         return q_out_numeric
 
-    def process(self, config_grid_e, *process_args, **kwargs):
+    def process(self, config_grid_e, *input_args, **kwargs):
+
+        # This makes everything compatible with the vector field time input, and gives us a hook
+        # in case time-varying directional derivative fields become important
+        time = input_args[0]
+        process_args = input_args[1:]
 
         def defining_map_with_inputs(config, delta):
             return self.defining_map_numeric(config, delta, *process_args, **kwargs)
