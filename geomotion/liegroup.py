@@ -54,6 +54,34 @@ class LieGroup(gp.Group, tb.DiffManifold):
                                      input_grid_format)
         return v
 
+    def variable_group_composition_R(self,
+                                     g_value,
+                                     h_param,
+                                     h_index,
+                                     chart=0):
+        h_value = self.identity_list[chart].copy()
+        h_value[h_index] = h_value[h_index] + h_param[0] # numdifftools requires that h_param be passed as an array
+        h = self.element(h_value, chart)
+        g = self.element(g_value, chart)
+        gh = g * h
+        return gh.value
+
+    def variable_group_composition_L(self,
+                                     g_param,
+                                     g_index,
+                                     h_value,
+                                     chart=0):
+
+        # Get the identity element of the group in the requested chart
+        g_value = self.identity_list[chart].copy
+
+        # Modify the
+        g_value[g_index] = g_value[g_index] + g_param[0] # numdifftools requires that g_param be passed as an array
+        g = self.element(g_value)
+        h = self.element(h_value)
+        gh = g * h
+        return gh.value
+
 
 class LieGroupTangentVector(tb.TangentVector):
 
