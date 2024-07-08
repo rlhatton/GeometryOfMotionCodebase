@@ -311,7 +311,7 @@ class ManifoldMap(ManifoldFunction):
                  defining_chart=0,              # The input-manifold chart in which the function domain is defined
                  output_defining_chart=0,       # The output-manifold chart in which the function range is defined
                  output_chart=None):            # An output chart to use, if different from the definition chart
-        
+
         # If a separate output chart is not specified, match it to the output defining chart
         if output_chart is None:
             output_chart = output_defining_chart

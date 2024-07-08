@@ -10,16 +10,12 @@ spot_color = gplt.crimson
 G = RxRplus
 
 
-def variable_group_composition_L(g_param, g_index, h_value):
+def variable_group_composition_L(g_delta, h_value):
     """ Function that creates a one-dimensional subgroup of the left group action along the g_index coordinate, from
     which the direction in the derivative of the left group action at h can be calculated"""
 
     # Get the group identity element
-    g_value = G.identity_list[0].copy()
-
-    # Modify the g_index value to be the provided g_param value (which numdifftools will supply as an array from which
-    # the value needs to be extracted
-    g_value[g_index] = g_value[g_index] + g_param[0]
+    g_value = G.identity_list[0] + g_delta
 
     # Create group elements from the parameters
     g = G.element(g_value)
@@ -62,15 +58,23 @@ grid_points = RxRplus.element_set(grid_xy)
 d_dL = []
 for i in range(G.n_dim):
 
-    # Specialize the left group composition function to be along the ith direction at h
+    # Generate a delta from the identity along the ith coordinate
+    g_delta_i = np.zeros_like(G.identity_list[0])
+    g_delta_i[i] = 1
+
+    # Make a 1-parameter function that is a delta-scaled left action acting on point h
     def f_L(h, delta):
-        return variable_group_composition_L(delta, i, h)
+
+        return variable_group_composition_L(delta*g_delta_i, h)
 
     # Equip the specialized composition function with the attributes of a ManifoldMap
     L_delta = md.ManifoldMap(G, G, f_L)
 
-    # Take the directional derivative of the manifold map with respect to the delta variable, and save it to the list
-    d_dL.append(tb.DirectionDerivative(L_delta)(grid_points))
+    # Take the directional derivative of the manifold map with respect to the delta variable,
+    d_dL_i = tb.DirectionDerivative(L_delta)
+
+    # Evaluate the ith directional derivative and save it to the list
+    d_dL.append(d_dL_i(grid_points))
 
 # Create a list of vector fields containing the derivatives in the directions
 # of the right group actions in each parameter

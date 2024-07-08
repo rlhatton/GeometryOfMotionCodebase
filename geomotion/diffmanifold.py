@@ -12,15 +12,19 @@ from . import utilityfunctions as ut
 
 
 class DiffManifold(md.Manifold):
-    """Class that instantiates differentiable manifolds"""
+    """Class that instantiates differentiable manifolds. Changes from Manifold are:
+    1. A transition Jacobian table is automatically generated from the transition table
+    2. Vectors and vector sets can be spawned in the same manner as elements and element sets
+    3. The shape of a vector element is generated from n_dim and saved for use by other functions checking size"""
 
     def __init__(self,
                  transition_table,
                  n_dim):
 
         # Initialize a manifold with the provided transition table and number of dimensions
-        super().__init__(transition_table,
-                         n_dim)
+        md.Manifold.__init__(self,
+                             transition_table,
+                             n_dim)
 
         # Create a table of the Jacobians of the transition functions
         transition_Jacobian_table = [[[] for _ in range(self.n_charts)] for _ in range(self.n_charts)]
@@ -40,6 +44,7 @@ class DiffManifold(md.Manifold):
                initial_basis=0):
 
         """Instantiate a tangent vector at a specified configuration on the manifold"""
+
         v = TangentVector(self,
                           configuration,
                           value,
@@ -55,6 +60,8 @@ class DiffManifold(md.Manifold):
                    initial_basis=0,
                    input_grid_format=None):
 
+        """Instantiate a tangent vector set at a specified configuration on the manifold"""
+
         v = TangentVectorSet(self,
                              configuration,
                              value,
@@ -68,11 +75,12 @@ class DiffManifold(md.Manifold):
     def vector_shape(self):
 
         """ Vectors should be 1-dimensional arrays with as many entries as there are dimensions
-        This property facilitates checking this condition"""
+        This property facilitates other functions checking this condition"""
         return (self.n_dim,)
 
 
 class TangentVector(core.GeomotionElement):
+    """Constructs a vector in the tangent space of a specified manifold at a specified point"""
 
     def __init__(self,
                  manifold: DiffManifold,
@@ -80,9 +88,6 @@ class TangentVector(core.GeomotionElement):
                  value,
                  initial_chart=None,
                  initial_basis=0):
-
-        # # Make sure that the value is an ndarray
-        # value = ut.ensure_ndarray(value)
 
         # If configuration is a manifold element, verify that no manifold was specified or that the configuration's
         # manifold matches the manifold specified for this vector
@@ -947,11 +952,11 @@ class DirectionDerivative(TangentVectorField):
         # Evaluate the function over the configurations
         def defining_map_with_inputs_zero(q):
             return defining_map_with_inputs(q, [0])
+
         # output_config_grid_e = config_grid_e.grid_eval(defining_map_with_inputs_zero)
         output_config_grid_e = config_grid_e
 
         def direction_deriv(config):
-
             def defining_map_at_config(d):
                 return defining_map_with_inputs(config, d)
 
