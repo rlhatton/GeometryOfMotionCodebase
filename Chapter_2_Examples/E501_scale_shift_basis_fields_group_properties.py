@@ -7,44 +7,8 @@ from matplotlib import pyplot as plt
 np.set_printoptions(precision=2)
 spot_color = gplt.crimson
 
-
 # Make the working group the scale-shift group
 G = RxRplus
-
-
-def L_infinitesimal(h_value, g_delta):
-    """ Function that finds the result of transforming an element at h by an infinitesimal action at g_delta
-    away from the identity"""
-
-    # Get the group identity element and add g_delta to it
-    g_value = G.identity_list[0] + g_delta
-
-    # Create group elements from the parameters
-    g = G.element(g_value)
-    h = G.element(h_value)
-
-    # Compose the group elements
-    gh = g * h
-
-    return gh.value
-
-
-def R_infinitesimal(g_value, h_delta):
-    """ Function that finds the result of transforming an element at h by an infinitesimal action at g_delta
-    away from the identity"""
-
-    # Get the group identity element and add h_delta to it
-    h_value = G.identity_list[0] + h_delta
-
-    # Create group elements from the parameters
-    h = G.element(h_value)
-    g = G.element(g_value)
-
-    # Compose the group elements
-    gh = g * h
-
-    return gh.value
-
 
 # Create a grid in the right-half-plane
 grid_xy = ut.meshgrid_array(np.linspace(.5, 2, 4), np.linspace(-1, 1, 5))
@@ -61,22 +25,9 @@ for i in range(G.n_dim):
     g_delta_i = np.zeros_like(G.identity_list[0])
     g_delta_i[i] = 1
 
-    # Make 1-parameter functions that are delta-scaled left and right actions acting on point h
-    def f_L(h, delta):
-
-        return L_infinitesimal(h, delta*g_delta_i)
-
-    def f_R(h, delta):
-
-        return R_infinitesimal(h, delta*g_delta_i)
-
-    # Equip the specialized composition functions with the attributes of a ManifoldMap
-    L_delta = md.ManifoldMap(G, G, f_L)
-    R_delta = md.ManifoldMap(G, G, f_R)
-
-    # Take the directional derivatives of the manifold maps with respect to the delta variable,
-    d_dL_i = tb.DirectionDerivative(L_delta)
-    d_dR_i = tb.DirectionDerivative(R_delta)
+    # Get the group generator fields in the direction of g_delta_i,
+    d_dL_i = G.L_generator(g_delta_i)
+    d_dR_i = G.R_generator(g_delta_i)
 
     # Evaluate the ith directional derivatives and save them to the lists
     d_dL.append(d_dL_i(grid_points))
