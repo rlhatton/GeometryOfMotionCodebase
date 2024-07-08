@@ -943,7 +943,8 @@ class DirectionDerivative(TangentVectorField):
         # Evaluate the function over the configurations
         def defining_map_with_inputs_zero(q):
             return defining_map_with_inputs(q, [0])
-        output_config_grid_e = config_grid_e.grid_eval(defining_map_with_inputs_zero)
+        # output_config_grid_e = config_grid_e.grid_eval(defining_map_with_inputs_zero)
+        output_config_grid_e = config_grid_e
 
         def direction_deriv(config):
 

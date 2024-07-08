@@ -45,10 +45,6 @@ f_rho_dirdiv = tb.DirectionDerivative(f_rho_map)
 f_phi_dirdiv = tb.DirectionDerivative(f_phi_map)
 f_11_dirdiv = tb.DirectionDerivative(f_11_map)
 
-# # Generate vector fields from these direction derivatives
-# f_rho_field = tb.TangentVectorField(f_rho_dirdiv)
-# f_phi_field = tb.TangentVectorField(f_phi_dirdiv)
-# f_11_field = tb.TangentVectorField(f_11_dirdiv)
 
 # Construct a grid over which to evaluate the vector fields
 grid_xy = ut.meshgrid_array(np.linspace(-2, 2, 6), np.linspace(-2, 2, 5))
