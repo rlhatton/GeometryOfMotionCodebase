@@ -11,7 +11,7 @@ class Group(md.Manifold):
                  operation_list,
                  identity_list,
                  inverse_function_list=None,
-                 transition_table=((None,))):
+                 transition_table=((None,),)):
         # Ensure that the operation list, identity list, and inverse function list are all actually lists
         operation_list = ut.ensure_tuple(operation_list)
         identity_list = ut.ensure_tuple(identity_list)
@@ -21,8 +21,11 @@ class Group(md.Manifold):
         n_dim = np.size(identity_list[0])
 
         # Initialize the group as a manifold
-        super().__init__(transition_table,
-                         n_dim)
+        # super().__init__(transition_table,
+        #                  n_dim)
+        md.Manifold.__init__(self,
+                             transition_table,
+                             n_dim)
 
         # Save the operation list as an instance attribute, wrapping it in a tuple if provided as a raw function
         self.operation_list = operation_list

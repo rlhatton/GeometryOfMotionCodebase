@@ -40,7 +40,11 @@ class DiffManifold(md.Manifold):
                initial_basis=0):
 
         """Instantiate a tangent vector at a specified configuration on the manifold"""
-        v = TangentVector(self, configuration, value, initial_chart, initial_basis)
+        v = TangentVector(self,
+                          configuration,
+                          value,
+                          initial_chart,
+                          initial_basis)
 
         return v
 
