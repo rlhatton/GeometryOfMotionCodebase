@@ -48,11 +48,13 @@ def third_embedding(chart_coords):
 
     return ambient_coords
 
+torus_embedding = md.ManifoldMap(Q, Q_amb, [first_embedding, third_embedding],
+                                 [0, 2])
 
-# Generate the embedding functions corresponding to the charts
-embed_first = md.ManifoldMap(Q, Q_amb, first_embedding, 0)
-embed_second = md.ManifoldMap(Q, Q_amb, second_embedding, 1)
-embed_third = md.ManifoldMap(Q, Q_amb, third_embedding, 2)
+# # Generate the embedding functions corresponding to the charts
+# torus_embedding = md.ManifoldMap(Q, Q_amb, [first_embedding, second_embedding, third_embedding],
+#                                  [0, 1, 2])
+
 
 # Make a grid of coordinate values
 coordinate_grid = ut.meshgrid_array(np.linspace(-.4, .4, 25), np.linspace(-.4, .4, 25))
@@ -62,10 +64,10 @@ first_points = md.ManifoldElementSet(Q, coordinate_grid, 0)
 second_points = md.ManifoldElementSet(Q, coordinate_grid, 1)
 third_points = md.ManifoldElementSet(Q, coordinate_grid, 2)
 
-# Embed coordinate grids for three two charts into R3
-first_points_Q_amb = embed_first(first_points)
-second_points_Q_amb = embed_second(second_points)
-third_points_Q_amb = embed_third(third_points)
+# # Embed coordinate grids for three two charts into R3
+first_points_Q_amb = torus_embedding(first_points)
+second_points_Q_amb = torus_embedding(second_points)
+third_points_Q_amb = torus_embedding(third_points)
 
 # Pull back the points defined in the second and third charts into the first chart
 first_chart_second_points = second_points.transition(0)

@@ -32,8 +32,7 @@ def back_embedding(back_coords):
     return ambient_coords
 
 
-embed_front = md.ManifoldMap(Q, Q_amb, front_embedding, 0)
-embed_back = md.ManifoldMap(Q, Q_amb, back_embedding, 1)
+cylinder_embedding = md.ManifoldMap(Q, Q_amb, [front_embedding, back_embedding], [0, 1])
 
 # Make a grid of coordinate values
 coordinate_grid = ut.meshgrid_array(np.linspace(-.4, .4, 25), np.linspace(-1, 1, 10))
@@ -43,8 +42,8 @@ front_points = md.ManifoldElementSet(Q, coordinate_grid, 0)
 back_points = md.ManifoldElementSet(Q, coordinate_grid, 1)
 
 # Embed coordinate grids for the two charts into R3
-front_Q_amb = embed_front(front_points)
-back_Q_amb = embed_back(back_points)
+front_Q_amb = cylinder_embedding(front_points)
+back_Q_amb = cylinder_embedding(back_points)
 
 fig = plt.figure()
 ax_ambient1 = fig.add_subplot(131, projection='3d')

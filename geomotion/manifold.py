@@ -126,7 +126,7 @@ class ManifoldElementSet(core.GeomotionSet):
         3. A nested list-of-lists of ManifoldElements
         4. a Manifold, followed by
            a GridArray of values
-           an initial chart
+           an initial chart (either a single value or an element-outer grid
            (optional) component-outer or element-outer specification for grid"""
 
         # Check if the first argument is a ManifoldElementSet already, and if so, extract its value and manifold
@@ -162,17 +162,32 @@ class ManifoldElementSet(core.GeomotionSet):
                 # Make sure that the grid is in element-outer format
                 grid = ut.format_grid(grid, manifold.element_shape, 'element', input_format)
 
-                def manifold_element_construction_function(manifold_element_value):
-                    return manifold.element(manifold_element_value, initial_chart)
+                # Handle possibility for manifold elements to have individual chart specifications or
+                # one shared specification
 
-                value = ut.object_list_eval(manifold_element_construction_function, grid, grid.n_outer)
+                # Check for initial_chart being a GridArray
+                if isinstance(initial_chart, ut.GridArray):
+                    # Make sure it matches the dimensions of the value grid
+                    if initial_chart.shape == grid.shape[:grid.n_outer]:
+                        # Construct a manifold element with each value/chart pair in the grids
+                        value = ut.object_list_eval_pairwise(manifold.element,
+                                                             grid, initial_chart, grid.n_outer)
+                    else:
+                        raise Exception("Initial_chart is a grid that doesn't match the value grids")
+                else:
+                    # Preload the initial chart into the manifold element constructor, and evaluate
+                    # it for each configuration
+                    def manifold_element_construction_function(manifold_element_value):
+                        return manifold.element(manifold_element_value, initial_chart)
+
+                    value = ut.object_list_eval(manifold_element_construction_function, grid, grid.n_outer)
 
             else:
                 raise Exception(
                     "If first input to ManifoldElementSet is a Manifold, second input should be a GridArray")
 
         else:
-            raise Exception("First argument to ManifoldSet should be either a list of "
+            raise Exception("First argument to ManifoldSet should be either a list-of-lists of "
                             "Elements or a Manifold")
 
         super().__init__(value)
@@ -199,10 +214,16 @@ class ManifoldElementSet(core.GeomotionSet):
         return component_outer_grid_array
 
     def transition(self, new_chart):
-        transition_method = methodcaller('transition', new_chart)
 
-        new_set = ut.object_list_eval(transition_method,
-                                      self.value)
+        if isinstance(new_chart, int):
+            transition_method = methodcaller('transition', new_chart)
+            new_set = ut.object_list_eval(transition_method,
+                                          self.value)
+        elif isinstance(new_chart, ut.GridArray):
+            new_set = ut.object_list_method_eval_pairwise('transition', self.value, new_chart)
+
+        else:
+            raise Exception("New chart should be specified as an int or a grid array")
 
         return self.__class__(new_set)
 
@@ -215,10 +236,26 @@ class ManifoldFunction:
     ManifoldMap and TangentVectorField"""
 
     def __init__(self,
-                 manifold,
-                 defining_function,                 # Underlying numeric function
-                 defining_chart=0,                  # Chart on which the underlying function is defined
-                 postprocess_function=None):        # How to format the output of the numeric function
+                 manifold: Manifold,
+                 defining_function,  # Underlying numeric function
+                 defining_chart=0,  # Chart on which the underlying function is defined
+                 postprocess_function=None):  # How to format the output of the numeric function
+
+        """Defining function and defining chart can be supplied as either a single function and the chart
+        on which it is defined, or as a list of functions and a corresponding list of charts on which those
+        functions are defined. Where the charts overlap, the functions should agree with each other."""
+
+        if not isinstance(defining_function, list):
+            defining_function = [defining_function]
+
+        if not isinstance(defining_chart, list):
+            defining_chart = [defining_chart]
+
+        if not ut.shape(defining_function) == ut.shape(defining_chart):
+            raise Exception("Defining function list and defining chart list do not have matching shapes")
+
+        # Make a dictionary from defining chart designators to their positions in the list of functions
+        self.chart_dict = dict(zip(defining_chart, range(len(defining_chart))))
 
         # Save all of the inputs as instance properties
         self.manifold = manifold
@@ -231,13 +268,13 @@ class ManifoldFunction:
         apply the underlying function and any output processing"""
 
         # Convert the configuration value into an element-wise GridArray of numeric data
-        configuration_grid_e, value_type = self.preprocess(configuration)
+        configuration_grid_e, function_index_list, value_type = self.preprocess(configuration)
 
         # Evaluate the defining function over the grid with any additional arguments provided
-        function_grid_e = self.process(configuration_grid_e, *args, **kwargs)
+        function_grid_e = self.process(configuration_grid_e, function_index_list, *args, **kwargs)
 
         # Apply any post-process formatting
-        function_value = self.postprocess(configuration_grid_e, function_grid_e, value_type)
+        function_value = self.postprocess(configuration_grid_e, function_grid_e, function_index_list, value_type)
 
         return function_value
 
@@ -248,7 +285,6 @@ class ManifoldFunction:
 
         # Record the single- or multiple-input status for post-processing
         if isinstance(configuration, ManifoldElement):
-
             value_type = 'single'
         elif isinstance(configuration, ManifoldElementSet):
             value_type = 'multiple'
@@ -258,27 +294,68 @@ class ManifoldFunction:
         # Put the input into ManifoldElementSet form (no change is made if it is already a set)
         configuration_set = ManifoldElementSet(configuration)
 
-        # Transition the ManifoldElementSet into the defining chart
-        configuration_set_defining_chart = configuration_set.transition(self.defining_chart)
+        # Get every point into a chart for which the function is defined
+        def send_to_feasible_chart(q, function_index_to_try=0):
+
+            # If the point is in a chart over which the function has been defined, leave it in that
+            if q.current_chart in self.defining_chart:
+                q_chart = q.current_chart
+                function_index = self.defining_chart.index(q_chart)
+                return q, function_index
+
+            # Sequentially check if the point can be pushed into the underlying chart of one of the
+            # underlying functions
+            elif self.manifold.transition_table[q.current_chart][self.defining_chart[function_index_to_try]] is not None:
+                function_index = function_index_to_try
+                q_chart = self.defining_chart[function_index_to_try]
+                return (q.transition(q_chart),
+                        function_index)
+
+            # Increase the function index for the next try
+            elif function_index_to_try + 1 < len(self.manifold.transition_table):
+                return send_to_feasible_chart(q, function_index_to_try + 1)
+
+            # If we run out of functions to check, give the user an error
+            else:
+                raise Exception("Point is not in a chart where the function is defined, "
+                                "and does not have a transition to a chart in which the function is defined")
+                # Two-step transitions are not checked yet; this is also where boundaries of charts could be checked
+
+        configuration_set, function_index_list = (
+            ut.object_list_eval_two_outputs(send_to_feasible_chart, configuration_set))
+
+        configuration_set = ManifoldElementSet(configuration_set)
+
+        # # Get a list of the chart in which each element is defined
+        # def extract_chart(q):
+        #     return [q.current_chart]
+        #
+        # chart_grid_e = ut.GridArray(ut.object_list_eval(extract_chart, configuration_set), n_inner=1)
+        # # chart_grid_e = np.array(ut.object_list_eval(extract_chart, configuration_set))
 
         # Extract a component-wise grid from the ManifoldElementSet and evert it to element-wise
-        configuration_grid_e = configuration_set_defining_chart.grid.everse
+        configuration_grid_e = configuration_set.grid.everse
 
-        return configuration_grid_e, value_type
+        # Make function_index_list a grid_array
+        function_index_list = ut.GridArray([function_index_list], n_outer=1).everse
 
-    def process(self, configuration_grid_e, *process_args, **kwargs):
+        return configuration_grid_e, function_index_list, value_type
+
+    def process(self, configuration_grid_e, function_index_list, *process_args, **kwargs):
         """Preload any non-configuration inputs that have been provided to the function, evaluate over the provided
         configurations, and return an element-wise grid of numeric values"""
 
-        def defining_function_with_inputs(config):
-            return self.defining_function(config, *process_args, **kwargs)
+        def defining_function_with_inputs(config, function_index):
+            return self.defining_function[function_index[0]](config, *process_args, **kwargs)
 
-        # Evaluate the defining function over the grid
-        function_grid_e = configuration_grid_e.grid_eval(defining_function_with_inputs)
+        # Evaluate the defining function over the grid in the specified chart
+        function_grid_e = ut.GridArray(ut.array_eval_pairwise(defining_function_with_inputs, configuration_grid_e,
+                                                              function_index_list, configuration_grid_e.n_outer),
+                                       configuration_grid_e.n_outer)
 
         return function_grid_e
 
-    def postprocess(self, configuration_grid_e, function_grid_e, value_type):
+    def postprocess(self, configuration_grid_e, function_grid_e, function_index_list, value_type):
         """If the input was a single element, make the output also single element, and then apply the
         post-processing operation"""
 
@@ -286,9 +363,10 @@ class ManifoldFunction:
             if value_type == 'single':
                 configuration_value = configuration_grid_e[0]  # Extract the single item from the config grid array
                 function_value = function_grid_e[0]  # Extract the single item from the function grid array
-                return self.postprocess_function[0](configuration_value, function_value)
+                chart_value = function_index_list[0]
+                return self.postprocess_function[0](configuration_value, function_value, chart_value)
             elif value_type == 'multiple':
-                return self.postprocess_function[1](configuration_grid_e, function_grid_e)
+                return self.postprocess_function[1](configuration_grid_e, function_grid_e, function_index_list)
             else:
                 raise Exception("Value_type should be 'single' or 'multiple'.")
         else:
@@ -305,24 +383,65 @@ class ManifoldMap(ManifoldFunction):
     """A manifold function that post-processes the output from the numeric function into manifold elements"""
 
     def __init__(self,
-                 manifold: Manifold,            # The manifold that input elements are part of
-                 output_manifold: Manifold,     # The manifold that output elements are part of
-                 defining_function,             # The underlying numeric function
-                 defining_chart=0,              # The input-manifold chart in which the function domain is defined
-                 output_defining_chart=0,       # The output-manifold chart in which the function range is defined
-                 output_chart=None):            # An output chart to use, if different from the definition chart
+                 manifold: Manifold,  # The manifold that input elements are part of
+                 output_manifold: Manifold,  # The manifold that output elements are part of
+                 defining_function,  # The underlying numeric function
+                 defining_chart=None,  # The input-manifold chart in which the function domain is defined
+                 output_defining_chart=None,  # The output-manifold chart in which the function range is defined
+                 output_chart=None):  # An output chart to use, if different from the definition chart
+
+        if not isinstance(defining_function, list):
+            defining_function = [defining_function]
+
+        if defining_chart is None:
+            defining_chart = [0] * len(defining_function)
+        elif not isinstance(defining_chart, list):
+            defining_chart = [defining_chart]
+
+        if output_defining_chart is None:
+            output_defining_chart = [0] * len(defining_function)
+        elif not isinstance(output_defining_chart, list):
+            output_defining_chart = [output_defining_chart]
 
         # If a separate output chart is not specified, match it to the output defining chart
         if output_chart is None:
             output_chart = output_defining_chart
+        else:
+            if not isinstance(output_chart, list):
+                output_chart = [output_chart]
+
+        if not ut.shape(defining_function) == ut.shape(defining_chart):
+            raise Exception("Defining function list and defining chart list do not have matching shapes")
+        elif not ut.shape(defining_function) == ut.shape(output_defining_chart):
+            raise Exception("Defining function list and output defining chart list do not have matching shapes")
+        elif not ut.shape(defining_function) == ut.shape(output_chart):
+            raise Exception("Defining function list and output chart list do not have matching shapes")
+
+        # # Make dictionaries from chart designators to their positions in the lists of functions
+        # self.chart_dict = dict(zip(defining_chart, range(len(defining_chart))))
+        # self.output_defining_chart_dict = dict(zip(output_defining_chart, range(len(output_defining_chart))))
+        # self.output_chart_dict = dict(zip(output_chart, range(len(output_chart))))
 
         # Turn the numerical output of the defining function into manifold elements or
         # element sets in the output manifold
-        def postprocess_function_single(q_input, q_output):
-            return output_manifold.element(q_output, output_defining_chart).transition(output_chart)
+        def postprocess_function_single(q_input, q_output, function_index):
+            return output_manifold.element(q_output,
+                                           output_defining_chart[function_index[0]]). \
+                transition(output_chart[function_index[0]])
 
-        def postprocess_function_multiple(q_input, q_output):
-            return output_manifold.element_set(q_output, output_defining_chart).transition(output_chart)
+        def postprocess_function_multiple(q_input, q_output, function_index_list):
+
+            def get_output_defining_chart(function_index):
+                return output_defining_chart[function_index[0]]
+
+            def get_output_chart(function_index):
+                return output_chart[function_index[0]]
+
+            output_defining_chart_grid = function_index_list.grid_eval(get_output_defining_chart)
+
+            output_chart_grid = function_index_list.grid_eval(get_output_chart)
+
+            return self.output_manifold.element_set(q_output, output_defining_chart_grid).transition(output_chart_grid)
 
         postprocess_function = [postprocess_function_single, postprocess_function_multiple]
 
