@@ -692,36 +692,37 @@ class TangentVectorField(md.ManifoldFunction):
 
             def_function_list.append(def_function)
 
-        def postprocess_function_single(q, v, input_chart):
-            output_vector = manifold.vector(q, v, defining_chart,
-                                            self.output_defining_basis[input_chart]). \
-                transition(self.output_basis[input_chart],
-                           self.output_chart[input_chart])
+        def postprocess_function_single(q, v, function_index):
+            output_vector = manifold.vector(q,
+                                            v,
+                                            self.defining_chart[function_index[0]],
+                                            self.output_defining_basis[function_index[0]]). \
+                transition(self.output_basis[function_index[0]],
+                           self.output_chart[function_index[0]])
 
             return output_vector
 
         def postprocess_function_multiple(q, v, function_index_list):
 
             def get_defining_chart(function_index):
-                return defining_chart[function_index[0]]
+                return self.defining_chart[function_index[0]]
 
-            def get_defining_basis(function_index):
-                return defining_basis[function_index[0]]
-
+            def get_output_defining_basis(function_index):
+                return self.output_defining_basis[function_index[0]]
 
             def get_output_chart(function_index):
-                return output_chart[function_index[0]]
+                return self.output_chart[function_index[0]]
 
             def get_output_basis(function_index):
-                return output_basis[function_index[0]]
+                return self.output_basis[function_index[0]]
 
             defining_chart_grid = function_index_list.grid_eval(get_defining_chart)
-            defining_basis_grid = function_index_list.grid_eval(get_defining_chart)
+            output_defining_basis_grid = function_index_list.grid_eval(get_output_defining_basis)
 
             output_chart_grid = function_index_list.grid_eval(get_output_chart)
             output_basis_grid = function_index_list.grid_eval(get_output_basis)
 
-            output_vector_set = manifold.vector_set(q, v, defining_chart_grid, defining_basis_grid).transition(
+            output_vector_set = manifold.vector_set(q, v, defining_chart_grid, output_defining_basis_grid).transition(
                 output_basis_grid,
                 output_chart_grid)
 
@@ -897,14 +898,14 @@ class DifferentialMap(md.ManifoldFunction):
         self.output_basis = defining_map.output_chart
         self.postprocess_function = [self.postprocess_function_single, self.postprocess_function_multiple]
 
-    def postprocess_function_single(self, q, v, input_chart):
+    def postprocess_function_single(self, q, v, function_index):
         v_defining_output_chart = self.output_manifold.vector(q,
                                                               v,
-                                                              self.output_defining_chart[input_chart],
-                                                              self.output_defining_basis[input_chart])
+                                                              self.output_defining_chart[function_index[0]],
+                                                              self.output_defining_basis[function_index[0]])
 
-        v_output_chart = v_defining_output_chart.transition(self.output_chart[input_chart],
-                                                            self.output_basis[input_chart])
+        v_output_chart = v_defining_output_chart.transition(self.output_chart[function_index[0]],
+                                                            self.output_basis[function_index[0]])
 
         return v_output_chart
 
@@ -1082,16 +1083,16 @@ class DirectionDerivative(TangentVectorField):
         self.output_basis = defining_map.output_chart
         self.postprocess_function = [self.postprocess_function_single, self.postprocess_function_multiple]
 
-    def defining_map_numeric(self, q_numeric, delta, *args, **kwargs):
-        q_manifold = self.manifold.element(q_numeric)
+    def defining_map_numeric(self, q_numeric, function_index, *args, **kwargs):
+        q_manifold = self.manifold.element(q_numeric, self.defining_chart[function_index[0]])
 
-        q_out_manifold = self.defining_map(q_manifold, delta, *args, **kwargs)
+        q_out_manifold = self.defining_map(q_manifold, *args, **kwargs)
 
         q_out_numeric = q_out_manifold.value
 
         return q_out_numeric
 
-    def process(self, config_grid_e, *input_args, **kwargs):
+    def process(self, config_grid_e, function_index_list, *input_args, **kwargs):
 
         # This makes everything compatible with the vector field time input, and gives us a hook
         # in case time-varying directional derivative fields become important
