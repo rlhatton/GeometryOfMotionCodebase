@@ -43,6 +43,8 @@ xy_dense = immersion_map_R1_into_R2(q_R1_dense)
 
 # Map the sparse set of points to unit vectors, and then immerse them
 v_sparse = unit_flow_field(q_R1_sparse)
+print(type(q_R1_sparse[0].current_chart))
+print(type(v_sparse[0].configuration.current_chart))
 v_xy_sparse = diffimmersion_map_R1_into_R2(v_sparse)
 
 

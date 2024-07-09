@@ -215,7 +215,7 @@ class ManifoldElementSet(core.GeomotionSet):
 
     def transition(self, new_chart):
 
-        if isinstance(new_chart, int):
+        if isinstance(new_chart, (int, float)):
             transition_method = methodcaller('transition', new_chart)
             new_set = ut.object_list_eval(transition_method,
                                           self.value)
@@ -321,10 +321,10 @@ class ManifoldFunction:
                                 "and does not have a transition to a chart in which the function is defined")
                 # Two-step transitions are not checked yet; this is also where boundaries of charts could be checked
 
-        configuration_set, function_index_list = (
+        configuration_list, function_index_list = (
             ut.object_list_eval_two_outputs(send_to_feasible_chart, configuration_set))
 
-        configuration_set = ManifoldElementSet(configuration_set)
+        configuration_set = ManifoldElementSet(configuration_list)
 
         # # Get a list of the chart in which each element is defined
         # def extract_chart(q):
@@ -363,8 +363,8 @@ class ManifoldFunction:
             if value_type == 'single':
                 configuration_value = configuration_grid_e[0]  # Extract the single item from the config grid array
                 function_value = function_grid_e[0]  # Extract the single item from the function grid array
-                chart_value = function_index_list[0]
-                return self.postprocess_function[0](configuration_value, function_value, chart_value)
+                function_index = function_index_list[0]
+                return self.postprocess_function[0](configuration_value, function_value, function_index)
             elif value_type == 'multiple':
                 return self.postprocess_function[1](configuration_grid_e, function_grid_e, function_index_list)
             else:
