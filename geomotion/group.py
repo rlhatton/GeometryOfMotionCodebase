@@ -100,45 +100,8 @@ class GroupElement(md.ManifoldElement):
                                 [lambda x: f(x, self.value) for f in self.group.operation_list],
                                 list(range(len(self.group.operation_list))))
 
-    # def L_fun(self,
-    #       g_right):
-    #
-    #     if self.group.operation_list[self.current_chart] is not None:
-    #
-    #         # Attempt to ensure that g_right is expressed in the same chart as this group element
-    #         g_right = g_right.transition(self.current_chart)
-    #
-    #         # Apply the operation for the current chart, with this element on the left
-    #         g_composed_value = self.group.operation_list[self.current_chart](self.value, g_right.value)
-    #
-    #         # Construct an element from the composed value, in this element's chart
-    #         g_composed = GroupElement(self.group, g_composed_value, self.current_chart)
-    #
-    #     else:
-    #
-    #         raise Exception("Group operation is undefined for chart " + str(self.current_chart))
-    #
-    #     return g_composed
-    #
-    # def R(self,
-    #       g_left):
-    #
-    #     if self.group.operation_list[self.current_chart] is not None:
-    #
-    #         # Attempt to ensure that g_left is expressed in the same chart as this group element
-    #         g_left = g_left.transition(self.current_chart)
-    #
-    #         # Apply the operation for the current chart, with this element on the right
-    #         g_composed_value = self.group.operation_list[self.current_chart](g_left.value, self.value)
-    #
-    #         # Construct an element from the composed value, in this element's chart
-    #         g_composed = GroupElement(self.group, g_composed_value, self.current_chart)
-    #
-    #     else:
-    #
-    #         raise Exception("Group operation is undefined for chart " + str(self.current_chart))
-    #
-    #     return g_composed
+        # Information about how to build a set of these objects
+        self.plural = GroupElementSet
 
     def AD(self, other):
         g_inv = self.inverse
@@ -173,14 +136,14 @@ class GroupElement(md.ManifoldElement):
 
     def __mul__(self, other):
 
-        if isinstance(other, GroupElement) and (self.manifold == other.manifold):
+        if isinstance(other, (GroupElement, GroupElementSet)):
             return self.L(other)
         else:
             return NotImplemented
 
     def __rmul__(self, other):
 
-        if isinstance(other, GroupElement) and (self.manifold == other.manifold):
+        if isinstance(other, (GroupElement, GroupElementSet)):
             return self.R(other)
         else:
             return NotImplemented
@@ -191,6 +154,22 @@ def commutator(g: GroupElement, h: GroupElement):
 
 
 class GroupElementSet(md.ManifoldElementSet):
+
+
+    def __init__(self,
+                 manifold,
+                 value=None,
+                 initial_chart=0,
+                 input_format=None):
+
+        md.ManifoldElementSet.__init__(self,
+                                       manifold,
+                                       value,
+                                       initial_chart,
+                                       input_format)
+
+        # Information about what this set should contain
+        self.single = GroupElement
 
     def group_set_action(self, other, action_name):
 
@@ -209,7 +188,9 @@ class GroupElementSet(md.ManifoldElementSet):
             action = methodcaller(action_name, other)
             new_set = ut.object_list_eval(action, self.value)
 
-        return self.__class__(new_set)
+            plural_type = ut.object_list_extract_first_entry(new_set).plural
+
+        return plural_type(new_set)
 
     def L(self, other):
 
@@ -234,16 +215,14 @@ class GroupElementSet(md.ManifoldElementSet):
 
     def __mul__(self, other):
 
-        if (isinstance(other, GroupElement) or isinstance(other, GroupElementSet)) and (
-                self.manifold == other.manifold):
+        if isinstance(other, (GroupElement, GroupElementSet)):
             return self.group_set_action(other, '__mul__')
         else:
             return NotImplemented
 
     def __rmul__(self, other):
 
-        if (isinstance(other, GroupElement) or isinstance(other, GroupElementSet)) and (
-                self.manifold == other.manifold):
+        if isinstance(other, (GroupElement, GroupElementSet)):
             return self.group_set_action(other, '__rmul__')
         else:
             return NotImplemented

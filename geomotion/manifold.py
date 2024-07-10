@@ -70,9 +70,11 @@ class ManifoldElement(core.GeomotionElement):
             # Make sure that the value is an ndarray
             value = ut.ensure_ndarray(value)
 
-            # Make sure the value is a numpy float array
             self.current_chart = initial_chart
             self.value = value
+
+        # Information about how to build a set of these objects
+        self.plural = ManifoldElementSet
 
     def format_value(self, val):
 
@@ -192,6 +194,9 @@ class ManifoldElementSet(core.GeomotionSet):
 
         super().__init__(value)
         self.manifold = manifold
+
+        # Information about what objects this set should contain
+        self.single = ManifoldElement
 
     @property
     def element_shape(self):

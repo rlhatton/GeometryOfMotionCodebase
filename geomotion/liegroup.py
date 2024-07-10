@@ -41,7 +41,7 @@ class LieGroup(gp.Group, tb.DiffManifold):
                     value=None,
                     initial_chart=0,
                     input_format=None):
-        g_set = gp.GroupElementSet(self,
+        g_set = LieGroupElementSet(self,
                                    value,
                                    initial_chart,
                                    input_format)
@@ -142,22 +142,6 @@ class LieGroup(gp.Group, tb.DiffManifold):
                     chart=0):
         return self.generator_field_constructor(self.R_infinitesimal, h_delta, chart)
 
-    def L_Jacobian(self,
-                   g_Delta,
-                   chart=0):
-        def L_delta_action_at_g0(g_0):
-            self.operation_list[chart](g_Delta, g_0)
-
-        return ndt.Jacobian(L_delta_action_at_g0)
-
-    def R_Jacobian(self,
-                   g_Delta,
-                   chart=0):
-        def R_delta_action_at_g0(g_0):
-            self.operation_list[chart](g_0, g_Delta)
-
-        return ndt.Jacobian(R_delta_action_at_g0)
-
 
 class LieGroupElement(gp.GroupElement):
 
@@ -172,6 +156,29 @@ class LieGroupElement(gp.GroupElement):
 
         self.TL = tb.DifferentialMap(self.L)
         self.TR = tb.DifferentialMap(self.R)
+
+        # Information about how to build a set of these objects
+        self.plural = LieGroupElementSet
+
+    def __mul__(self, other):
+
+        if isinstance(other, (LieGroupTangentVector, LieGroupTangentVectorSet)):
+            return self.TL(other)
+        else:
+            return gp.GroupElement.__mul__(self, other)
+
+    def __rmul__(self, other):
+
+        if isinstance(other, (LieGroupTangentVector, LieGroupTangentVectorSet)):
+            return self.TR(other)
+        else:
+            return gp.GroupElement.__rmul__(self, other)
+
+    def Ad(self, other):
+        return self.AD(other)
+
+    def Adinv(self, other):
+        return self.AD(other)
 
 
 class LieGroupTangentVector(tb.TangentVector):
@@ -191,6 +198,9 @@ class LieGroupTangentVector(tb.TangentVector):
                                   initial_chart,
                                   initial_basis)
 
+        # Information about how to build a set of these objects
+        self.plural = LieGroupTangentVectorSet
+
     @property
     def group(self):
         return self.manifold
@@ -200,18 +210,56 @@ class LieGroupTangentVector(tb.TangentVector):
         self.manifold = gp
 
 
+class LieGroupElementSet(gp.GroupElementSet):
+
+    def __init__(self,
+                 manifold,
+                 value=None,
+                 initial_chart=0,
+                 input_format=None):
+
+        gp.GroupElementSet.__init__(self,
+                                    manifold,
+                                    value,
+                                    initial_chart,
+                                    input_format)
+
+        # Information about what this set should contain
+        self.single = LieGroupElement
+
+    def __mul__(self, other):
+
+        if isinstance(other, (LieGroupTangentVector, LieGroupTangentVectorSet)):
+            return self.group_set_action(other, '__mul__')
+        else:
+            return gp.GroupElementSet.__mul__(self, other)
+
+    def __rmul__(self, other):
+
+        if isinstance(other, (LieGroupTangentVector, LieGroupTangentVector)):
+            return self.group_set_action(other, '__rmul__')
+        else:
+            return gp.GroupElementSet.__rmul__(self, other)
+
+
 class LieGroupTangentVectorSet(tb.TangentVectorSet):
 
     def __init__(self,
-                 group,  # Could also be a TangentVector, TangentVectorSet, or list of TangentVectors
+                 group,
+                 # Could also be a LieGroupTangentVector, LieGroupTangentVectorSet, or list of LieGroupTangentVectors
                  configuration=None,
                  value=None,
                  initial_chart=0,
                  initial_basis=0,
                  input_grid_format=None):
-        super().__init__(group,
-                         configuration,
-                         value,
-                         initial_chart,
-                         initial_basis,
-                         input_grid_format)
+
+        tb.TangentVectorSet.__init__(self,
+                                     group,
+                                     configuration,
+                                     value,
+                                     initial_chart,
+                                     initial_basis,
+                                     input_grid_format)
+
+        # Information about what this set should contain
+        self.single = LieGroupTangentVector

@@ -1,5 +1,5 @@
 import numpy as np
-from geomotion import manifold as md, diffmanifold as tb, utilityfunctions as ut, plottingfunctions as gplt
+from geomotion import utilityfunctions as ut, plottingfunctions as gplt
 from S500_Construct_RxRplus import RxRplus
 from matplotlib import pyplot as plt
 
@@ -27,8 +27,8 @@ for i in range(G.n_dim):
     g_circ_i = G.vector(G.identity_element(), g_circ_i_val)
 
     # Create vector fields from the lifted actions acting on g_circ_i
-    TeLg_i = tb.TangentVectorSet(ut.object_list_method_eval_with_arg('TL', grid_points, g_circ_i))
-    TeRg_i = tb.TangentVectorSet(ut.object_list_method_eval_with_arg('TR', grid_points, g_circ_i))
+    TeLg_i = grid_points * g_circ_i
+    TeRg_i = g_circ_i * grid_points
 
     # Evaluate the ith directional derivatives and save them to the lists
     TeLg.append(TeLg_i)
@@ -75,8 +75,8 @@ ax.plot([0, c_grid_0[0][-1][1]], [0, c_grid_0[1][-1][1]], color='grey', linewidt
 
 ######
 ax = plt.subplot(3, 2, 3)
-c_grid_0, v_grid_0 = g_shift.TL(TeLg[0]).grid
-c_grid_1, v_grid_1 = g_shift.TL(TeLg[1]).grid
+c_grid_0, v_grid_0 = (g_shift * TeLg[0]).grid
+c_grid_1, v_grid_1 = (g_shift * TeLg[1]).grid
 ax.quiver(*c_grid_0, *v_grid_0, scale=20, color=spot_color)
 ax.quiver(*c_grid_1, *v_grid_1, scale=20, color='black')
 ax.set_aspect('equal')
@@ -91,8 +91,8 @@ ax.set_title("Left-invariant field left_shifted")
 
 ######
 ax = plt.subplot(3, 2, 4)
-c_grid_0, v_grid_0 = g_shift.TL(TeRg[0]).grid
-c_grid_1, v_grid_1 = g_shift.TL(TeRg[1]).grid
+c_grid_0, v_grid_0 = (g_shift * TeRg[0]).grid
+c_grid_1, v_grid_1 = (g_shift * TeRg[1]).grid
 ax.quiver(*c_grid_0, *v_grid_0, scale=20, color=spot_color)
 ax.quiver(*c_grid_1, *v_grid_1, scale=20, color='black')
 ax.set_aspect('equal')
@@ -107,8 +107,8 @@ ax.set_title("Right-invariant field left_shifted")
 
 ######
 ax = plt.subplot(3, 2, 5)
-c_grid_0, v_grid_0 = g_shift.TR(TeLg[0]).grid
-c_grid_1, v_grid_1 = g_shift.TR(TeLg[1]).grid
+c_grid_0, v_grid_0 = (TeLg[0] * g_shift).grid
+c_grid_1, v_grid_1 = (TeLg[1] * g_shift).grid
 ax.quiver(*c_grid_0, *v_grid_0, scale=20, color=spot_color)
 ax.quiver(*c_grid_1, *v_grid_1, scale=20, color='black')
 ax.set_aspect('equal')
@@ -123,8 +123,8 @@ ax.set_title("Left-invariant field right_shifted")
 
 ######
 ax = plt.subplot(3, 2, 6)
-c_grid_0, v_grid_0 = g_shift.TR(TeRg[0]).grid
-c_grid_1, v_grid_1 = g_shift.TR(TeRg[1]).grid
+c_grid_0, v_grid_0 = (TeRg[0] * g_shift).grid
+c_grid_1, v_grid_1 = (TeRg[1] * g_shift).grid
 ax.quiver(*c_grid_0, *v_grid_0, scale=20, color=spot_color)
 ax.quiver(*c_grid_1, *v_grid_1, scale=20, color='black')
 ax.set_aspect('equal')

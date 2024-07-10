@@ -112,6 +112,9 @@ class TangentVector(core.GeomotionElement):
         self.configuration = configuration
         self.value = value  # Format is verified/ensured by the format_value method
 
+        # Information about how to build a set of these objects
+        self.plural = TangentVectorSet
+
     def format_value(self, val):
 
         # TangentVectors have the same 1-d data format as their associated ManifoldElements
@@ -394,17 +397,6 @@ class TangentVectorSet(core.GeomotionSet):
                                                 vector_grid.n_outer)
 
                 else:
-                    # def tangent_vector_construction_function(configuration_value, vector_value):
-                    #     tangent_vector = manifold.vector(configuration_value,
-                    #                                      vector_value,
-                    #                                      initial_chart,
-                    #                                      initial_basis)
-                    #     return tangent_vector
-                    #
-                    # value = ut.object_list_eval_pairwise(tangent_vector_construction_function,
-                    #                                      config_grid,
-                    #                                      vector_grid,
-                    #                                      vector_grid.n_outer)
 
                     # Check for initial_chart being a GridArray
                     if isinstance(initial_chart, ut.GridArray):
@@ -442,6 +434,9 @@ class TangentVectorSet(core.GeomotionSet):
 
         super().__init__(value)
         self.manifold = manifold
+
+        # Information about what this set should contain
+        self.single = TangentVector
 
     @property
     def grid(self):
