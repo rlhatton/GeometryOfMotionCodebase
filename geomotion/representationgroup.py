@@ -2,6 +2,7 @@
 import numpy as np
 from geomotion import utilityfunctions as ut
 from geomotion import group as gp
+from geomotion import core
 
 
 class RepresentationGroup(gp.Group):
@@ -99,22 +100,17 @@ class RepresentationGroupElement(gp.GroupElement):
         # Save the representation (using the type enforcement in the setter)
         self.rep = representation
 
-    def L(self,
-          g_right):
+        # Defining here instead of as methods so that these definitions override the definitions in
+        # GroupElement (which are defined in init so that they get the properties of being ManifoldFunctions
+        self.L = lambda x: RepresentationGroupElement(self.group, np.matmul(self.rep, x.rep), self.current_chart)
+        self.R = lambda x: RepresentationGroupElement(self.group, np.matmul(x.rep, self.rep), self.current_chart)
 
-        g_composed_rep = np.matmul(self.rep, g_right.rep)
 
-        return RepresentationGroupElement(self.group,
-                                          g_composed_rep,
-                                          self.current_chart)
+    def L_act(self, other):
 
-    def R(self,
-          g_left):
-        g_composed_rep = np.matmul(g_left.rep, self.rep)
+        if isinstance(other, core.GeomotionElement):
+            
 
-        return RepresentationGroupElement(self.group,
-                                          g_composed_rep,
-                                          self.current_chart)
 
     @property
     def inverse(self):

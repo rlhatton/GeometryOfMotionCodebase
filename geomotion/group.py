@@ -2,6 +2,7 @@
 import numpy as np
 from . import utilityfunctions as ut
 from . import manifold as md
+from . import core
 from operator import methodcaller
 
 
@@ -173,10 +174,13 @@ class GroupElementSet(md.ManifoldElementSet):
 
     def group_set_action(self, other, action_name):
 
-        if hasattr(other, 'shape'):
+        # Test if the counterparty is also a geomotion set
+        if isinstance(other, core.GeomotionSet):
 
             if self.shape == other.shape:
 
+                # Get the list of objects out of the set, and apply the named action method from the elements in
+                # self to the elements in other
                 new_set = ut.object_list_method_eval_pairwise(action_name, self.value, other.value)
 
             else:
@@ -185,11 +189,13 @@ class GroupElementSet(md.ManifoldElementSet):
 
         else:
 
+            # If acting on a single-element counterparty, preload that single argument into the method, then
+            # evaluate it for all elements in self
             action = methodcaller(action_name, other)
             new_set = ut.object_list_eval(action, self.value)
 
-            plural_type = ut.object_list_extract_first_entry(new_set).plural
-
+        # Identify what kind of set should be constructed from these objects
+        plural_type = ut.object_list_extract_first_entry(new_set).plural
         return plural_type(new_set)
 
     def L(self, other):
