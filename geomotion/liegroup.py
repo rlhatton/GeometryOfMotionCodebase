@@ -161,38 +161,17 @@ class LieGroup(gp.Group, tb.DiffManifold):
 
 class LieGroupElement(gp.GroupElement):
 
-    def L_lifted(self,
-                 v_right):
+    def __init__(self,
+                 group,
+                 value,
+                 initial_chart=0):
+        gp.GroupElement.__init__(self,
+                                 group,
+                                 value,
+                                 initial_chart)
 
-        if self.group.operation_list[self.current_chart] is not None:
-
-            # Attempt to ensure that v_right is expressed in the same chart and basis as this group element
-            v_right = v_right.transition(self.current_chart)
-
-            # Extract the configuration value at which v_right is defined
-            g_0 = v_right.configuration
-            g_0_value = g_0.value
-
-            # Apply the operation for the current chart to the vector's configuration, with this element on the left
-            g_composed_value = self.group.operation_list[self.current_chart](self.value, g_0_value)
-
-            # Get the Jacobian for the left action of the current group element at the current location of the vector,
-            # and multiply it by the value of v_right
-            J = self.group.L_Jacobian(self.value)
-            J_at_g0 = J(g_0_value)
-            v_out_value = np.matmul(J_at_g0, v_right.value)
-
-            # Construct an element from the composed value, in this element's chart
-            g_composed = self.group.element(g_composed_value, self.current_chart)
-
-            # Construct a LieGroupTangentVector at the output location
-            v_out = self.group.vector(g_composed, v_out_value, self.current_chart, self.current_chart)
-
-        else:
-
-            raise Exception("Group lifted operation is undefined for chart " + str(self.current_chart))
-
-        return v_out
+        self.TL = tb.DifferentialMap(self.L)
+        self.TR = tb.DifferentialMap(self.R)
 
 
 class LieGroupTangentVector(tb.TangentVector):

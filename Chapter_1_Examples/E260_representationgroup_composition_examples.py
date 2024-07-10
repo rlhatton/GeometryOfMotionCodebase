@@ -19,7 +19,7 @@ g2 = R1plus.element(3)
 
 g3 = g1 * g2
 
-rint("Addition-group composition of \n", g1.rep, "\n and \n", g2.rep, "\n is \n", g3.rep)
+print("Addition-group composition of \n", g1.rep, "\n and \n", g2.rep, "\n is \n", g3.rep)
 
 """ Scalar addition """
 

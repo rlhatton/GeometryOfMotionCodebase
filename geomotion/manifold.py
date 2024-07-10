@@ -242,7 +242,7 @@ class ManifoldFunction:
                  postprocess_function=None):  # How to format the output of the numeric function
 
         """Defining function and defining chart can be supplied as either a single function and the chart
-        on which it is defined, or as a list of functions and a corresponding list of charts on which those
+        on which it is defined, or as a tuple of functions and a corresponding tuple of charts on which those
         functions are defined. Where the charts overlap, the functions should agree with each other."""
 
         if not isinstance(defining_function, list):
@@ -253,9 +253,6 @@ class ManifoldFunction:
 
         if not ut.shape(defining_function) == ut.shape(defining_chart):
             raise Exception("Defining function list and defining chart list do not have matching shapes")
-
-        # Make a dictionary from defining chart designators to their positions in the list of functions
-        self.chart_dict = dict(zip(defining_chart, range(len(defining_chart))))
 
         # Save all of the inputs as instance properties
         self.manifold = manifold
@@ -305,7 +302,8 @@ class ManifoldFunction:
 
             # Sequentially check if the point can be pushed into the underlying chart of one of the
             # underlying functions
-            elif self.manifold.transition_table[q.current_chart][self.defining_chart[function_index_to_try]] is not None:
+            elif self.manifold.transition_table[q.current_chart][
+                self.defining_chart[function_index_to_try]] is not None:
                 function_index = function_index_to_try
                 q_chart = self.defining_chart[function_index_to_try]
                 return (q.transition(q_chart),

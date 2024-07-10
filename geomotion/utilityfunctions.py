@@ -16,6 +16,14 @@ def ensure_tuple(value):
 
     return value_tuple
 
+def ensure_list(value):
+    """ Function that wraps an input value in a tuple if it is not already a tuple"""
+    if isinstance(value, list):
+        value_list = value
+    else:
+        value_list = [value]  # comma creates the tuple
+
+    return value_list
 
 def ensure_ndarray(value):
     if not isinstance(value, np.ndarray):
@@ -214,6 +222,28 @@ def object_list_method_eval_pairwise(method_name, object_list_1, object_list_2, 
     # store the results in a list
     else:
         return [getattr(object_list_1[i], method_name)(object_list_2[i]) for i in range(sh)]
+
+def object_list_method_eval_with_arg(method_name, object_list_1, object2, n_outer=None, depth=0):
+    # Get the length of the first array at the current depth
+    sh = len(object_list_1)
+
+    # If a target dept was supplied, check if we've reached it
+    if n_outer is not None:
+        reached_target_depth = (depth + 1) >= n_outer
+    # If no target depth was supplied, stop drilling down once we find a non-list item
+    else:
+        reached_target_depth = not all([isinstance(object_list_1[i], list) for i in range(sh)])
+
+    # If we're not yet drilled down to the contents, recurse further down
+    if not reached_target_depth:
+        return [
+            object_list_method_eval_with_arg(method_name, object_list_1[i], object2, n_outer, depth + 1)
+            for i
+            in range(sh)]
+    # If we've reached the target level of the list, evaluate the specified method for each point at this level and
+    # store the results in a list
+    else:
+        return [getattr(object_list_1[i], method_name)(object2) for i in range(sh)]
 
 
 def object_list_method_eval_allpairs(method_name, object_list_1, object_list_2, n_outer=None, depth=0):
