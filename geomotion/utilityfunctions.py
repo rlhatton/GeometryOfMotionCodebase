@@ -173,7 +173,7 @@ def object_list_eval_threewise(f, object_list_1, object_list_2, object_list_3, n
 
     # If we're not yet drilled down to the contents, recurse further down
     if not reached_target_depth:
-        return [object_list_eval_threewise(f, object_list_1[i], object_list_2[i], n_outer, depth + 1) for i in
+        return [object_list_eval_threewise(f, object_list_1[i], object_list_2[i], object_list_3[i], n_outer, depth + 1) for i in
                 range(sh)]
     # If we've reached the target level of the list, evaluate the specified method for each point at this level and
     # store the results in a list
