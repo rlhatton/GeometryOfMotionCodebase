@@ -1083,10 +1083,10 @@ class DirectionDerivative(TangentVectorField):
         self.output_basis = defining_map.output_chart
         self.postprocess_function = [self.postprocess_function_single, self.postprocess_function_multiple]
 
-    def defining_map_numeric(self, q_numeric, function_index, *args, **kwargs):
+    def defining_map_numeric(self, q_numeric, delta, function_index, *args, **kwargs):
         q_manifold = self.manifold.element(q_numeric, self.defining_chart[function_index[0]])
 
-        q_out_manifold = self.defining_map(q_manifold, *args, **kwargs)
+        q_out_manifold = self.defining_map(q_manifold, delta, *args, **kwargs)
 
         q_out_numeric = q_out_manifold.value
 
@@ -1099,8 +1099,8 @@ class DirectionDerivative(TangentVectorField):
         time = input_args[0]
         process_args = input_args[1:]
 
-        def defining_map_with_inputs(config, delta):
-            return self.defining_map_numeric(config, delta, *process_args, **kwargs)
+        def defining_map_with_inputs(config, delta, function_index):
+            return self.defining_map_numeric(config, delta, function_index, *process_args, **kwargs)
 
         # Evaluate the function over the configurations
         def defining_map_with_inputs_zero(q):
@@ -1109,18 +1109,22 @@ class DirectionDerivative(TangentVectorField):
         # output_config_grid_e = config_grid_e.grid_eval(defining_map_with_inputs_zero)
         output_config_grid_e = config_grid_e
 
-        def direction_deriv(config):
+        def direction_deriv(config, function_index):
             def defining_map_at_config(d):
-                return defining_map_with_inputs(config, d)
+                return defining_map_with_inputs(config, d, function_index)
 
             return np.squeeze(ndt.Jacobian(defining_map_at_config)([0]))
 
         # Evaluate the defining function over the grid
-        vector_grid_e = config_grid_e.grid_eval(direction_deriv)
+        # vector_grid_e = config_grid_e.grid_eval(direction_deriv)
+        vector_grid_e = ut.array_eval_pairwise(direction_deriv,
+                                               config_grid_e,
+                                               function_index_list,
+                                               config_grid_e.n_outer)
 
         return output_config_grid_e, vector_grid_e
 
-    def postprocess(self, configuration_grid, function_grid, value_type):
+    def postprocess(self, configuration_grid, function_grid, function_index_list, value_type):
 
         vector_location_grid = function_grid[0]
         vector_value_grid = function_grid[1]
