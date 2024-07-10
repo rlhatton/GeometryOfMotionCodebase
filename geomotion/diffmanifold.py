@@ -1117,10 +1117,11 @@ class DirectionDerivative(TangentVectorField):
 
         # Evaluate the defining function over the grid
         # vector_grid_e = config_grid_e.grid_eval(direction_deriv)
-        vector_grid_e = ut.array_eval_pairwise(direction_deriv,
-                                               config_grid_e,
-                                               function_index_list,
-                                               config_grid_e.n_outer)
+        vector_grid_e = ut.GridArray(ut.array_eval_pairwise(direction_deriv,
+                                                            config_grid_e,
+                                                            function_index_list,
+                                                            config_grid_e.n_outer),
+                                     config_grid_e.n_outer)
 
         return output_config_grid_e, vector_grid_e
 
@@ -1133,32 +1134,49 @@ class DirectionDerivative(TangentVectorField):
             if value_type == 'single':
                 vector_location = vector_location_grid[0]  # Extract the single output from the grid array
                 vector_value = vector_value_grid[0]
-                return self.postprocess_function[0](vector_location, vector_value)
+                return self.postprocess_function[0](vector_location, vector_value, function_index_list[0])
             elif value_type == 'multiple':
-                return self.postprocess_function[1](vector_location_grid, vector_value_grid)
+                return self.postprocess_function[1](vector_location_grid, vector_value_grid, function_index_list)
             else:
                 raise Exception("Value_type should be 'single' or 'multiple'.")
         else:
             return function_grid
 
-    def postprocess_function_single(self, q, v):
+    def postprocess_function_single(self, q, v, function_index):
         v_defining_output_chart = self.output_manifold.vector(q,
                                                               v,
-                                                              self.output_defining_chart,
-                                                              self.output_defining_basis)
+                                                              self.output_defining_chart[function_index[0]],
+                                                              self.output_defining_basis[function_index[0]])
 
-        v_output_chart = v_defining_output_chart.transition(self.output_chart,
-                                                            self.output_basis)
+        v_output_chart = v_defining_output_chart.transition(self.output_chart[function_index[0]],
+                                                            self.output_basis[function_index[0]])
 
-        return v_output_chart
+    def postprocess_function_multiple(self, q, v, function_index_list):
 
-    def postprocess_function_multiple(self, q, v):
+        def get_output_defining_chart(function_index):
+            return self.output_defining_chart[function_index[0]]
+
+        def get_output_defining_basis(function_index):
+            return self.output_defining_basis[function_index[0]]
+
+        def get_output_chart(function_index):
+            return self.output_chart[function_index[0]]
+
+        def get_output_basis(function_index):
+            return self.output_basis[function_index[0]]
+
+        output_defining_chart_grid = function_index_list.grid_eval(get_output_defining_chart)
+        output_defining_basis_grid = function_index_list.grid_eval(get_output_defining_basis)
+
+        output_chart_grid = function_index_list.grid_eval(get_output_chart)
+        output_basis_grid = function_index_list.grid_eval(get_output_basis)
+
         v_defining_output_chart = self.output_manifold.vector_set(q,
                                                                   v,
-                                                                  self.output_defining_chart,
-                                                                  self.output_defining_basis)
+                                                                  output_defining_chart_grid,
+                                                                  output_defining_basis_grid)
 
-        v_output_chart = v_defining_output_chart.transition(self.output_chart,
-                                                            self.output_basis)
+        v_output_chart = v_defining_output_chart.transition(output_chart_grid,
+                                                            output_basis_grid)
 
         return v_output_chart
