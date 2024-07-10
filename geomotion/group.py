@@ -109,7 +109,7 @@ class GroupElement(md.ManifoldElement):
         return AD_g_other
 
     # noinspection SpellCheckingInspection
-    def ADinv(self, other):
+    def AD_inv(self, other):
         g_inv = self.inverse
         ADi_g_other = g_inv * other * self
         return ADi_g_other
@@ -205,9 +205,9 @@ class GroupElementSet(md.ManifoldElementSet):
         return self.group_set_action(other, 'AD')
 
     # noinspection SpellCheckingInspection
-    def ADinv(self, other):
+    def AD_inv(self, other):
 
-        return self.group_set_action(other, 'R')
+        return self.group_set_action(other, 'AD_inv')
 
     def commutator(self, other):
 

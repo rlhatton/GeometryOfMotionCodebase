@@ -33,7 +33,7 @@ print("The adjoint of h1=", h1, " at g2=", g2, " is h3=AD_g2(h1)=", h3, ",\n whi
 h4 = g1.AD(h2)
 
 # Calculate the adjoint-inverse of h2 at g1
-h5 = g1.ADinv(h2)
+h5 = g1.AD_inv(h2)
 
 print("The adjoint of h2=", h2, " at g1=", g1, " is h4=AD_g1(h2)=", h4, ",\n which satisfies g1*h2=", g1*h2,
       "being equal to h4*g1=", h4*g1, ".\n\n", "Note h1 and h4 are different because taking adjoint twice is not "

@@ -61,6 +61,18 @@ class LieGroup(gp.Group, tb.DiffManifold):
                                   initial_basis)
         return v
 
+    def Lie_alg_vector(self,
+                       value,
+                       initial_chart=0,
+                       initial_basis=0):
+        """Instantiate a Lie grouptangent vector at a specified configuration on the manifold"""
+        v = LieGroupTangentVector(self,
+                                  self.identity_element(initial_chart),
+                                  value,
+                                  initial_chart,
+                                  initial_basis)
+        return v
+
     def vector_set(self,
                    configuration,
                    value=None,
@@ -178,7 +190,7 @@ class LieGroupElement(gp.GroupElement):
         return self.AD(other)
 
     def Adinv(self, other):
-        return self.AD(other)
+        return self.AD_inv(other)
 
 
 class LieGroupTangentVector(tb.TangentVector):
@@ -252,7 +264,6 @@ class LieGroupTangentVectorSet(tb.TangentVectorSet):
                  initial_chart=0,
                  initial_basis=0,
                  input_grid_format=None):
-
         tb.TangentVectorSet.__init__(self,
                                      group,
                                      configuration,
