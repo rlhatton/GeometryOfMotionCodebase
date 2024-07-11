@@ -33,6 +33,8 @@ class RepresentationLieGroup(rgp.RepresentationGroup, lgp.LieGroup):
         self.representation_Jacobian_table = \
             [ndt.Jacobian(rho) for rho in self.representation_function_list]
 
+
+
     def element(self,
                 representation,
                 initial_chart=0):
@@ -119,7 +121,7 @@ class RepresentationLieGroupElement(lgp.LieGroupElement, rgp.RepresentationGroup
 class RepresentationLieGroupTangentVector(lgp.LieGroupTangentVector):
 
     def __init__(self,
-                 manifold: RepresentationLieGroup,
+                 group: RepresentationLieGroup,
                  configuration,
                  representation,
                  initial_chart=None,
@@ -127,9 +129,9 @@ class RepresentationLieGroupTangentVector(lgp.LieGroupTangentVector):
         """Tangent vector with extra group properties"""
 
         lgp.LieGroupTangentVector.__init__(self,
-                                           manifold,
+                                           group,
                                            configuration,
-                                           None,
+                                           group.identity_derep,  # This is to get something of the right shape, rep overrides whatever we have here
                                            initial_chart,
                                            initial_basis)
 
@@ -155,7 +157,7 @@ class RepresentationLieGroupTangentVector(lgp.LieGroupTangentVector):
             pass
         elif representation.ndim == 1:
             # Multiply the matrices in the Jacobian of the representation function by the list of provided coefficients
-            representation = np.matmul(self.group.representation_Jacobian_table[self.configuration.current_chart],
+            representation = np.matmul(self.group.representation_Jacobian_table[self.configuration.current_chart](self.configuration.value),
                                        representation)
 
         # Store the matrix representation

@@ -212,7 +212,7 @@ class ManifoldElementSet(core.GeomotionSet):
                                                                  self.value))
 
         # Convert this array into a GridArray
-        element_outer_grid_array = ut.GridArray(element_outer_grid, n_inner=1)
+        element_outer_grid_array = ut.GridArray(element_outer_grid, n_inner=len(self.element_shape))
 
         component_outer_grid_array = element_outer_grid_array.everse
 

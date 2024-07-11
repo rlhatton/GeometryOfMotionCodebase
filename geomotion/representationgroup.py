@@ -16,16 +16,24 @@ class RepresentationGroup(gp.Group):
         # Regularize representation and derepresentation function lists, wrapping them in list if provided as raw
         # functions
         representation_function_list = ut.ensure_list(representation_function_list)
+        representation_function_list = [lambda x: ut.ensure_ndarray(rho(x)) for rho in representation_function_list]
+
         derepresentation_function_list = ut.ensure_list(derepresentation_function_list)
 
         # If a derepresentation list has been provided, use it to construct the transition map as the composition of
         # the rep and derep functions
         if ((derepresentation_function_list is not None)
                 and (len(derepresentation_function_list) == len(representation_function_list))):
+
+            derepresentation_function_list = ut.ensure_list(derepresentation_function_list)
+
+            derepresentation_function_list = [lambda x: ut.ensure_ndarray(rho(x)) for rho in derepresentation_function_list]
+
             transition_table = [
-                [lambda x: derepresentation_function_list[j](representation_function_list[i](x)) for j in range(2)] for
-                i in range(len(representation_function_list))]
+                [lambda x: derepresentation_function_list[j](derepresentation_function_list[i](x)) for j in range(2)] for
+                i in range(len(derepresentation_function_list))]
         else:
+            derepresentation_function_list = ut.ensure_list(derepresentation_function_list)
             transition_table = ((None,))
 
         # Make sure that we have both the representation of the identity (for constructing the group) and its
@@ -57,6 +65,7 @@ class RepresentationGroup(gp.Group):
 
         # Store the identity input as the group identity representation
         self.identity_rep = identity_representation
+        self.identity_derep = identity_derepresentation
 
     def element(self,
                 representation,
@@ -89,6 +98,10 @@ class RepresentationGroup(gp.Group):
                                        initial_chart)
 
         return g
+
+    @property
+    def representation_shape(self):
+        return self.identity_rep.shape
 
 
 class RepresentationGroupElement(gp.GroupElement):
