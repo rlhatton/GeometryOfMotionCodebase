@@ -31,9 +31,7 @@ class RepresentationLieGroup(rgp.RepresentationGroup, lgp.LieGroup):
 
         # Construct the differential representation functions
         self.representation_Jacobian_table = \
-            [ndt.Jacobian(rho) for rho in self.representation_function_list]
-
-
+            [lambda x: np.moveaxis(ndt.Jacobian(rho)(x), 1, 0) for rho in self.representation_function_list]
 
     def element(self,
                 representation,
@@ -131,7 +129,8 @@ class RepresentationLieGroupTangentVector(lgp.LieGroupTangentVector):
         lgp.LieGroupTangentVector.__init__(self,
                                            group,
                                            configuration,
-                                           group.identity_derep,  # This is to get something of the right shape, rep overrides whatever we have here
+                                           group.identity_derep,
+                                           # This is to get something of the right shape, rep overrides whatever we have here
                                            initial_chart,
                                            initial_basis)
 
@@ -154,22 +153,26 @@ class RepresentationLieGroupTangentVector(lgp.LieGroupTangentVector):
         # Force the representation into matrix form if it is not already in matrix form
         if representation.ndim == 2:
             # If the representation is a matrix, assume that it is a proper representation
-            pass
+            matrix_representation = representation
         elif representation.ndim == 1:
             # Multiply the matrices in the Jacobian of the representation function by the list of provided coefficients
-            representation = np.matmul(self.group.representation_Jacobian_table[self.configuration.current_chart](self.configuration.value),
-                                       representation)
+            J_rep = self.group.representation_Jacobian_table[self.configuration.current_chart](self.configuration.value)
+            matrix_representation = np.zeros_like(J_rep[0])
+            for i, J_i in enumerate(J_rep):
+                matrix_representation = matrix_representation + J_i * representation[i]
+
 
         # Store the matrix representation
-        self._representation = representation
+        self._representation = matrix_representation
 
     @property
     def value(self):
 
-        val_raw = self.group.derepresentation_function_list[self.configuration.current_chart](self.rep)
-
-        # Make sure that the value is a list or ndarray
-        val = ut.ensure_ndarray(val_raw)
+        J_rep = self.group.representation_Jacobian_table[self.configuration.current_chart](self.configuration.value)
+        J_rep_vectorized = np.concatenate([ut.column(np.ravel(x)) for x in J_rep], 1)
+        rep_vectorized = ut.column(np.ravel(self.rep))
+        #val = np.linalg.lstsq(J_rep_vectorized, ut.column(np.ravel(self.rep)))
+        val = np.ravel(np.matmul(np.linalg.pinv(J_rep_vectorized), rep_vectorized))
 
         return val
 
