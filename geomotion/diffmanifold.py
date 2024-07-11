@@ -500,7 +500,9 @@ class TangentVectorSet(core.GeomotionSet):
         elif isinstance(new_basis, ut.GridArray):
             new_set = ut.object_list_method_eval_pairwise('transition', self.value, new_basis)
 
-        return self.__class__(new_set)
+        # Identify what kind of set should be constructed from these objects
+        plural_type = ut.object_list_extract_first_entry(new_set).plural
+        return plural_type(new_set)
 
     def vector_addition(self, other):
         return self.vector_set_action(other, 'vector_addition')

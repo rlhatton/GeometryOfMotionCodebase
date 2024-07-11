@@ -218,6 +218,20 @@ class LieGroupTangentVector(tb.TangentVector):
     def group(self, grp):
         self.manifold = grp
 
+    def __mul__(self, other):
+
+        if isinstance(other, LieGroupElement):
+            return other.__rmul__(self)
+        else:
+            return tb.TangentVector.__mul__(self, other)
+
+    def __rmul__(self, other):
+
+        if isinstance(other, LieGroupElement):
+            return other.__mul__(self)
+        else:
+            return tb.TangentVector.__rmul__(self, other)
+
 
 class LieGroupElementSet(gp.GroupElementSet):
 
@@ -271,3 +285,17 @@ class LieGroupTangentVectorSet(tb.TangentVectorSet):
 
         # Information about what this set should contain
         self.single = LieGroupTangentVector
+
+    def __mul__(self, other):
+
+        if isinstance(other, (LieGroupElement, LieGroupElementSet)):
+            return self.vector_set_action(other, '__mul__')
+        else:
+            return NotImplemented
+
+    def __rmul__(self, other):
+
+        if isinstance(other, (LieGroupElement, LieGroupElementSet)):
+            return self.vector_set_action(other, '__rmul__')
+        else:
+            return NotImplemented
