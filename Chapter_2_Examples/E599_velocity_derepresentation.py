@@ -31,6 +31,7 @@ g_dot = S1plus.vector(g, 2)
 
 print("Representation of g_dot with theta_dot=2 at g=", g, "is\n", g_dot.rep, "\n and derepresents back to ", g_dot.value)
 
+
 print("\nScale-shift:")
 
 

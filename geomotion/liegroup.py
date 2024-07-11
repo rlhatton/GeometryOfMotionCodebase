@@ -218,6 +218,22 @@ class LieGroupTangentVector(tb.TangentVector):
     def group(self, grp):
         self.manifold = grp
 
+    @property
+    def left(self):
+        return self * self.configuration
+
+    @property
+    def right(self):
+        return self.configuration * self
+
+    @property
+    def L_generator(self):
+        return self.group.L_generator(self.left.value, self.configuration.current_chart)
+
+    @property
+    def R_generator(self):
+        return self.group.R_generator(self.right.value, self.configuration.current_chart)
+
     def __mul__(self, other):
 
         if isinstance(other, LieGroupElement):
