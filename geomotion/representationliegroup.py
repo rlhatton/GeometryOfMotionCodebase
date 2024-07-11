@@ -108,12 +108,12 @@ class RepresentationLieGroupElement(lgp.LieGroupElement, rgp.RepresentationGroup
                                                 initial_chart)
 
         self.TL = lambda x: RepresentationLieGroupTangentVector(self.group,
-                                                                self,
+                                                                x.configuration * self,
                                                                 np.matmul(self.rep, x.rep),
                                                                 self.current_chart)
 
         self.TR = lambda x: RepresentationLieGroupTangentVector(self.group,
-                                                                self,
+                                                                self * x.configuration,
                                                                 np.matmul(x.rep, self.rep),
                                                                 self.current_chart)
 
