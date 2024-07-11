@@ -106,10 +106,10 @@ class RepresentationGroupElement(gp.GroupElement):
         self.R = lambda x: RepresentationGroupElement(self.group, np.matmul(x.rep, self.rep), self.current_chart)
 
 
-    def L_act(self, other):
-
-        if isinstance(other, core.GeomotionElement):
-            
+    # def L_act(self, other):
+    #
+    #     if isinstance(other, core.GeomotionElement):
+    #
 
 
     @property

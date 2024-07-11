@@ -56,8 +56,8 @@ class ManifoldElement(core.GeomotionElement):
                  value=None,
                  initial_chart=0):
 
-        # Check if the first argument is a ManifoldElementSet already, and if so, extract its value and manifold
-        if isinstance(manifold, ManifoldElementSet):
+        # Check if the first argument is a ManifoldElement already, and if so, extract its value and manifold
+        if isinstance(manifold, ManifoldElement):
             manifold_element_input = manifold
             self.value = manifold_element_input.value
             self.manifold = manifold_element_input.manifold

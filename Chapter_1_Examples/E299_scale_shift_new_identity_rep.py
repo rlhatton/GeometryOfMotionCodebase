@@ -17,6 +17,7 @@ g3 = G.element([1, 2])
 initial_points = gp.GroupElementSet([e, g1, g2, g3])
 
 # Change the identity to g1 using a left action
+# primed_points = initial_points.R(g1.inverse)#
 primed_points = g1.inverse * initial_points
 print("Moving the identity to g1 using a left action results in the points having values of \n"
       "g0=", primed_points[0], ",\n g1=", primed_points[1], ",\n g2=", primed_points[2], ",\n and g3=", primed_points[3])
@@ -30,7 +31,7 @@ print("\n Moving the identity to g1 using a right action results in the points h
 # Generate grids transformed by left and right actions
 initial_grid = ut.meshgrid_array([0, 2, 3, 4, 5, 6], [-2, -1, 0, 1, 2, 3, 4])
 group_grid = gp.GroupElementSet(RxRplus, initial_grid)
-group_grid_left_transformed = g1 * group_grid
+group_grid_left_transformed = group_grid.R(g1)
 group_grid_right_transformed = group_grid * g1
 
 

@@ -137,14 +137,14 @@ class GroupElement(md.ManifoldElement):
 
     def __mul__(self, other):
 
-        if isinstance(other, (GroupElement, GroupElementSet)):
+        if isinstance(other, GroupElement):
             return self.L(other)
         else:
             return NotImplemented
 
     def __rmul__(self, other):
 
-        if isinstance(other, (GroupElement, GroupElementSet)):
+        if isinstance(other, GroupElement):
             return self.R(other)
         else:
             return NotImplemented

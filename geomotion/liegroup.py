@@ -174,14 +174,14 @@ class LieGroupElement(gp.GroupElement):
 
     def __mul__(self, other):
 
-        if isinstance(other, (LieGroupTangentVector, LieGroupTangentVectorSet)):
+        if isinstance(other, LieGroupTangentVector):
             return self.TL(other)
         else:
             return gp.GroupElement.__mul__(self, other)
 
     def __rmul__(self, other):
 
-        if isinstance(other, (LieGroupTangentVector, LieGroupTangentVectorSet)):
+        if isinstance(other, LieGroupTangentVector):
             return self.TR(other)
         else:
             return gp.GroupElement.__rmul__(self, other)
