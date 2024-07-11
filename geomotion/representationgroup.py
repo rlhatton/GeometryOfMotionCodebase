@@ -2,7 +2,6 @@
 import numpy as np
 from geomotion import utilityfunctions as ut
 from geomotion import group as gp
-from geomotion import core
 
 
 class RepresentationGroup(gp.Group):
@@ -14,10 +13,10 @@ class RepresentationGroup(gp.Group):
                  specification_chart=0,
                  ):
 
-        # Regularize representation and derepresentation function lists, wrapping them in tuples if provided as raw
+        # Regularize representation and derepresentation function lists, wrapping them in list if provided as raw
         # functions
-        representation_function_list = ut.ensure_tuple(representation_function_list)
-        derepresentation_function_list = ut.ensure_tuple(derepresentation_function_list)
+        representation_function_list = ut.ensure_list(representation_function_list)
+        derepresentation_function_list = ut.ensure_list(derepresentation_function_list)
 
         # If a derepresentation list has been provided, use it to construct the transition map as the composition of
         # the rep and derep functions
@@ -69,6 +68,18 @@ class RepresentationGroup(gp.Group):
                                        initial_chart)
         return g
 
+    def element_set(self,
+                    value=None,
+                    initial_chart=0,
+                    input_format=None):
+
+        g_set = RepresentationGroupElementSet(self,
+                                              value,
+                                              initial_chart,
+                                              input_format)
+
+        return g_set
+
     def identity_element(self,
                          initial_chart=0):
 
@@ -93,9 +104,10 @@ class RepresentationGroupElement(gp.GroupElement):
 
         # Use the provided inputs to generate the group-element properties of the group element
         # Don't pass in an initial value; we are making value a property that depends on the representation and chart
-        super().__init__(group,
-                         group.identity_list[0],
-                         initial_chart)
+        gp.GroupElement.__init__(self,
+                                 group,
+                                 group.identity_list[0],
+                                 initial_chart)
 
         # Save the representation (using the type enforcement in the setter)
         self.rep = representation
@@ -105,12 +117,8 @@ class RepresentationGroupElement(gp.GroupElement):
         self.L = lambda x: RepresentationGroupElement(self.group, np.matmul(self.rep, x.rep), self.current_chart)
         self.R = lambda x: RepresentationGroupElement(self.group, np.matmul(x.rep, self.rep), self.current_chart)
 
-
-    # def L_act(self, other):
-    #
-    #     if isinstance(other, core.GeomotionElement):
-    #
-
+        # # Information about how to build a set of these objects
+        self.plural = RepresentationGroupElementSet
 
     @property
     def inverse(self):
@@ -136,7 +144,8 @@ class RepresentationGroupElement(gp.GroupElement):
         if representation.ndim == 2:
             pass
         else:
-            representation = ut.ensure_ndarray(self.group.representation_function_list[self.current_chart](representation))
+            representation = ut.ensure_ndarray(
+                self.group.representation_function_list[self.current_chart](representation))
 
         # Store the matrix representation
         self._representation = representation
@@ -156,3 +165,22 @@ class RepresentationGroupElement(gp.GroupElement):
 
         # Pass the value input into the representation setter (which will force it to matrix form)
         self.rep = val
+
+
+class RepresentationGroupElementSet(gp.GroupElementSet):
+    """This is mostly a pass-through copy of group element set, but allows
+    us to set the self.single attribute"""
+
+    def __init__(self,
+                 group,
+                 representation=None,
+                 initial_chart=0,
+                 input_format=None):
+        gp.GroupElementSet.__init__(self,
+                                    group,
+                                    representation,
+                                    initial_chart,
+                                    input_format)
+
+        # Information about what this set should contain
+        self.single = RepresentationGroupElement

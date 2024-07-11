@@ -1,11 +1,8 @@
 #! /usr/bin/python3
-import numpy as np
-from . import utilityfunctions as ut
 from . import manifold as md
 from . import group as gp
 from . import diffmanifold as tb
-from operator import methodcaller
-import numdifftools as ndt
+
 
 
 class LieGroup(gp.Group, tb.DiffManifold):
@@ -218,20 +215,20 @@ class LieGroupTangentVector(tb.TangentVector):
         return self.manifold
 
     @group.setter
-    def group(self, gp):
-        self.manifold = gp
+    def group(self, grp):
+        self.manifold = grp
 
 
 class LieGroupElementSet(gp.GroupElementSet):
 
     def __init__(self,
-                 manifold,
+                 group,
                  value=None,
                  initial_chart=0,
                  input_format=None):
 
         gp.GroupElementSet.__init__(self,
-                                    manifold,
+                                    group,
                                     value,
                                     initial_chart,
                                     input_format)

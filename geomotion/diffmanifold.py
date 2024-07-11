@@ -307,7 +307,7 @@ class TangentVectorSet(core.GeomotionSet):
                  initial_basis=0,
                  input_grid_format=None):
 
-        # Check if the first argument is a ManifoldElementSet already,
+        # Check if the first argument is a TangentVectorSet already,
         # and if so, extract its value and manifold
         if isinstance(manifold, TangentVectorSet):
             tangent_vector_set_input = manifold

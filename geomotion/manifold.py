@@ -329,13 +329,6 @@ class ManifoldFunction:
 
         configuration_set = ManifoldElementSet(configuration_list)
 
-        # # Get a list of the chart in which each element is defined
-        # def extract_chart(q):
-        #     return [q.current_chart]
-        #
-        # chart_grid_e = ut.GridArray(ut.object_list_eval(extract_chart, configuration_set), n_inner=1)
-        # # chart_grid_e = np.array(ut.object_list_eval(extract_chart, configuration_set))
-
         # Extract a component-wise grid from the ManifoldElementSet and evert it to element-wise
         configuration_grid_e = configuration_set.grid.everse
 
@@ -419,11 +412,6 @@ class ManifoldMap(ManifoldFunction):
             raise Exception("Defining function list and output defining chart list do not have matching shapes")
         elif not ut.shape(defining_function) == ut.shape(output_chart):
             raise Exception("Defining function list and output chart list do not have matching shapes")
-
-        # # Make dictionaries from chart designators to their positions in the lists of functions
-        # self.chart_dict = dict(zip(defining_chart, range(len(defining_chart))))
-        # self.output_defining_chart_dict = dict(zip(output_defining_chart, range(len(output_defining_chart))))
-        # self.output_chart_dict = dict(zip(output_chart, range(len(output_chart))))
 
         # Turn the numerical output of the defining function into manifold elements or
         # element sets in the output manifold
