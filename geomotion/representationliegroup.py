@@ -180,7 +180,7 @@ class RepresentationLieGroupTangentVector(lgp.LieGroupTangentVector):
         self.rep = val
 
 
-class RepresentationLieGroupElementSet(rgp.RepresentationGroupElementSet):
+class RepresentationLieGroupElementSet(rgp.RepresentationGroupElementSet, lgp.LieGroupElementSet):
     """This is mostly a pass-through copy of representation group element set, but allows
     us to set the self.single attribute"""
 

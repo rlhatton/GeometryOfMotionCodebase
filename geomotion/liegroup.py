@@ -238,14 +238,14 @@ class LieGroupElementSet(gp.GroupElementSet):
 
     def __mul__(self, other):
 
-        if isinstance(other, (LieGroupTangentVector, LieGroupTangentVectorSet)):
+        if isinstance(other, LieGroupTangentVector):
             return self.group_set_action(other, '__mul__')
         else:
             return gp.GroupElementSet.__mul__(self, other)
 
     def __rmul__(self, other):
 
-        if isinstance(other, (LieGroupTangentVector, LieGroupTangentVector)):
+        if isinstance(other, LieGroupTangentVector):
             return self.group_set_action(other, '__rmul__')
         else:
             return gp.GroupElementSet.__rmul__(self, other)
