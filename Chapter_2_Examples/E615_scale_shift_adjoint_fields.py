@@ -1,6 +1,6 @@
 import numpy as np
 from geomotion import manifold as md, diffmanifold as tb, utilityfunctions as ut, plottingfunctions as gplt
-from S500_Construct_RxRplus import RxRplus
+from S550_Construct_RxRplus_rep import RxRplus
 from matplotlib import pyplot as plt
 
 # Make things print nicely
