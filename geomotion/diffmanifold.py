@@ -1147,6 +1147,7 @@ class DirectionDerivative(TangentVectorField):
 
         v_output_chart = v_defining_output_chart.transition(self.output_chart[function_index[0]],
                                                             self.output_basis[function_index[0]])
+        return v_output_chart
 
     def postprocess_function_multiple(self, q, v, function_index_list):
 

@@ -24,3 +24,5 @@ print("The left velocity corresponding to g_dot=", g_dot, " is g_circ_l=", g_dot
 print("The right velocity corresponding to g_dot=", g_dot, " is g_circ_r=", g.inverse * g_dot)
 
 print(g2.inverse*g3)
+print(G.R_generator([1, 0, 1, 0])(g2))
+print(G.R_generator([1, 0, 1, 0])(lgp.LieGroupElementSet([g2]))[0])
