@@ -220,11 +220,13 @@ class LieGroupTangentVector(tb.TangentVector):
 
     @property
     def left(self):
-        return self * self.configuration.inverse
+        left_velocity = self * self.configuration.inverse
+        return left_velocity
 
     @property
     def right(self):
-        return self.configuration.inverse * self
+        right_velocity = self.configuration.inverse * self
+        return right_velocity
 
     @property
     def L_generator(self):

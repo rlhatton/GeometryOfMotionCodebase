@@ -18,11 +18,10 @@ g = G.element([2, 0, 3, 0])
 # Create a configuration in which the link is rotated by 90 degrees, and both points
 # are moving to the right at unit speed
 g2 = G.element([0, 0, 0, 1])
-g3 = G.element([0.1, 0, 0.1, 1])
 g_dot = G.vector(g2, [1, 0, 1, 0])
-print("The left velocity corresponding to g_dot=", g_dot, " is g_circ_l=", g_dot.left, " or ", g_dot.L_generator(g_dot.configuration))
-print("The right velocity corresponding to g_dot=", g_dot, " is g_circ_r=", g.inverse * g_dot)
+print("At g=", g_dot.configuration, " and g_dot=", g_dot, ":")
+print("The left velocity corresponding to g_dot=", g_dot, " is g_circ_l=", g_dot.left, " or ", g_dot.L_generator(e), " or ", g_dot * g2.inverse)
+print("The right velocity corresponding to g_dot=", g_dot, " is g_circ_r=", g_dot.right, " or ", g_dot.R_generator(e), "or ", g2.inverse * g_dot)
 
-print(g2.inverse*g3)
-print(G.R_generator([1, 0, 1, 0])(g2))
-print(G.R_generator([1, 0, 1, 0])(lgp.LieGroupElementSet([g2]))[0])
+g3 = G.element([0, 2, 0, 5])
+print(g3.inverse)
