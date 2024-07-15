@@ -5,6 +5,7 @@ from geomotion import liegroup as lgp
 from geomotion import diffmanifold as tb
 from geomotion import representationgroup as rgp
 import numdifftools as ndt
+import scipy as sc
 
 
 class RepresentationLieGroup(rgp.RepresentationGroup, lgp.LieGroup):
@@ -163,7 +164,6 @@ class RepresentationLieGroupTangentVector(lgp.LieGroupTangentVector):
             for i, J_i in enumerate(J_rep):
                 matrix_representation = matrix_representation + J_i * representation[i]
 
-
         # Store the matrix representation
         self._representation = matrix_representation
 
@@ -183,6 +183,26 @@ class RepresentationLieGroupTangentVector(lgp.LieGroupTangentVector):
 
         # Pass the value input into the representation setter (which will force it to matrix form)
         self.rep = val
+
+    @property
+    def exp_L(self):
+
+        new_rep = sc.linalg.expm(self.left.rep)
+
+        new_element = RepresentationLieGroupElement(self.group, new_rep,
+                                                    self.configuration.current_chart) * self.configuration
+
+        return new_element
+
+    @property
+    def exp_R(self):
+
+        new_rep = sc.linalg.expm(self.right.rep)
+
+        new_element = self.configuration * RepresentationLieGroupElement(self.group, new_rep,
+                                                                         self.configuration.current_chart)
+
+        return new_element
 
 
 class RepresentationLieGroupElementSet(rgp.RepresentationGroupElementSet, lgp.LieGroupElementSet):
