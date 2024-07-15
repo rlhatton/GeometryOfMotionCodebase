@@ -26,7 +26,17 @@ def SE2_derep(g_rep):
     return g_value
 
 
-SE2 = rgp.RepresentationGroup(SE2_rep, [0, 0, 0], SE2_derep)
+def SE2_normalize(g_rep):
+    R = g_rep[0:2, 0:2]
+
+    R_normalized = (1.5 * R) - (0.5 * np.matmul(np.matmul(R, np.transpose(R)), R))
+
+    g_rep_normalized = np.concatenate([np.concatenate([R_normalized, g_rep[[0, 1], 2:]], 1), [[0, 0, 1]]])
+
+    return (g_rep_normalized)
+
+
+SE2 = rgp.RepresentationGroup(SE2_rep, [0, 0, 0], SE2_derep, 0, SE2_normalize)
 
 
 class RigidBodyPlotInfo:

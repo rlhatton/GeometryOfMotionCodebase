@@ -91,18 +91,22 @@ class GroupElement(md.ManifoldElement):
                                     value,
                                     initial_chart)
 
-        self.L = md.ManifoldMap(self.group,
-                                self.group,
-                                [lambda x: f(self.value, x) for f in self.group.operation_list],
-                                list(range(len(self.group.operation_list))))
-
-        self.R = md.ManifoldMap(self.group,
-                                self.group,
-                                [lambda x: f(x, self.value) for f in self.group.operation_list],
-                                list(range(len(self.group.operation_list))))
-
         # Information about how to build a set of these objects
         self.plural = GroupElementSet
+
+    @property
+    def L(self):
+        return md.ManifoldMap(self.group,
+                              self.group,
+                              [lambda x: f(self.value, x) for f in self.group.operation_list],
+                              list(range(len(self.group.operation_list))))
+
+    @property
+    def R(self):
+        return md.ManifoldMap(self.group,
+                              self.group,
+                              [lambda x: f(x, self.value) for f in self.group.operation_list],
+                              list(range(len(self.group.operation_list))))
 
     def AD(self, other):
         g_inv = self.inverse
@@ -155,7 +159,6 @@ def commutator(g: GroupElement, h: GroupElement):
 
 
 class GroupElementSet(md.ManifoldElementSet):
-
 
     def __init__(self,
                  manifold,

@@ -11,27 +11,32 @@ class RepresentationGroup(gp.Group):
                  identity,
                  derepresentation_function_list=None,
                  specification_chart=0,
+                 normalization_function=None,
                  ):
 
-        # Regularize representation and derepresentation function lists, wrapping them in list if provided as raw
-        # functions
+        # Regularize representation function list, wrapping it in list if provided as raw
+        # function
         representation_function_list = ut.ensure_list(representation_function_list)
         representation_function_list = [lambda x: ut.ensure_ndarray(rho(x)) for rho in representation_function_list]
 
-        derepresentation_function_list = ut.ensure_list(derepresentation_function_list)
-
         # If a derepresentation list has been provided, use it to construct the transition map as the composition of
         # the rep and derep functions
-        if ((derepresentation_function_list is not None)
-                and (len(derepresentation_function_list) == len(representation_function_list))):
+        if derepresentation_function_list is not None:
 
             derepresentation_function_list = ut.ensure_list(derepresentation_function_list)
 
-            derepresentation_function_list = [lambda x: ut.ensure_ndarray(rho(x)) for rho in derepresentation_function_list]
+            if len(derepresentation_function_list) == len(representation_function_list):
 
-            transition_table = [
-                [lambda x: derepresentation_function_list[j](derepresentation_function_list[i](x)) for j in range(2)] for
-                i in range(len(derepresentation_function_list))]
+                derepresentation_function_list = ut.ensure_list(derepresentation_function_list)
+
+                derepresentation_function_list = [lambda x: ut.ensure_ndarray(rho(x)) for rho in derepresentation_function_list]
+
+                transition_table = [
+                    [lambda x: derepresentation_function_list[j](derepresentation_function_list[i](x)) for j in range(2)] for
+                    i in range(len(derepresentation_function_list))]
+            else:
+                raise Exception("derepresentation function list does not have the same dimension as representation "
+                                "function list")
         else:
             derepresentation_function_list = ut.ensure_list(derepresentation_function_list)
             transition_table = ((None,))
@@ -62,6 +67,9 @@ class RepresentationGroup(gp.Group):
         # Save the derepresentation function as an instance attribute, wrapping it in a tuple if provided as a raw
         # function
         self.derepresentation_function_list = derepresentation_function_list
+
+        # Save the normalization function list as an instance attribute
+        self.normalization_function = normalization_function
 
         # Store the identity input as the group identity representation
         self.identity_rep = identity_representation
@@ -125,13 +133,32 @@ class RepresentationGroupElement(gp.GroupElement):
         # Save the representation (using the type enforcement in the setter)
         self.rep = representation
 
-        # Defining here instead of as methods so that these definitions override the definitions in
-        # GroupElement (which are defined in init so that they get the properties of being ManifoldFunctions
-        self.L = lambda x: RepresentationGroupElement(self.group, np.matmul(self.rep, x.rep), self.current_chart)
-        self.R = lambda x: RepresentationGroupElement(self.group, np.matmul(x.rep, self.rep), self.current_chart)
-
         # # Information about how to build a set of these objects
         self.plural = RepresentationGroupElementSet
+
+
+    def L(self, other):
+
+        new_rep = np.matmul(self.rep, other.rep)
+
+        if self.group.normalization_function is not None:
+            new_rep = self.group.normalization_function(new_rep)
+
+        new_element = RepresentationGroupElement(self.group, new_rep, self.current_chart)
+
+        return new_element
+
+    def R(self, other):
+
+        new_rep = np.matmul(other.rep, self.rep)
+
+        if self.group.normalization_function is not None:
+            new_rep = self.group.normalization_function(new_rep)
+
+        new_element = RepresentationGroupElement(self.group, new_rep, self.current_chart)
+
+        return new_element
+
 
     @property
     def inverse(self):

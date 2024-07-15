@@ -14,5 +14,11 @@ def scale_shift_derep(g_rep):
 
     return g_value
 
+def scale_shift_normalization(g_rep):
+    g_rep_normalized = [[g_rep[0][0], g_rep[0][1]], [0, 1]]
 
-RxRplus = rlgp.RepresentationLieGroup(scale_shift_rep, [1, 0], scale_shift_derep)
+    return g_rep_normalized
+
+
+
+RxRplus = rlgp.RepresentationLieGroup(scale_shift_rep, [1, 0], scale_shift_derep, 0, scale_shift_normalization)

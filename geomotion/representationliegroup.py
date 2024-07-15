@@ -14,6 +14,7 @@ class RepresentationLieGroup(rgp.RepresentationGroup, lgp.LieGroup):
                  identity,
                  derepresentation_function_list=None,
                  specification_chart=0,
+                 normalization_function=None
                  ):
         # Instantiate as a representation group
         rgp.RepresentationGroup.__init__(self,
@@ -21,6 +22,7 @@ class RepresentationLieGroup(rgp.RepresentationGroup, lgp.LieGroup):
                                          identity,
                                          derepresentation_function_list,
                                          specification_chart,
+                                         normalization_function
                                          )
 
         # Instantiate as a differentiable manifold
