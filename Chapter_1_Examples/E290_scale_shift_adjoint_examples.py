@@ -33,7 +33,7 @@ print("The adjoint of h1=", h1, " at g2=", g2, " is h3=AD_g2(h1)=", h3, ",\n whi
 h4 = g1.AD(h2)
 
 # Calculate the adjoint-inverse of h2 at g1
-h5 = g1.ADinv(h2)
+h5 = g1.AD_inv(h2)
 
 print("The adjoint of h2=", h2, " at g1=", g1, " is h4=AD_g1(h2)=", h4, ",\n which satisfies g1*h2=", g1*h2,
       "being equal to h4*g1=", h4*g1, ".\n\n", "Note h1 and h4 are different because taking adjoint twice is not "
@@ -63,9 +63,9 @@ h4scale_g1 = h3scale * g1
 
 ax_g1 = plt.subplot(1, 3, 1)
 ax = ax_g1
-ax.scatter(g1[0], g1[1], edgecolor=spot_color, facecolor='white', label='$g_{1}$')
-ax.scatter(g1_h1[0], g1_h1[1], edgecolor='black', facecolor=spot_color, label='$g_{2}$')
-ax.scatter(1,0, edgecolor='black', facecolor='black')
+ax.scatter(*g1, edgecolor=spot_color, facecolor='white', label='$g_{1}$')
+ax.scatter(*g1_h1, edgecolor='black', facecolor=spot_color, label='$g_{2}$')
+ax.scatter(1, 0, edgecolor='black', facecolor='black')
 ax.scatter(0, 0, edgecolor='black', facecolor='white', s=20, clip_on=False, zorder=3)
 ax.set_xlim(0, 3)
 ax.set_ylim(-1, 5)
@@ -84,9 +84,9 @@ ax.plot([0, h2scale_g1[0]], [0, h2scale_g1[1]], color='black', linewidth=.5, lin
 
 ax_g2 = plt.subplot(1, 3, 2)
 ax = ax_g2
-ax.scatter(g2[0], g2[1], edgecolor=spot_color, facecolor='white', label='$g_{1}$')
-ax.scatter(g2_h1[0], g2_h1[1], edgecolor='black', facecolor=spot_color, label='$g_{2}$')
-ax.scatter(1,0, edgecolor='black', facecolor='black')
+ax.scatter(*g2, edgecolor=spot_color, facecolor='white', label='$g_{1}$')
+ax.scatter(*g2_h1, edgecolor='black', facecolor=spot_color, label='$g_{2}$')
+ax.scatter(1, 0, edgecolor='black', facecolor='black')
 ax.scatter(0, 0, edgecolor='black', facecolor='white', s=20, clip_on=False, zorder=3)
 ax.set_xlim(0, 3)
 ax.set_ylim(-1, 5)
@@ -104,8 +104,8 @@ ax.plot([0, h3scale_g2[0]], [0, h3scale_g2[1]], color='black', linewidth=.5, lin
 
 ax_h4 = plt.subplot(1, 3, 3)
 ax = ax_h4
-ax.scatter(g1[0], g1[1], edgecolor=spot_color, facecolor='white', label='$g_{1}$')
-ax.scatter(g1_h2[0], g1_h2[1], edgecolor='black', facecolor=spot_color, label='$g_{2}$')
+ax.scatter(*g1, edgecolor=spot_color, facecolor='white', label='$g_{1}$')
+ax.scatter(*g1_h2, edgecolor='black', facecolor=spot_color, label='$g_{2}$')
 ax.scatter(1,0, edgecolor='black', facecolor='black')
 ax.scatter(0, 0, edgecolor='black', facecolor='white', s=20, clip_on=False, zorder=3)
 ax.set_xlim(0, 3)

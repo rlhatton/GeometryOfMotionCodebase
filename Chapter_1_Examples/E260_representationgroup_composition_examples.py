@@ -1,6 +1,6 @@
 #! /usr/bin/python3
 import numpy as np
-from geomotion import representationgroup as rgp
+from geomotion import representationgroup as rgp, utilityfunctions as ut
 
 np.set_printoptions(precision=2)  # Make things print nicely
 

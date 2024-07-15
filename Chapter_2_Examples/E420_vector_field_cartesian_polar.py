@@ -13,45 +13,50 @@ def v_outward_xy(q):
     return v
 
 
-# Use the vector field function to construct a vector field
-X_outward_xy = tb.TangentVectorField(Q, v_outward_xy)
+# Use the vector field function to construct a vector field that points outward, based on a Cartesian definition
+X_outward = tb.TangentVectorField(Q, v_outward_xy, 0, 0)
 
 # Build a grid over which to evaluate the vector field
 grid_xy = ut.meshgrid_array(np.linspace(-2, 2, 5), np.linspace(-2, 2, 5))
 
-# Evaluate the vector field on the grid
-vector_grid = X_outward_xy(grid_xy).grid[1]
+# Turn this grid into a set of points in the manifold
+cartesian_points = Q.element_set(grid_xy, 0, 'component')
+
+# Evaluate the vector field on the grid of points
+vector_grid = X_outward(cartesian_points).grid[1]
 print("The Cartesian components of the outward field are the same as the underlying Cartesian coordinates: \n",
       vector_grid,
       "\n")
 
-# Transition the vector field into polar coordinates
-X_outward_rt = X_outward_xy.transition(1)
+
 
 # Construct a grid of polar coordinates
 grid_rt = ut.meshgrid_array([.5, 1, 2], [0, np.pi / 2, np.pi])
 
-# Evaluate the polar-coordinate-expressed field on the polar grid
-vector_grid_rt = X_outward_rt(grid_rt).grid
+# Turn this grid into a set of points in the manifold
+polar_points = Q.element_set(grid_rt, 1, 'component')
+
+# Evaluate the field on the polar grid, and transition the output to polar coordinates
+vector_grid_rt = X_outward(polar_points).transition(1).grid
 
 print("The polar components of the outward field are all in the radial direction: \n", vector_grid_rt)
 
-# Adding vector fields with casting
-X_doubled = X_outward_xy + X_outward_rt
-vector_grid_doubled = X_doubled(grid_xy).grid[1]
+# Adding vector fields
+X_doubled = X_outward + X_outward
+vector_grid_doubled = X_doubled(cartesian_points).grid[1]
 
 print("Adding vector fields expressed in different coordinates produces a vector field in the first field's "
       "coordinates: \n", vector_grid_doubled)
 
 # Scalar multiplying vector fields
-X_tripled = X_outward_xy * 3
-vector_grid_tripled = X_tripled(grid_xy).grid[1]
+X_tripled = X_outward * 3
+vector_grid_tripled = X_tripled(cartesian_points).grid[1]
 
 print("Multiplying a scalar by a vector field scales the output: \n", vector_grid_tripled)
 
 # Dividing a vector field by a scalar
-X_halved = X_outward_xy / 2
-vector_grid_halved = X_halved(grid_xy).grid[1]
+X_halved = X_outward / 2
+vector_grid_halved = X_halved(cartesian_points).grid[1]
 
 print("Dividing a vector field by a scalar scales down the value \n", vector_grid_halved, "\n")
 
@@ -59,8 +64,10 @@ print("Dividing a vector field by a scalar scales down the value \n", vector_gri
 # them as sets and then transitioning them
 
 # Evaluate the Cartesian and polar expressions of the vector fields as sets
-vector_set_xy = X_outward_xy(grid_xy)
-vector_set_rt = X_outward_rt(grid_rt)
+vector_set_xy = X_outward(cartesian_points)
+
+X_outward_polar = X_outward.transition_output(1, 1)
+vector_set_rt = X_outward(polar_points)
 
 # Transition the polar set to Cartesian form
 vector_set_rtxy = vector_set_rt.transition(0, 'match')
@@ -75,7 +82,7 @@ print(vs_xy_v[0], "\n", vs_rtxy_v[0])#, "\n", vector_grid[0], "\n", vector_grid_
 ax = plt.subplot(2, 2, 1)
 c_grid = vs_xy_c
 v_grid = vs_xy_v
-ax.quiver(c_grid[0], c_grid[1], v_grid[0], v_grid[1], scale=20, linewidth=10)
+ax.quiver(*c_grid, *v_grid, scale=20, linewidth=10)
 ax.set_aspect('equal')
 ax.set_xlim(-4, 4)
 ax.set_ylim(-4, 4)
@@ -83,7 +90,7 @@ ax.set_ylim(-4, 4)
 ax = plt.subplot(2, 2, 2)
 c_grid = grid_xy
 v_grid = vector_grid
-ax.quiver(c_grid[0], c_grid[1], v_grid[0], v_grid[1], scale=20, linewidth=10)
+ax.quiver(*c_grid, *v_grid, scale=20, linewidth=10)
 ax.set_aspect('equal')
 ax.set_xlim(-4, 4)
 ax.set_ylim(-4, 4)
@@ -92,7 +99,7 @@ ax.set_ylim(-4, 4)
 ax = plt.subplot(2, 2, 4)
 c_grid = vs_rtxy_c
 v_grid = vs_rtxy_v
-ax.quiver(c_grid[0], c_grid[1], v_grid[0], v_grid[1], scale=20, linewidth=10)
+ax.quiver(*c_grid, *v_grid, scale=20, linewidth=10)
 ax.set_aspect('equal')
 ax.set_xlim(-4, 4)
 ax.set_ylim(-4, 4)

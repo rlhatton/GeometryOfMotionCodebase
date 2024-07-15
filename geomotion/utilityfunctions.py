@@ -16,6 +16,14 @@ def ensure_tuple(value):
 
     return value_tuple
 
+def ensure_list(value):
+    """ Function that wraps an input value in a tuple if it is not already a tuple"""
+    if isinstance(value, list):
+        value_list = value
+    else:
+        value_list = [value]  # comma creates the tuple
+
+    return value_list
 
 def ensure_ndarray(value):
     if not isinstance(value, np.ndarray):
@@ -63,7 +71,7 @@ def array_eval(func, arr, n_outer=None, depth=0):
 
 def array_eval_pairwise(func, arr1, arr2, n_outer, depth=0):
     # Verify that arrays are of the same length
-    if arr1.shape == arr2.shape:
+    if arr1.shape[:n_outer - depth] == arr2.shape[:n_outer - depth]:
         pass
     else:
         raise Exception("Cannot make pairwise evaluation of arrays for arrays of different shape")
@@ -74,7 +82,7 @@ def array_eval_pairwise(func, arr1, arr2, n_outer, depth=0):
     # If we're not at the deepest level of the outer grid, iterate over the level we're at, calling array_eval on the
     # next-deeper layer and creating an array of the results
     if (depth + 1) < n_outer:
-        return np.array([array_eval(func, arr1[i], arr2[i], n_outer, depth + 1) for i in range(sh)])
+        return np.array([array_eval_pairwise(func, arr1[i], arr2[i], n_outer, depth + 1) for i in range(sh)])
     # If we've reached the deepest level of the grid, evaluate the function for each point at this level and store
     # the results in an array
     else:
@@ -101,6 +109,37 @@ def object_list_eval(f, object_list, n_outer=None, depth=0):
         return [f(object_list[i]) for i in range(sh)]
 
 
+def object_list_eval_two_outputs(f, object_list, n_outer=None, depth=0):
+    # Get the length of the array at the current depth
+    sh = len(object_list)
+
+    # If a target dept was supplied, check if we've reached it
+    if n_outer is not None:
+        reached_target_depth = (depth + 1) >= n_outer
+    # If no target depth was supplied, stop drilling down once we find a non-list item
+    else:
+        reached_target_depth = not all([isinstance(object_list[i], list) for i in range(sh)])
+
+    # If we're not yet drilled down to the contents, recurse further down
+    if not reached_target_depth:
+        output = [[], []]
+        for i in range(sh):
+            f_i = object_list_eval_two_outputs(f, object_list[i], n_outer, depth + 1)
+            for j in [0, 1]:
+                output[j].append(f_i[j])
+        return tuple(output)
+
+    # If we've reached the target level of the list, evaluate the specified method for each point at this level and
+    # store the results in a list
+    else:
+        output = [[], []]
+        for i in range(sh):
+            f_i = f(object_list[i])
+            for j in [0, 1]:
+                output[j].append(f_i[j])
+        return tuple(output)
+
+
 def object_list_eval_pairwise(f, object_list_1, object_list_2, n_outer=None, depth=0):
     # Get the length of the array at the current depth
     sh = len(object_list_1)
@@ -119,6 +158,48 @@ def object_list_eval_pairwise(f, object_list_1, object_list_2, n_outer=None, dep
     # store the results in a list
     else:
         return [f(object_list_1[i], object_list_2[i]) for i in range(sh)]
+
+
+def object_list_eval_threewise(f, object_list_1, object_list_2, object_list_3, n_outer=None, depth=0):
+    # Get the length of the array at the current depth
+    sh = len(object_list_1)
+
+    # If a target dept was supplied, check if we've reached it
+    if n_outer is not None:
+        reached_target_depth = (depth + 1) >= n_outer
+    # If no target depth was supplied, stop drilling down once we find a non-list item
+    else:
+        reached_target_depth = not all([isinstance(object_list_1[i], list) for i in range(sh)])
+
+    # If we're not yet drilled down to the contents, recurse further down
+    if not reached_target_depth:
+        return [object_list_eval_threewise(f, object_list_1[i], object_list_2[i], object_list_3[i], n_outer, depth + 1) for i in
+                range(sh)]
+    # If we've reached the target level of the list, evaluate the specified method for each point at this level and
+    # store the results in a list
+    else:
+        return [f(object_list_1[i], object_list_2[i], object_list_3[i]) for i in range(sh)]
+
+
+def object_list_eval_fourwise(f, object_list_1, object_list_2, object_list_3, object_list_4, n_outer=None, depth=0):
+    # Get the length of the array at the current depth
+    sh = len(object_list_1)
+
+    # If a target dept was supplied, check if we've reached it
+    if n_outer is not None:
+        reached_target_depth = (depth + 1) >= n_outer
+    # If no target depth was supplied, stop drilling down once we find a non-list item
+    else:
+        reached_target_depth = not all([isinstance(object_list_1[i], list) for i in range(sh)])
+
+    # If we're not yet drilled down to the contents, recurse further down
+    if not reached_target_depth:
+        return [object_list_eval_fourwise(f, object_list_1[i], object_list_2[i], object_list_4[i], object_list_3[i],
+                                          n_outer, depth + 1) for i in range(sh)]
+    # If we've reached the target level of the list, evaluate the specified method for each point at this level and
+    # store the results in a list
+    else:
+        return [f(object_list_1[i], object_list_2[i], object_list_3[i], object_list_4[i]) for i in range(sh)]
 
 
 def object_list_method_eval_pairwise(method_name, object_list_1, object_list_2, n_outer=None, depth=0):
@@ -141,6 +222,28 @@ def object_list_method_eval_pairwise(method_name, object_list_1, object_list_2, 
     # store the results in a list
     else:
         return [getattr(object_list_1[i], method_name)(object_list_2[i]) for i in range(sh)]
+
+def object_list_method_eval_with_arg(method_name, object_list_1, object2, n_outer=None, depth=0):
+    # Get the length of the first array at the current depth
+    sh = len(object_list_1)
+
+    # If a target dept was supplied, check if we've reached it
+    if n_outer is not None:
+        reached_target_depth = (depth + 1) >= n_outer
+    # If no target depth was supplied, stop drilling down once we find a non-list item
+    else:
+        reached_target_depth = not all([isinstance(object_list_1[i], list) for i in range(sh)])
+
+    # If we're not yet drilled down to the contents, recurse further down
+    if not reached_target_depth:
+        return [
+            object_list_method_eval_with_arg(method_name, object_list_1[i], object2, n_outer, depth + 1)
+            for i
+            in range(sh)]
+    # If we've reached the target level of the list, evaluate the specified method for each point at this level and
+    # store the results in a list
+    else:
+        return [getattr(object_list_1[i], method_name)(object2) for i in range(sh)]
 
 
 def object_list_method_eval_allpairs(method_name, object_list_1, object_list_2, n_outer=None, depth=0):

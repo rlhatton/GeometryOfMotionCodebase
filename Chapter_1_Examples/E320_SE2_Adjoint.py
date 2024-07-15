@@ -18,7 +18,7 @@ h_A = SE2.element([-1, -1, -np.pi/2])
 h_BwrtA = SE2.element([1, 0, np.pi/2])
 
 # Adjoint-inverse action of the relative motion on the first frame's motion
-ADi_hBA_hA = h_BwrtA.ADinv(h_A)
+ADi_hBA_hA = h_BwrtA.AD_inv(h_A)
 
 print("Given two frames A and B rigidly attached by a relative transformation h_B/A =", h_BwrtA, ","
       "\nthe local motion felt by B when A experiences a local motion h_A=", h_A,

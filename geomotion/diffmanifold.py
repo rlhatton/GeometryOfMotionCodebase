@@ -12,15 +12,19 @@ from . import utilityfunctions as ut
 
 
 class DiffManifold(md.Manifold):
-    """Class that instantiates differentiable manifolds"""
+    """Class that instantiates differentiable manifolds. Changes from Manifold are:
+    1. A transition Jacobian table is automatically generated from the transition table
+    2. Vectors and vector sets can be spawned in the same manner as elements and element sets
+    3. The shape of a vector element is generated from n_dim and saved for use by other functions checking size"""
 
     def __init__(self,
                  transition_table,
                  n_dim):
 
         # Initialize a manifold with the provided transition table and number of dimensions
-        super().__init__(transition_table,
-                         n_dim)
+        md.Manifold.__init__(self,
+                             transition_table,
+                             n_dim)
 
         # Create a table of the Jacobians of the transition functions
         transition_Jacobian_table = [[[] for _ in range(self.n_charts)] for _ in range(self.n_charts)]
@@ -40,7 +44,12 @@ class DiffManifold(md.Manifold):
                initial_basis=0):
 
         """Instantiate a tangent vector at a specified configuration on the manifold"""
-        v = TangentVector(self, configuration, value, initial_chart, initial_basis)
+
+        v = TangentVector(self,
+                          configuration,
+                          value,
+                          initial_chart,
+                          initial_basis)
 
         return v
 
@@ -50,6 +59,8 @@ class DiffManifold(md.Manifold):
                    initial_chart=0,
                    initial_basis=0,
                    input_grid_format=None):
+
+        """Instantiate a tangent vector set at a specified configuration on the manifold"""
 
         v = TangentVectorSet(self,
                              configuration,
@@ -64,11 +75,12 @@ class DiffManifold(md.Manifold):
     def vector_shape(self):
 
         """ Vectors should be 1-dimensional arrays with as many entries as there are dimensions
-        This property facilitates checking this condition"""
+        This property facilitates other functions checking this condition"""
         return (self.n_dim,)
 
 
 class TangentVector(core.GeomotionElement):
+    """Constructs a vector in the tangent space of a specified manifold at a specified point"""
 
     def __init__(self,
                  manifold: DiffManifold,
@@ -76,9 +88,6 @@ class TangentVector(core.GeomotionElement):
                  value,
                  initial_chart=None,
                  initial_basis=0):
-
-        # # Make sure that the value is an ndarray
-        # value = ut.ensure_ndarray(value)
 
         # If configuration is a manifold element, verify that no manifold was specified or that the configuration's
         # manifold matches the manifold specified for this vector
@@ -102,6 +111,9 @@ class TangentVector(core.GeomotionElement):
         self.current_basis = initial_basis
         self.configuration = configuration
         self.value = value  # Format is verified/ensured by the format_value method
+
+        # Information about how to build a set of these objects
+        self.plural = TangentVectorSet
 
     def format_value(self, val):
 
@@ -155,18 +167,14 @@ class TangentVector(core.GeomotionElement):
 
         # Verify that 'other' is at the same configuration as self
         if self.configuration.manifold == other.configuration.manifold:
-            if self.configuration.current_chart == other.configuration.current_chart:
-                if all(np.isclose(self.configuration.value, other.configuration.value)):
-                    pass
-                else:
-                    raise Exception("Cannot add two TangentVectors at different configurations")
+
+            # Test if configurations are equal when expressed in same chart
+            if all(np.isclose(self.configuration.value,
+                              (other.configuration.transition(self.configuration.current_chart)).value)):
+                pass
             else:
-                # Test if configurations are equal when expressed in same chart
-                if np.isclose(self.configuration.value,
-                              (other.configuration.transition(self.configuration.current_chart)).value):
-                    pass
-                else:
-                    raise Exception("Cannot add two TangentVectors at different configurations")
+                raise Exception("Cannot add two TangentVectors at different configurations")
+
         else:
             raise Exception("Cannot add two TangentVectors attached to different manifolds")
 
@@ -292,25 +300,37 @@ class TangentVector(core.GeomotionElement):
 class TangentVectorSet(core.GeomotionSet):
 
     def __init__(self,
-                 manifold,  # Could also be a list of TangentVectors
+                 manifold,  # Could also be a TangentVector, TangentVectorSet, or list of TangentVectors
                  configuration=None,
                  value=None,
                  initial_chart=0,
                  initial_basis=0,
                  input_grid_format=None):
 
-        # n_args = len(args)
+        # Check if the first argument is a TangentVectorSet already,
+        # and if so, extract its value and manifold
+        if isinstance(manifold, TangentVectorSet):
+            tangent_vector_set_input = manifold
+            value = tangent_vector_set_input.value
+            manifold = tangent_vector_set_input.manifold
+
+        # Check if the first argument is a bare TangentVector, and if so, wrap its value in a list
+        elif isinstance(manifold, TangentVector):
+            tangent_vector_input = manifold
+            value = [tangent_vector_input]
+            manifold = tangent_vector_input.manifold
 
         # Check if the first argument is a list of TangentVectors, and if so, use it directly
-        if isinstance(manifold, list):
+        elif isinstance(manifold, list):
             if ut.object_list_all_instance(TangentVector, manifold):
-                value = manifold
-                manifold = ut.object_list_extract_first_entry(value).manifold
+                tangent_vector_list_input = manifold
+                value = tangent_vector_list_input
+                manifold = ut.object_list_extract_first_entry(tangent_vector_list_input).manifold
             else:
                 raise Exception("List input to TangentVectorSet should contain TangentVector objects")
 
-        # If the first argument is a differentiable manifold, process the inputs as if they were TangentVector inputs
-        # allowing for GridArray formatting
+        # If the first argument is a differentiable manifold, process the inputs as if they were
+        # TangentVector inputs allowing for GridArray formatting
         elif isinstance(manifold, DiffManifold):
 
             # Get the expected shape of the elements
@@ -367,8 +387,8 @@ class TangentVectorSet(core.GeomotionSet):
                 if single_configuration:
 
                     def tangent_vector_construction_function(vector_value):
-                        return manifold.vector(vector_value,
-                                               configuration,
+                        return manifold.vector(configuration,
+                                               vector_value,
                                                initial_chart,
                                                initial_basis)
 
@@ -377,28 +397,46 @@ class TangentVectorSet(core.GeomotionSet):
                                                 vector_grid.n_outer)
 
                 else:
-                    def tangent_vector_construction_function(configuration_value, vector_value):
-                        tangent_vector = manifold.vector(configuration_value,
-                                                         vector_value,
-                                                         initial_chart,
-                                                         initial_basis)
-                        return tangent_vector
 
-                    value = ut.object_list_eval_pairwise(tangent_vector_construction_function,
-                                                         config_grid,
-                                                         vector_grid,
-                                                         vector_grid.n_outer)
+                    # Check for initial_chart being a GridArray
+                    if isinstance(initial_chart, ut.GridArray):
+                        # Make sure it matches the dimensions of the value grid
+                        if initial_chart.shape == vector_grid.shape[:vector_grid.n_outer]:
+                            # Construct a manifold element with each value/chart pair in the grids
+                            value = ut.object_list_eval_fourwise(manifold.vector,
+                                                                 config_grid,
+                                                                 vector_grid,
+                                                                 initial_chart,
+                                                                 initial_basis,
+                                                                 vector_grid.n_outer)
+                        else:
+                            raise Exception("Initial_chart is a grid that doesn't match the value grids")
+                    else:
+                        def tangent_vector_construction_function(configuration_value, vector_value):
+                            tangent_vector = manifold.vector(configuration_value,
+                                                             vector_value,
+                                                             initial_chart,
+                                                             initial_basis)
+                            return tangent_vector
+
+                        value = ut.object_list_eval_pairwise(tangent_vector_construction_function,
+                                                             config_grid,
+                                                             vector_grid,
+                                                             vector_grid.n_outer)
 
             else:
                 raise Exception(
                     "If first input to TangentVectorSet is a Manifold, second input should be a GridArray")
 
         else:
-            raise Exception("First argument to ManifoldSet should be either a list of "
+            raise Exception("First argument to TangentVectorSet should be a TangentVector, a list of "
                             "TangentVectors or a Manifold")
 
         super().__init__(value)
         self.manifold = manifold
+
+        # Information about what this set should contain
+        self.single = TangentVector
 
     @property
     def grid(self):
@@ -452,14 +490,19 @@ class TangentVectorSet(core.GeomotionSet):
 
     def transition(self,
                    new_basis,
-                   configuration_transition):
+                   configuration_transition='match'):
 
-        transition_method = methodcaller('transition', new_basis, configuration_transition)
+        if isinstance(new_basis, (int, float)):
+            transition_method = methodcaller('transition', new_basis, configuration_transition)
+            new_set = ut.object_list_eval(transition_method,
+                                          self.value)
 
-        new_set = ut.object_list_eval(transition_method,
-                                      self.value)
+        elif isinstance(new_basis, ut.GridArray):
+            new_set = ut.object_list_method_eval_pairwise('transition', self.value, new_basis)
 
-        return self.__class__(new_set)
+        # Identify what kind of set should be constructed from these objects
+        plural_type = ut.object_list_extract_first_entry(new_set).plural
+        return plural_type(new_set)
 
     def vector_addition(self, other):
         return self.vector_set_action(other, 'vector_addition')
@@ -592,23 +635,95 @@ class TangentVectorField(md.ManifoldFunction):
                  manifold: DiffManifold,
                  defining_function,
                  defining_chart=0,
-                 defining_basis=0):
+                 output_defining_basis=0,
+                 output_chart=None,
+                 output_basis=None):
 
-        # Make sure that the defining function can take at least two inputs (configuration and time)
-        sig = signature(defining_function)
-        if len(sig.parameters) == 1:
-            # noinspection PyUnusedLocal
-            def def_function(q, t, *args):
-                return ut.ensure_ndarray(defining_function(q))
+        if not isinstance(defining_function, list):
+            defining_function = [defining_function]
+
+        if defining_chart is None:
+            defining_chart = [0] * len(defining_function)
+        elif not isinstance(defining_chart, list):
+            defining_chart = [defining_chart]
+
+        if output_defining_basis is None:
+            output_defining_basis = [0] * len(defining_function)
+        elif not isinstance(output_defining_basis, list):
+            output_defining_basis = [output_defining_basis]
+
+        # If a separate output chart and basis are not specified, match them to the defining chart and
+        # output defining basis
+        if output_chart is None:
+            output_chart = defining_chart
         else:
-            def def_function(q, t, *args):
-                return ut.ensure_ndarray(defining_function(q, t, *args))
+            if not isinstance(output_chart, list):
+                output_chart = [output_chart]
 
-        def postprocess_function_single(q, v):
-            return manifold.vector(q, v, defining_chart, defining_basis)
+        if output_basis is None:
+            output_basis = output_defining_basis
+        else:
+            if not isinstance(output_basis, list):
+                output_basis = [output_basis]
 
-        def postprocess_function_multiple(q, v):
-            return manifold.vector_set(q, v, defining_chart, defining_basis)
+        if not ut.shape(defining_function) == ut.shape(defining_chart):
+            raise Exception("Defining function list and defining chart list do not have matching shapes")
+        elif not ut.shape(defining_function) == ut.shape(output_defining_basis):
+            raise Exception("Defining function list and output defining basis list do not have matching shapes")
+        elif not ut.shape(defining_function) == ut.shape(output_chart):
+            raise Exception("Defining function list and output chart list do not have matching shapes")
+        elif not ut.shape(defining_function) == ut.shape(output_basis):
+            raise Exception("Defining function list and output basis list do not have matching shapes")
+
+        # Make sure that the defining functions can take at least two inputs (configuration and time)
+        def_function_list = []
+        for i, f in enumerate(defining_function):
+            sig = signature(f)
+            if len(sig.parameters) == 1:
+                # noinspection PyUnusedLocal
+                def def_function(q, t, *args):
+                    return ut.ensure_ndarray(f(q))
+            else:
+                def def_function(q, t, *args):
+                    return ut.ensure_ndarray(f(q, t, *args))
+
+            def_function_list.append(def_function)
+
+        def postprocess_function_single(q, v, function_index):
+            output_vector = manifold.vector(q,
+                                            v,
+                                            self.defining_chart[function_index[0]],
+                                            self.output_defining_basis[function_index[0]]). \
+                transition(self.output_basis[function_index[0]],
+                           self.output_chart[function_index[0]])
+
+            return output_vector
+
+        def postprocess_function_multiple(q, v, function_index_list):
+
+            def get_defining_chart(function_index):
+                return self.defining_chart[function_index[0]]
+
+            def get_output_defining_basis(function_index):
+                return self.output_defining_basis[function_index[0]]
+
+            def get_output_chart(function_index):
+                return self.output_chart[function_index[0]]
+
+            def get_output_basis(function_index):
+                return self.output_basis[function_index[0]]
+
+            defining_chart_grid = function_index_list.grid_eval(get_defining_chart)
+            output_defining_basis_grid = function_index_list.grid_eval(get_output_defining_basis)
+
+            output_chart_grid = function_index_list.grid_eval(get_output_chart)
+            output_basis_grid = function_index_list.grid_eval(get_output_basis)
+
+            output_vector_set = manifold.vector_set(q, v, defining_chart_grid, output_defining_basis_grid).transition(
+                output_basis_grid,
+                output_chart_grid)
+
+            return output_vector_set
 
         postprocess_function = [postprocess_function_single, postprocess_function_multiple]
 
@@ -617,65 +732,30 @@ class TangentVectorField(md.ManifoldFunction):
                          defining_chart,
                          postprocess_function)
 
-        self.defining_basis = defining_basis
+        self.output_defining_basis = output_defining_basis
+        self.output_chart = output_chart
+        self.output_basis = output_basis
 
     def __call__(self,
                  config,
-                 time=0,
+                 time=None,
                  *args,
                  **kwargs):
+
+        if time is None:
+            time = 0
 
         output = super().__call__(config, time, *args, **kwargs)
         return output
 
-    def transition(self, new_basis, configuration_transition: Union[str, int] = 'match'):
-        """Take a vector field defined in one basis and chart combination and convert it
-         to a different basis and chart combination"""
+    def transition_output(self, new_output_basis, new_output_chart='match'):
 
-        # Parse the configuration_transition option. It would be nice to just pass it into
-        # the vector transition (pushforward), but we need to process it here for the pullback
-        # of the vector field function itself
-        if isinstance(configuration_transition, str):
-            # 'match' says to match the configuration to the new basis
-            if configuration_transition == 'match':
-                new_chart = new_basis
-            elif configuration_transition == 'keep':
-                new_chart = self.defining_chart
-            else:
-                raise Exception("Unknown option " + configuration_transition + "for transitioning the configuration "
-                                                                               "while transitioning a "
-                                                                               "TangentVectorField")
-        else:
-            new_chart = configuration_transition
-
-        # Modify the defining function by pushing forward through the transition maps
-        def output_defining_function(x, t):
-            # Pull back function through transition map
-
-            # Convert configuration from new chart to current chart
-            y = self.manifold.transition_table[new_chart][self.defining_chart](x)
-
-            # Evaluate defining function in current chart
-            u = self.defining_function(y, t)
-
-            # Convert evaluated vector into a TangentVector
-            v = TangentVector(self.manifold, y, u, self.defining_basis, self.defining_chart)
-
-            # Transition the vector into the new chart and basis
-            v_new = v.transition(new_basis, configuration_transition)
-
-            # extract the value from the transitioned vector
-            u_new = v_new.value
-
-            return u_new
-
-        # Create a TangentVectorField from the output_defining_function
-        output_tangent_vector_field = self.__class__(self.manifold,
-                                                     output_defining_function,
-                                                     new_chart,
-                                                     new_basis)
-
-        return output_tangent_vector_field
+        return self.__class__(self.manifold,
+                              self.defining_function,
+                              self.defining_chart,
+                              self.output_defining_basis,
+                              new_output_chart,
+                              new_output_basis)
 
     def addition(self, other):
 
@@ -683,11 +763,7 @@ class TangentVectorField(md.ManifoldFunction):
         if isinstance(other, TangentVectorField):
             # Verify that the vector fields are associated with the same manifold
             if self.manifold == other.manifold:
-                # Bring other into the same basis nd chart if necessary
-                if (self.defining_basis == other.defining_basis) and (self.defining_chart == other.defining_chart):
-                    pass
-                else:
-                    other = other.transition(self.defining_basis, self.defining_chart)
+                pass
             else:
                 raise Exception("Cannot add vector fields associated with different manifolds")
         else:
@@ -702,7 +778,7 @@ class TangentVectorField(md.ManifoldFunction):
         sum_of_fields = self.__class__(self.manifold,
                                        sum_of_functions,
                                        self.defining_chart,
-                                       self.defining_basis)
+                                       self.output_defining_basis)
 
         return sum_of_fields
 
@@ -720,7 +796,7 @@ class TangentVectorField(md.ManifoldFunction):
         scalar_product_with_field = self.__class__(self.manifold,
                                                    scaled_defining_function,
                                                    self.defining_chart,
-                                                   self.defining_basis)
+                                                   self.output_defining_basis)
 
         return scalar_product_with_field
 
@@ -749,6 +825,13 @@ class TangentVectorField(md.ManifoldFunction):
                   output_format=None,
                   **kwargs):
 
+        # Verify that the initial configuration is a manifold element
+        if not isinstance(initial_config, md.ManifoldElement):
+            raise Exception("Initial configuration for vector flow should be a ManifoldElement")
+
+        # Get the chart in which the initial configuration is specified
+        initial_config_chart = initial_config.current_chart
+
         # Parse the output content and format specifications
         if output_content == 'sol':
             if output_format is None:
@@ -760,10 +843,23 @@ class TangentVectorField(md.ManifoldFunction):
             raise Exception("Unsupported output content: ", output_content)
 
         def flow_function(t, x):
-            v = self.__call__(x, t).value
-            return np.ravel(v)  # required to match dimension of vector with dimension of state
 
-        sol = solve_ivp(flow_function, timespan, initial_config, dense_output=True, **kwargs)
+            # Turn the current numerical value into a configuration element in the same chart
+            # as the initial configuration
+            x_config = self.manifold.element(x, initial_config_chart)
+
+            # Evaluate the vector field at that location
+            v = self.__call__(x_config, t)
+
+            v_initial_chart = v.transition(initial_config_chart)
+
+            # ravel required to match dimension of vector with dimension of state
+            return np.ravel(v_initial_chart.value)
+
+        sol = solve_ivp(flow_function,
+                        timespan,
+                        initial_config.value,
+                        dense_output=True, **kwargs)
 
         if output_content == 'sol':
             return sol
@@ -787,164 +883,171 @@ class TangentVectorField(md.ManifoldFunction):
 class DifferentialMap(md.ManifoldFunction):
 
     def __init__(self,
-                 manifold: md.Manifold,
-                 output_manifold: md.Manifold,
-                 defining_function,
-                 defining_chart=0,
-                 defining_basis=0,
-                 output_defining_chart=0,
-                 output_defining_basis=0,
-                 output_chart=None,
-                 output_basis=None):
+                 defining_map: md.ManifoldMap):
 
-        if output_chart is None:
-            output_chart = output_defining_chart
+        self.manifold = defining_map.manifold
+        self.defining_map = defining_map
+        self.defining_chart = defining_map.defining_chart
+        self.output_manifold = defining_map.output_manifold
+        self.output_defining_chart = defining_map.output_defining_chart
+        self.output_defining_basis = defining_map.output_defining_chart
+        self.output_chart = defining_map.output_chart
+        self.output_basis = defining_map.output_chart
+        self.postprocess_function = [self.postprocess_function_single, self.postprocess_function_multiple]
 
-        if output_basis is None:
-            output_basis = output_defining_basis
+    def postprocess_function_single(self, q, v, function_index):
+        v_defining_output_chart = self.output_manifold.vector(q,
+                                                              v,
+                                                              self.output_defining_chart[function_index[0]],
+                                                              self.output_defining_basis[function_index[0]])
 
-        def postprocess_function_single(q, v):
-            return (output_manifold.vector(q, v, output_defining_chart, output_defining_basis).
-                    transition(output_chart, output_basis))
+        v_output_chart = v_defining_output_chart.transition(self.output_chart[function_index[0]],
+                                                            self.output_basis[function_index[0]])
 
-        def postprocess_function_multiple(q, v):
-            return (output_manifold.vector_set(q, v, output_defining_chart, output_defining_basis).
-                    transition(output_chart, output_basis))
+        return v_output_chart
 
-        def defining_function_safe(*args):
+    def postprocess_function_multiple(self, q, v, function_index_list):
 
-            q_out_raw = defining_function(*args)
+        def get_output_defining_chart(function_index):
+            return self.output_defining_chart[function_index[0]]
 
-            if isinstance(q_out_raw, md.ManifoldElement):
-                q_out = q_out_raw.value
-            else:
-                q_out = ut.ensure_ndarray(q_out_raw)
+        def get_output_defining_basis(function_index):
+            return self.output_defining_chart[function_index[0]]
 
-            return q_out
+        def get_output_chart(function_index):
+            return self.output_chart[function_index[0]]
 
-        postprocess_function = [postprocess_function_single, postprocess_function_multiple]
+        def get_output_basis(function_index):
+            return self.output_chart[function_index[0]]
 
-        super().__init__(manifold,
-                         defining_function_safe,
-                         defining_chart,
-                         postprocess_function)
+        output_defining_chart_grid = function_index_list.grid_eval(get_output_defining_chart)
+        output_defining_basis_grid = function_index_list.grid_eval(get_output_defining_basis)
 
-        self.output_manifold = output_manifold
-        self.defining_basis = defining_basis
-        self.output_defining_chart = output_defining_chart
-        self.output_defining_basis = output_defining_basis
-        self.output_chart = output_chart
-        self.output_basis = output_basis
-        self.input_grid_format = 'component'
+        output_chart_grid = function_index_list.grid_eval(get_output_chart)
+        output_basis_grid = function_index_list.grid_eval(get_output_basis)
 
-    def preprocess(self, *call_args):
-        """Input vector information is provided as the first entries of call_args, and can be one of:
+        v_defining_output_chart = self.output_manifold.vector_set(q,
+                                                                  v,
+                                                                  output_defining_chart_grid,
+                                                                  output_defining_basis_grid)
+
+        v_output_chart = v_defining_output_chart.transition(output_chart_grid,
+                                                            output_basis_grid)
+
+        return v_output_chart
+
+    def defining_map_numeric(self, q_numeric, function_index, *args, **kwargs):
+        q_manifold = self.manifold.element(q_numeric, self.defining_chart[function_index[0]])
+
+        q_out_manifold = self.defining_map(q_manifold, *args, **kwargs)
+
+        q_out_numeric = q_out_manifold.value
+
+        return q_out_numeric
+
+    def __call__(self, vector, *args, **kwargs):
+
+        # This changes the name of the first argument in the call function, which is useful for
+        # things like IDE hinting. ManifoldFunction has evolved from the first implementation to
+        # the point where we could probably just copy the call function over and remove the inheritance
+        return super().__call__(vector, *args, **kwargs)
+
+    def preprocess(self, vector):
+        """Input vector information is provided as one of:
             1. TangentVector
-            2. pair of ndarray or List of int/float values describing a configuration element and vector at that point
             3. TangentVectorSet
-            4. GridArray of values describing configuration points and vector components.
-                Assumed to be component-outer (as generated by meshgrid_array), can be changed by setting the
-                'input_grid_format' parameter on the ManifoldFunction from 'component' to 'element' after creation."""
 
-        if isinstance(call_args[0], TangentVector):
+            and should be pushed to being a TangentVectorSet"""
 
-            if call_args[0].manifold == self.manifold:
-                pass
-            else:
-                raise Exception("TangentVector input is not from the manifold associated with this function")
-
-            configuration_value = call_args[0].transition(self.defining_chart).configuration
-            vector_value = call_args[1].transition(self.defining_chart, self.defining_basis).value
-
-            configuration_grid = ut.GridArray([configuration_value], 1)
-            vector_grid = ut.GridArray([vector_value], 1)
-
-            process_args = call_args[2:]
+        if isinstance(vector, TangentVector):
             value_type = 'single'
-
-        elif isinstance(call_args[0], np.ndarray) and (call_args[0].shape == self.manifold.element.shape):
-            configuration_value = call_args[0]
-            vector_value = call_args[1]
-
-            configuration_grid = ut.GridArray([configuration_value], 1)
-            vector_grid = ut.GridArray([vector_value], 1)
-
-            process_args = call_args[3:]
-            value_type = 'single'
-
-        elif isinstance(call_args[0], list) and (ut.shape(call_args[0]) == self.manifold.element.shape):
-
-            configuration_value = call_args[0]
-            vector_value = call_args[1]
-
-            configuration_grid = ut.GridArray([configuration_value], 1)
-            vector_grid = ut.GridArray([vector_value], 1)
-
-            process_args = call_args[3:]
-            value_type = 'single'
-
-        elif isinstance(call_args[0], TangentVectorSet):
-
-            if call_args[0].manifold == self.manifold:
-                pass
-            else:
-                raise Exception("TangentVectorSet input is not from the manifold associated with this function")
-
-            configuration_grid, vector_grid = call_args[0].transition(self.defining_chart, self.defining_basis).grid
-
-            process_args = call_args[2:]
+        elif isinstance(vector, TangentVectorSet):
             value_type = 'multiple'
-
-        elif isinstance(call_args[0], ut.GridArray):
-
-            configuration_grid = ut.format_grid(call_args[0], self.manifold.element_shape, 'component')
-            vector_grid = ut.format_grid(call_args[1], self.manifold.element_shape, 'component')
-
-            process_args = call_args[3:]
-            value_type = 'multiple'
-
         else:
-            raise Exception("Input to DifferentialMap __call__ is not of an expected type")
+            raise Exception("DifferentialMap must be called with a TangentVector or TangentVectorSet")
 
-        return (configuration_grid, vector_grid), process_args, value_type
+        # Push the vector input into TangentVectorSet form
+        vector_set = TangentVectorSet(vector)
 
-    def process(self, configuration_grids, *process_args, **kwargs):
+        # Get every vector into a chart for which the function is defined
+        def send_to_feasible_chart(v, function_index_to_try=0):
 
-        configuration_grid = configuration_grids[0]
-        vector_grid = configuration_grids[1]
+            # If the point is in a chart over which the function has been defined, leave it in that
+            if v.configuration.current_chart in self.defining_chart:
+                v_chart = v.configuration.current_chart
+                function_index = self.defining_chart.index(v_chart)
+                return v.transition(v_chart), function_index  # Matches the basis to the chart
 
-        def defining_function_with_inputs(q):
-            q_out = self.defining_function(q, *process_args, **kwargs)
+            # Sequentially check if the point can be pushed into the underlying chart of one of the
+            # underlying functions
+            elif self.manifold.transition_table[v.configuration.current_chart][
+                self.defining_chart[function_index_to_try]] is not None:
+                function_index = function_index_to_try
+                v_chart = self.defining_chart[function_index_to_try]
+                return (v.transition(v_chart),
+                        function_index)
+
+            # Increase the function index for the next try
+            elif function_index_to_try + 1 < len(self.manifold.transition_table):
+                return send_to_feasible_chart(v, function_index_to_try + 1)
+
+            # If we run out of functions to check, give the user an error
+            else:
+                raise Exception("Vector configuration is not in a chart where the function is defined, "
+                                "and does not have a transition to a chart in which the function is defined")
+                # Two-step transitions are not checked yet; this is also where boundaries of charts could be checked
+
+        vector_list, function_index_list = (
+            ut.object_list_eval_two_outputs(send_to_feasible_chart, vector_set))
+
+        # Make function_index_list a grid_array
+        function_index_list = ut.GridArray([function_index_list], n_outer=1).everse
+
+        vector_set = TangentVectorSet(vector_list)
+
+        # # Get a list of the chart in which each vector is defined
+        # def extract_chart(v):
+        #     return v.configuration.current_chart
+        #
+        # chart_grid_e = ut.GridArray(ut.object_list_eval(extract_chart, vector_set), n_inner=1)
+
+        return vector_set, function_index_list, value_type
+
+    def process(self, vector_set, function_index_list, *process_args, **kwargs):
+
+        # Extract a numeric grid from the vector set
+        config_grid_c, vector_grid_c = vector_set.grid
+
+        config_grid_e = config_grid_c.everse
+        vector_grid_e = vector_grid_c.everse
+
+        def defining_map_with_inputs(q, function_index):
+            q_out = self.defining_map_numeric(q, function_index, *process_args, **kwargs)
 
             return q_out
-
-        # Make the configuration grid element-wise
-        config_grid_e = configuration_grid.everse
 
         # Evaluate the function over the configurations
-        output_configuration_grid = config_grid_e.grid_eval(defining_function_with_inputs).everse
+        output_config_grid_e = ut.GridArray(ut.array_eval_pairwise(defining_map_with_inputs, config_grid_e,
+                                                                   function_index_list, config_grid_e.n_outer),
+                                            config_grid_e.n_outer)
 
-        def diffdefining_function_with_inputs(q, v):
-            function_jacobian = ndt.Jacobian(defining_function_with_inputs)
+        def diffdefining_function_with_inputs(q, v, function_index):
+            function_jacobian = ndt.Jacobian(lambda x: defining_map_with_inputs(x, function_index))
             v_out = np.matmul(function_jacobian(q), v)
 
             return v_out
 
-
-        # Make the vector grid element-wise
-        vector_grid_e = vector_grid.everse
-
         # Evaluate the Jacobian at each point with the vector at that point
-        output_vector_grid_e = ut.object_list_eval_pairwise(diffdefining_function_with_inputs,
-                                                            config_grid_e,
-                                                            vector_grid_e,
-                                                            n_outer=config_grid_e.n_outer)
+        output_vector_grid_e = ut.GridArray(ut.object_list_eval_threewise(diffdefining_function_with_inputs,
+                                                                          config_grid_e,
+                                                                          vector_grid_e,
+                                                                          function_index_list,
+                                                                          n_outer=config_grid_e.n_outer),
+                                            n_outer=config_grid_e.n_outer)
 
-        output_vector_grid = ut.GridArray(output_vector_grid_e, vector_grid_e.n_outer).everse
+        return output_config_grid_e, output_vector_grid_e
 
-        return output_configuration_grid, output_vector_grid
-
-    def postprocess(self, configuration_grid, function_grid, value_type):
+    def postprocess(self, input_configuration_grid, function_grid, function_index_list, value_type):
 
         vector_location_grid = function_grid[0]
         vector_value_grid = function_grid[1]
@@ -953,10 +1056,125 @@ class DifferentialMap(md.ManifoldFunction):
             if value_type == 'single':
                 vector_location = vector_location_grid[0]  # Extract the single output from the grid array
                 vector_value = vector_value_grid[0]
-                return self.postprocess_function[0](vector_location, vector_value)
+                function_index = function_index_list[0]
+                return self.postprocess_function[0](vector_location, vector_value, function_index)
             elif value_type == 'multiple':
-                return self.postprocess_function[1](vector_location_grid, vector_value_grid)
+                return self.postprocess_function[1](vector_location_grid, vector_value_grid, function_index_list)
             else:
                 raise Exception("Value_type should be 'single' or 'multiple'.")
         else:
             return function_grid
+
+
+class DirectionDerivative(TangentVectorField):
+
+    def __init__(self,
+                 defining_map: md.ManifoldMap):
+        self.manifold = defining_map.manifold
+        self.defining_map = defining_map
+        self.defining_chart = defining_map.defining_chart
+        self.output_manifold = defining_map.output_manifold
+        self.output_defining_chart = defining_map.output_defining_chart
+        self.output_defining_basis = defining_map.output_defining_chart
+        self.output_chart = defining_map.output_chart
+        self.output_basis = defining_map.output_chart
+        self.postprocess_function = [self.postprocess_function_single, self.postprocess_function_multiple]
+
+    def defining_map_numeric(self, q_numeric, delta, function_index, *args, **kwargs):
+        q_manifold = self.manifold.element(q_numeric, self.defining_chart[function_index[0]])
+
+        q_out_manifold = self.defining_map(q_manifold, delta, *args, **kwargs)
+
+        q_out_numeric = q_out_manifold.value
+
+        return q_out_numeric
+
+    def process(self, config_grid_e, function_index_list, *input_args, **kwargs):
+
+        # This makes everything compatible with the vector field time input, and gives us a hook
+        # in case time-varying directional derivative fields become important
+        time = input_args[0]
+        process_args = input_args[1:]
+
+        def defining_map_with_inputs(config, delta, function_index):
+            return self.defining_map_numeric(config, delta, function_index, *process_args, **kwargs)
+
+        # Evaluate the function over the configurations
+        def defining_map_with_inputs_zero(q):
+            return defining_map_with_inputs(q, [0])
+
+        # output_config_grid_e = config_grid_e.grid_eval(defining_map_with_inputs_zero)
+        output_config_grid_e = config_grid_e
+
+        def direction_deriv(config, function_index):
+            def defining_map_at_config(d):
+                return defining_map_with_inputs(config, d, function_index)
+
+            return np.squeeze(ndt.Jacobian(defining_map_at_config)([0]))
+
+        # Evaluate the defining function over the grid
+        # vector_grid_e = config_grid_e.grid_eval(direction_deriv)
+        vector_grid_e = ut.GridArray(ut.array_eval_pairwise(direction_deriv,
+                                                            config_grid_e,
+                                                            function_index_list,
+                                                            config_grid_e.n_outer),
+                                     config_grid_e.n_outer)
+
+        return output_config_grid_e, vector_grid_e
+
+    def postprocess(self, configuration_grid, function_grid, function_index_list, value_type):
+
+        vector_location_grid = function_grid[0]
+        vector_value_grid = function_grid[1]
+
+        if self.postprocess_function is not None:
+            if value_type == 'single':
+                vector_location = vector_location_grid[0]  # Extract the single output from the grid array
+                vector_value = vector_value_grid[0]
+                return self.postprocess_function[0](vector_location, vector_value, function_index_list[0])
+            elif value_type == 'multiple':
+                return self.postprocess_function[1](vector_location_grid, vector_value_grid, function_index_list)
+            else:
+                raise Exception("Value_type should be 'single' or 'multiple'.")
+        else:
+            return function_grid
+
+    def postprocess_function_single(self, q, v, function_index):
+        v_defining_output_chart = self.output_manifold.vector(q,
+                                                              v,
+                                                              self.output_defining_chart[function_index[0]],
+                                                              self.output_defining_basis[function_index[0]])
+
+        v_output_chart = v_defining_output_chart.transition(self.output_chart[function_index[0]],
+                                                            self.output_basis[function_index[0]])
+        return v_output_chart
+
+    def postprocess_function_multiple(self, q, v, function_index_list):
+
+        def get_output_defining_chart(function_index):
+            return self.output_defining_chart[function_index[0]]
+
+        def get_output_defining_basis(function_index):
+            return self.output_defining_basis[function_index[0]]
+
+        def get_output_chart(function_index):
+            return self.output_chart[function_index[0]]
+
+        def get_output_basis(function_index):
+            return self.output_basis[function_index[0]]
+
+        output_defining_chart_grid = function_index_list.grid_eval(get_output_defining_chart)
+        output_defining_basis_grid = function_index_list.grid_eval(get_output_defining_basis)
+
+        output_chart_grid = function_index_list.grid_eval(get_output_chart)
+        output_basis_grid = function_index_list.grid_eval(get_output_basis)
+
+        v_defining_output_chart = self.output_manifold.vector_set(q,
+                                                                  v,
+                                                                  output_defining_chart_grid,
+                                                                  output_defining_basis_grid)
+
+        v_output_chart = v_defining_output_chart.transition(output_chart_grid,
+                                                            output_basis_grid)
+
+        return v_output_chart
