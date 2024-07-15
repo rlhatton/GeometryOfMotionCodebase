@@ -236,6 +236,14 @@ class LieGroupTangentVector(tb.TangentVector):
     def R_generator(self):
         return self.group.R_generator(self.right.value, self.configuration.current_chart)
 
+    @property
+    def exp_L(self):
+        return self.L_generator.exp(self.configuration)
+
+    @property
+    def exp_R(self):
+        return self.R_generator.exp(self.configuration)
+
     def __mul__(self, other):
 
         if isinstance(other, LieGroupElement):
