@@ -484,9 +484,29 @@ class TangentVectorSet(core.GeomotionSet):
         else:
 
             action = methodcaller(action_name, other)
-            new_set = ut.object_list_eval(action, self.value)
+            new_list = ut.object_list_eval(action, self.value)
 
-        return self.__class__(new_set)
+            plural_type = ut.object_list_extract_first_entry(new_list).plural
+
+            new_set = plural_type(new_list)
+
+        return new_set
+
+    def vector_set_property(self, property_name):
+
+        # Use the provided name to set up a function that gets the desired attribute
+        property_function = lambda x: getattr(x, property_name)
+
+        # Get the specified property from each item in the list
+        new_list = ut.object_list_eval(property_function, self.value)
+
+        # Get the set type for the items in the list
+        plural_type = ut.object_list_extract_first_entry(new_list).plural
+
+        # Build a set of the appropriate type
+        new_set = plural_type(new_list)
+
+        return new_set
 
     def transition(self,
                    new_basis,
@@ -499,6 +519,9 @@ class TangentVectorSet(core.GeomotionSet):
 
         elif isinstance(new_basis, ut.GridArray):
             new_set = ut.object_list_method_eval_pairwise('transition', self.value, new_basis)
+
+        else:
+            raise Exception("New basis must be a scalar or a grid_array")
 
         # Identify what kind of set should be constructed from these objects
         plural_type = ut.object_list_extract_first_entry(new_set).plural

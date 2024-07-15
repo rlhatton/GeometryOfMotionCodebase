@@ -312,6 +312,15 @@ class LieGroupTangentVectorSet(tb.TangentVectorSet):
         # Information about what this set should contain
         self.single = LieGroupTangentVector
 
+    @property
+    def exp_L(self):
+        return self.vector_set_property('exp_L')
+
+    @property
+    def exp_R(self):
+        return self.vector_set_property('exp_R')
+
+
     def __mul__(self, other):
 
         if isinstance(other, (LieGroupElement, LieGroupElementSet)):
