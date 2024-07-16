@@ -1,4 +1,4 @@
-from geomotion import representationgroup as rgp
+from geomotion import representationliegroup as rlgp
 from geomotion import group as gp
 from geomotion import utilityfunctions as ut
 import numpy as np
@@ -36,7 +36,7 @@ def SE2_normalize(g_rep):
     return (g_rep_normalized)
 
 
-SE2 = rgp.RepresentationGroup(SE2_rep, [0, 0, 0], SE2_derep, 0, SE2_normalize)
+SE2 = rlgp.RepresentationLieGroup(SE2_rep, [0, 0, 0], SE2_derep, 0, SE2_normalize)
 
 
 class RigidBodyPlotInfo:
