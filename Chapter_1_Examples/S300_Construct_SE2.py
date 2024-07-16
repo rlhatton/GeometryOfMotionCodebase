@@ -50,18 +50,16 @@ class RigidBodyPlotInfo:
 
 
 def cornered_triangle(r, spot_color, **kwargs):
-    T1 = gp.GroupElementSet(SE2,
-                            ut.GridArray([[r, 0, 0],
-                                          [r * np.cos(2 * np.pi / 3), r * np.sin(2 * np.pi / 3), 0],
-                                          [r * np.cos(4 * np.pi / 3), r * np.sin(4 * np.pi / 3), 0]], 1),
-                            0, "element")
+    T1 = SE2.element_set(ut.GridArray([[r, 0, 0],
+                                       [r * np.cos(2 * np.pi / 3), r * np.sin(2 * np.pi / 3), 0],
+                                       [r * np.cos(4 * np.pi / 3), r * np.sin(4 * np.pi / 3), 0]], 1),
+                         0, "element")
 
-    T2 = gp.GroupElementSet(SE2,
-                            ut.GridArray(
-                                [[r, 0, 0],
-                                 [r / 3 * np.cos(2 * np.pi / 3) + (2 * r / 3), r / 3 * np.sin(2 * np.pi / 3), 0],
-                                 [r / 3 * np.cos(4 * np.pi / 3) + (2 * r / 3), r / 3 * np.sin(4 * np.pi / 3), 0]], 1),
-                            0, "element")
+    T2 = SE2.element_set(ut.GridArray([[r, 0, 0],
+                                       [r / 3 * np.cos(2 * np.pi / 3) + (2 * r / 3), r / 3 * np.sin(2 * np.pi / 3), 0],
+                                       [r / 3 * np.cos(4 * np.pi / 3) + (2 * r / 3), r / 3 * np.sin(4 * np.pi / 3), 0]],
+                                      1),
+                         0, "element")
 
     plot_points = [T1, T2]
 
