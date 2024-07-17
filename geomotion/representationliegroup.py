@@ -118,6 +118,16 @@ class RepresentationLieGroupElement(lgp.LieGroupElement, rgp.RepresentationGroup
                                                                 np.matmul(x.rep, self.rep),
                                                                 self.current_chart)
 
+    @property
+    def log(self):
+
+        new_rep = sc.linalg.logm(self.rep)
+
+        new_vector = RepresentationLieGroupTangentVector(self.group,
+                                                         self.group.identity_element(),
+                                                         new_rep,
+                                                         self.current_chart)
+        return new_vector
 
 class RepresentationLieGroupTangentVector(lgp.LieGroupTangentVector):
 

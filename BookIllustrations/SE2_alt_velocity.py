@@ -15,7 +15,7 @@ g = G.element([2, 0, 3, 0])
 # print("The left velocity corresponding to g_dot=", g_dot, " is g_circ_l=", g_dot.left)
 # print("The right velocity corresponding to g_dot=", g_dot, " is g_circ_r=", g.inverse * g_dot)
 
-# Create a configuration in which the link is rotated by 90 degrees, and both points
+# Create a configuration in which the Link is rotated by 90 degrees, and both points
 # are moving to the right at unit speed
 g2 = G.element([0, 0, 0, 1])
 g_dot = G.vector(g2, [1, 0, 1, 0])

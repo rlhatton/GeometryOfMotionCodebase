@@ -50,7 +50,7 @@ class RigidBodyPlotInfo:
             self.plot_style = kwargs['plot_style']
 
 
-def cornered_triangle(r, spot_color, **kwargs):
+def cornered_triangle(configuration, r, spot_color, **kwargs):
     T1 = SE2.element_set(ut.GridArray([[r, 0, 0],
                                        [r * np.cos(2 * np.pi / 3), r * np.sin(2 * np.pi / 3), 0],
                                        [r * np.cos(4 * np.pi / 3), r * np.sin(4 * np.pi / 3), 0]], 1),
@@ -69,7 +69,7 @@ def cornered_triangle(r, spot_color, **kwargs):
 
     plot_info = RigidBodyPlotInfo(plot_points=plot_points, plot_style=plot_style)
 
-    return plot_info
+    return RigidBody(plot_info, configuration)
 
 
 class RigidBody:

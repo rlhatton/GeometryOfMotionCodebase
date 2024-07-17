@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 np.set_printoptions(precision=2)
 spot_color = gplt.crimson
 
-# Make the working group the scale-shift group
+# Make the working group the SE(2) group
 G = SE2
 
 # Create a set of points

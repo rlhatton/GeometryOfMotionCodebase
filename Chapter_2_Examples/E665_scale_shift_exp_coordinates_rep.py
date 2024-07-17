@@ -1,5 +1,6 @@
 import numpy as np
-from geomotion import manifold as md, diffmanifold as tb, utilityfunctions as ut, plottingfunctions as gplt, liegroup as lgp
+from geomotion import manifold as md, diffmanifold as tb, utilityfunctions as ut, plottingfunctions as gplt, \
+    liegroup as lgp
 from S550_Construct_RxRplus_rep import RxRplus
 from matplotlib import pyplot as plt
 
@@ -20,12 +21,12 @@ g_box_points = RxRplus.vector_set(e, grid_xy)
 # Exponentiate all of those vectors
 g_points = g_box_points.exp_R
 
-ax = plt.subplot(1, 1,1)
+ax = plt.subplot(1, 1, 1)
 ax.pcolormesh(*g_points.grid,
-                   np.zeros([g_points.shape[0] - 1, g_points.shape[1] - 1]),
-                   edgecolor='grey',
-                   facecolor='none',
-                   linewidth=0.25)
+              np.zeros([g_points.shape[0] - 1, g_points.shape[1] - 1]),
+              edgecolor='grey',
+              facecolor='none',
+              linewidth=0.25)
 ax.set_xlim(0, 3)
 ax.set_ylim(-2, 2)
 ax.set_aspect('equal')
