@@ -144,7 +144,7 @@ class RepresentationGroupElement(gp.GroupElement):
         if self.group.normalization_function is not None:
             new_rep = self.group.normalization_function(new_rep)
 
-        new_element = RepresentationGroupElement(self.group, new_rep, self.current_chart)
+        new_element = self.group.element(new_rep, self.current_chart)
 
         return new_element
 
@@ -155,7 +155,7 @@ class RepresentationGroupElement(gp.GroupElement):
         if self.group.normalization_function is not None:
             new_rep = self.group.normalization_function(new_rep)
 
-        new_element = RepresentationGroupElement(self.group, new_rep, self.current_chart)
+        new_element = self.group.element(new_rep, self.current_chart)
 
         return new_element
 

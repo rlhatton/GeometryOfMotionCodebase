@@ -4,7 +4,6 @@ from . import group as gp
 from . import diffmanifold as tb
 
 
-
 class LieGroup(gp.Group, tb.DiffManifold):
 
     def __init__(self,
@@ -44,6 +43,14 @@ class LieGroup(gp.Group, tb.DiffManifold):
                                    input_format)
 
         return g_set
+
+    def identity_element(self,
+                         initial_chart=0):
+        """Instantiate a group element at the identity"""
+        g = LieGroupElement(self,
+                            'identity',
+                            initial_chart)
+        return g
 
     def vector(self,
                configuration,
@@ -186,7 +193,7 @@ class LieGroupElement(gp.GroupElement):
     def Ad(self, other):
         return self.AD(other)
 
-    def Adinv(self, other):
+    def Ad_inv(self, other):
         return self.AD_inv(other)
 
 
@@ -290,6 +297,20 @@ class LieGroupElementSet(gp.GroupElementSet):
         else:
             return gp.GroupElementSet.__rmul__(self, other)
 
+    def Ad(self, other):
+
+        if isinstance(other, LieGroupTangentVector):
+            return self.group_set_action(other, 'Ad')
+        else:
+            return NotImplemented
+
+    def Ad_inv(self, other):
+
+        if isinstance(other, LieGroupTangentVector):
+            return self.group_set_action(other, 'Ad_inv')
+        else:
+            return NotImplemented
+
 
 class LieGroupTangentVectorSet(tb.TangentVectorSet):
 
@@ -319,7 +340,6 @@ class LieGroupTangentVectorSet(tb.TangentVectorSet):
     @property
     def exp_R(self):
         return self.vector_set_property('exp_R')
-
 
     def __mul__(self, other):
 

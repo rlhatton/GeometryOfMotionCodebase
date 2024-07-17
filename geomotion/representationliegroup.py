@@ -56,6 +56,14 @@ class RepresentationLieGroup(rgp.RepresentationGroup, lgp.LieGroup):
 
         return g_set
 
+    def identity_element(self,
+                         initial_chart=0):
+        """Instantiate a group element at the identity"""
+        g = RepresentationLieGroupElement(self,
+                                          'identity',
+                                          initial_chart)
+        return g
+
     def vector(self,
                configuration,
                representation,
@@ -120,7 +128,6 @@ class RepresentationLieGroupElement(lgp.LieGroupElement, rgp.RepresentationGroup
 
     @property
     def log(self):
-
         new_rep = sc.linalg.logm(self.rep)
 
         new_vector = RepresentationLieGroupTangentVector(self.group,
@@ -128,6 +135,7 @@ class RepresentationLieGroupElement(lgp.LieGroupElement, rgp.RepresentationGroup
                                                          new_rep,
                                                          self.current_chart)
         return new_vector
+
 
 class RepresentationLieGroupTangentVector(lgp.LieGroupTangentVector):
 

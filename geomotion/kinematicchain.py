@@ -1,11 +1,10 @@
-from S700_Construct_SE2 import SE2, RigidBody, RigidBodyPlotInfo
-from geomotion import utilityfunctions as ut, representationliegroup as rlgp
+from geomotion import utilityfunctions as ut, representationliegroup as rlgp, rigidbody as rb
 import numpy as np
 
-G = SE2
+G = rb.SE2
 
 
-class ChainElement(RigidBody):
+class ChainElement(rb.RigidBody):
 
     def __init__(self,
                  defining_geometry,
@@ -13,9 +12,9 @@ class ChainElement(RigidBody):
                  initial_configuration=G.identity_element()):
 
         # Set up the rigid body properties
-        RigidBody.__init__(self,
-                           plot_info,
-                           initial_configuration)
+        rb.RigidBody.__init__(self,
+                              plot_info,
+                              initial_configuration)
 
         # Make sure the defining geometry is of an appropriate form
         if isinstance(defining_geometry, rlgp.RepresentationLieGroupElement):
@@ -83,7 +82,7 @@ class Joint(ChainElement):
     def __init__(self,
                  local_axis: rlgp.RepresentationLieGroupTangentVector,
                  plot_info=None,
-                 proximal_position=SE2.identity_element(),
+                 proximal_position=G.identity_element(),
                  angle=0):
 
         # Local axis should be at the group identity
@@ -132,6 +131,9 @@ class Link(ChainElement):
         # A link is currently a basic chain element
         ChainElement.__init__(self, transform, plot_info, proximal_position)
 
+        # Save a default reference position
+        self.reference_position = self.transform
+
 
 class KinematicChain:
 
@@ -159,16 +161,64 @@ class KinematicChainSequential(KinematicChain):
             self.links[j].proximal_position = self.joints[j].distal_position
 
 
+class KinematicChainPoE(KinematicChain):
+
+    def __init__(self, links, joints):
+        # Set up as a kinematic chain
+        KinematicChain.__init__(self, links, joints)
+
+        ###
+        # Calculate the position with joint angles equal to zero
+
+        for j, junk in enumerate(joints):
+            self.joints[j].angle = 0
+
+        # Hand-load position of first Joint
+        self.joints[0].proximal_position = G.identity_element()
+        self.links[0].proximal_position = self.joints[0].transform
+
+        # Find positions of the rest of the chain elements,
+        for j, x in enumerate(joints[1:], start=1):
+            self.joints[j].proximal_position = self.links[j - 1].distal_position
+            self.links[j].proximal_position = self.joints[j].distal_position
+
+        # Save the proximal position of each joint as the reference position for the joint
+        for joint in self.joints:
+            joint.reference_position = joint.proximal_position
+
+        # Save the distal positions for the links as their reference positions
+        for link in self.links:
+            link.reference_position = link.distal_position
+
+    def set_angles(self,
+                   joint_angles):
+
+        # Set the joint angles
+        for j, alpha in enumerate(joint_angles):
+            self.joints[j].angle = alpha
+
+        exp_prod = G.identity_element()
+        for j, joint in enumerate(self.joints):
+            exp_prod = exp_prod * (joint.angle*joint.spatial_axis_ref).exp_L
+            self.links[j].distal_position = exp_prod * self.links[j].reference_position
+
+        # self.joints[0].proximal_position = G.identity_element()
+        # for j, joint in enumerate(self.joints[1:], start=1):
+        #     joint.proximal_position = self.links[j-1].distal_position
+
+
+
+
 def ground_point(configuration, r, **kwargs):
-    T = SE2.element_set(ut.GridArray([[0, 0, 0],
-                                      [-r * np.sin(np.pi / 6), -r * np.cos(np.pi / 6), 0],
-                                      [r * np.sin(np.pi / 6), -r * np.cos(np.pi / 6), 0]], 1),
-                        0, "element")
+    T = G.element_set(ut.GridArray([[0, 0, 0],
+                                    [-r * np.sin(np.pi / 6), -r * np.cos(np.pi / 6), 0],
+                                    [r * np.sin(np.pi / 6), -r * np.cos(np.pi / 6), 0]], 1),
+                      0, "element")
 
     bar_width = 3 * r
     bar_offset = -r * np.cos(np.pi / 6)
-    bar = SE2.element_set(ut.GridArray([[-bar_width / 2, bar_offset, 0],
-                                        [bar_width / 2, bar_offset, 0]], 1))
+    bar = G.element_set(ut.GridArray([[-bar_width / 2, bar_offset, 0],
+                                      [bar_width / 2, bar_offset, 0]], 1))
 
     hash_height = .5 * r
     hash_angle = np.pi / 4
@@ -177,10 +227,10 @@ def ground_point(configuration, r, **kwargs):
 
     hashes = []
     for h in hash_tops:
-        hashes.append(SE2.element_set(ut.GridArray([[h, bar_offset, 0],
-                                                    [h - hash_height * np.tan(hash_angle), bar_offset - hash_height,
-                                                     0]],
-                                                   1)))
+        hashes.append(G.element_set(ut.GridArray([[h, bar_offset, 0],
+                                                  [h - hash_height * np.tan(hash_angle), bar_offset - hash_height,
+                                                   0]],
+                                                 1)))
 
     # Unpack the hashes and combine them with the triangle and bar
     plot_points = [T, bar, *hashes]
@@ -188,19 +238,19 @@ def ground_point(configuration, r, **kwargs):
     # Set the plot style
     plot_style = [{"edgecolor": 'black', "facecolor": 'white'} | kwargs] * len(plot_points)
 
-    plot_info = RigidBodyPlotInfo(plot_points=plot_points, plot_style=plot_style)
+    plot_info = rb.RigidBodyPlotInfo(plot_points=plot_points, plot_style=plot_style)
 
-    return RigidBody(plot_info, configuration)
+    return rb.RigidBody(plot_info, configuration)
 
 
 def simple_link(r, spot_color='black', **kwargs):
-    L = SE2.element_set(ut.GridArray([[0, 0.05, 0], [1, 0.05, 0], [1, -0.05, 0], [0, -0.05, 0]], 1),
-                        0, "element")
+    L = rb.SE2.element_set(ut.GridArray([[0, 0.05, 0], [1, 0.05, 0], [1, -0.05, 0], [0, -0.05, 0]], 1),
+                           0, "element")
 
     plot_points = [L]
 
     plot_style = [{"edgecolor": 'black', "facecolor": 'white'} | kwargs]
 
-    plot_info = RigidBodyPlotInfo(plot_points=plot_points, plot_style=plot_style)
+    plot_info = rb.RigidBodyPlotInfo(plot_points=plot_points, plot_style=plot_style)
 
     return plot_info

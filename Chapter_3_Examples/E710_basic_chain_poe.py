@@ -19,7 +19,7 @@ for j in range(3):
     joints.append(kc.Joint(rot_axis))
     links.append(kc.Link(link_transform, kc.simple_link(1)))
 
-chain = kc.KinematicChainSequential(links, joints)
+chain = kc.KinematicChainPoE(links, joints)
 chain.set_angles([1, -1, 1])
 
 
