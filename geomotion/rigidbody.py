@@ -81,7 +81,8 @@ class RigidBody:
         self.position = position
 
     def draw(self,
-             axis):
+             axis,
+             drawing_tool='fill'):
         plot_points = self.plot_info.plot_points
         plot_options = self.plot_info.plot_style
 
@@ -90,5 +91,10 @@ class RigidBody:
             plot_points_global = self.position * p
             plot_points_global_grid = plot_points_global.grid
 
-            axis.fill(plot_points_global_grid[0], plot_points_global_grid[1], 'black', **(plot_options[i]))
+            if drawing_tool == 'fill':
+                axis.fill(*plot_points_global_grid[:2], 'black', **(plot_options[i]))
+            elif drawing_tool == 'plot':
+                axis.plot(*plot_points_global_grid[:2], **(plot_options[i]))
             #print(plot_points_global_grid[0], "\n", plot_points_global_grid[1])
+
+        return

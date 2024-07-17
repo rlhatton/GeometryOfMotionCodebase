@@ -199,14 +199,12 @@ class KinematicChainPoE(KinematicChain):
 
         exp_prod = G.identity_element()
         for j, joint in enumerate(self.joints):
-            exp_prod = exp_prod * (joint.angle*joint.spatial_axis_ref).exp_L
+            exp_prod = exp_prod * (joint.angle * joint.spatial_axis_ref).exp_L
             self.links[j].distal_position = exp_prod * self.links[j].reference_position
 
-        # self.joints[0].proximal_position = G.identity_element()
-        # for j, joint in enumerate(self.joints[1:], start=1):
-        #     joint.proximal_position = self.links[j-1].distal_position
-
-
+        self.joints[0].proximal_position = G.identity_element()
+        for j, joint in enumerate(self.joints[1:], start=1):
+            joint.proximal_position = self.links[j-1].distal_position
 
 
 def ground_point(configuration, r, **kwargs):
@@ -244,12 +242,24 @@ def ground_point(configuration, r, **kwargs):
 
 
 def simple_link(r, spot_color='black', **kwargs):
-    L = rb.SE2.element_set(ut.GridArray([[0, 0.05, 0], [1, 0.05, 0], [1, -0.05, 0], [0, -0.05, 0]], 1),
-                           0, "element")
+    L = G.element_set(ut.GridArray([[0, 0.05, 0], [1, 0.05, 0], [1, -0.05, 0], [0, -0.05, 0]], 1),
+                      0, "element")
 
     plot_points = [L]
 
     plot_style = [{"edgecolor": 'black', "facecolor": 'white'} | kwargs]
+
+    plot_info = rb.RigidBodyPlotInfo(plot_points=plot_points, plot_style=plot_style)
+
+    return plot_info
+
+
+def joint_reference_line(l, **kwargs):
+    L = G.element_set(ut.GridArray([[0, 0, 0], [l, 0, 0]], 1), 0, "element")
+
+    plot_points = [L]
+
+    plot_style = [{"linestyle": 'dashed', "color": 'black'} | kwargs]
 
     plot_info = rb.RigidBodyPlotInfo(plot_points=plot_points, plot_style=plot_style)
 

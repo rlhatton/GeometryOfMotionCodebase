@@ -3,7 +3,6 @@ from matplotlib import pyplot as plt
 
 G = rb.SE2
 
-
 # Create a point at the identity
 e = G.identity_element()
 
@@ -16,20 +15,22 @@ links = []
 rot_axis = G.Lie_alg_vector([0, 0, 1])
 link_transform = G.element([1, 0, 0])
 for j in range(3):
-    joints.append(kc.Joint(rot_axis))
+    joints.append(kc.Joint(rot_axis, kc.joint_reference_line(.5)))
     links.append(kc.Link(link_transform, kc.simple_link(1)))
 
 chain = kc.KinematicChainSequential(links, joints)
 chain.set_angles([1, -1, 1])
 
-
-
-
 ax = plt.subplot(1, 1, 1)
 ax.set_aspect('equal')
+
+# Draw the ground point
 gp.draw(ax)
 
 for l in links:
     l.draw(ax)
+
+for j in joints:
+    j.draw(ax,'plot')
 
 plt.show()
