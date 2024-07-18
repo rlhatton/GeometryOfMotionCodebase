@@ -18,19 +18,18 @@ for j in range(3):
     joints.append(kc.Joint(rot_axis, kc.joint_reference_line(.5)))
     links.append(kc.Link(link_transform, kc.simple_link(1)))
 
-chain = kc.KinematicChainSequential(links, joints)
+# Form the links, joints, and grounding point into a chain
+chain = kc.KinematicChainSequential(links, joints, gp)
+
+# Set the angles in the chain
 chain.set_angles([1, -1, 1])
 
+# Create a plotting window with equal axes
 ax = plt.subplot(1, 1, 1)
 ax.set_aspect('equal')
 
-# Draw the ground point
-gp.draw(ax)
+# Draw the chain
+chain.draw(ax)
 
-for l in links:
-    l.draw(ax)
-
-for j in joints:
-    j.draw(ax,'plot')
 
 plt.show()

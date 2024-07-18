@@ -3,6 +3,8 @@ from geomotion import group as gp
 from geomotion import utilityfunctions as ut
 import numpy as np
 from matplotlib import pyplot as plt
+from operator import methodcaller
+
 
 
 def SE2_rep(g_value):
@@ -49,6 +51,11 @@ class RigidBodyPlotInfo:
         if 'plot_style' in kwargs:
             self.plot_style = kwargs['plot_style']
 
+        if 'plot_function' in kwargs:
+            self.plot_function = kwargs['plot_function']
+        else:
+            self.plot_function = 'fill'
+
 
 def cornered_triangle(configuration, r, spot_color, **kwargs):
     T1 = SE2.element_set(ut.GridArray([[r, 0, 0],
@@ -81,19 +88,19 @@ class RigidBody:
         self.position = position
 
     def draw(self,
-             axis,
-             drawing_tool='fill'):
+             axis):
         plot_points = self.plot_info.plot_points
         plot_options = self.plot_info.plot_style
+        plot_function = self.plot_info.plot_function
 
         for i, p in enumerate(plot_points):
             # Transform the locally expressed positions of the drawing points by the position of the body
             plot_points_global = self.position * p
             plot_points_global_grid = plot_points_global.grid
 
-            if drawing_tool == 'fill':
+            if plot_function == 'fill':
                 axis.fill(*plot_points_global_grid[:2], 'black', **(plot_options[i]))
-            elif drawing_tool == 'plot':
+            elif plot_function == 'plot':
                 axis.plot(*plot_points_global_grid[:2], **(plot_options[i]))
             #print(plot_points_global_grid[0], "\n", plot_points_global_grid[1])
 

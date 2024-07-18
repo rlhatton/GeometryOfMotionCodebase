@@ -139,9 +139,27 @@ class KinematicChain:
 
     def __init__(self,
                  links,
-                 joints):
+                 joints,
+                 ground=None):
+
+        # Save the links, joints, and ground information
         self.links = links
         self.joints = joints
+        self.ground = ground
+
+    def draw(self, ax):
+
+        # Draw the links in the chain
+        for l in self.links:
+            l.draw(ax)
+
+        # Draw the joints in the chain
+        for j in self.joints:
+            j.draw(ax)
+
+        # Draw a ground point if provided
+        if self.ground is not None:
+            self.ground.draw(ax)
 
 
 class KinematicChainSequential(KinematicChain):
@@ -261,6 +279,8 @@ def joint_reference_line(l, **kwargs):
 
     plot_style = [{"linestyle": 'dashed', "color": 'black'} | kwargs]
 
-    plot_info = rb.RigidBodyPlotInfo(plot_points=plot_points, plot_style=plot_style)
+    plot_function = 'plot'
+
+    plot_info = rb.RigidBodyPlotInfo(plot_points=plot_points, plot_style=plot_style, plot_function=plot_function)
 
     return plot_info
