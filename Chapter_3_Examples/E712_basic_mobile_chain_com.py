@@ -8,36 +8,36 @@ spot_color = gplt.crimson
 
 G = rb.SE2
 
-# Create a point at the identity
-e = G.identity_element()
-
-# Place a chain grounding point at the identity
-gp = kc.ground_point(e, .25)
-
-# Create a list of three rotational joints and three straight links
+# Create a list of two rotational joints and two straight links
 joints = []
 links = []
 rot_axis = G.Lie_alg_vector([0, 0, 1])
 link_transform = G.element([1, 0, 0])
-for j in range(3):
+for j in range(2):
     joints.append(kc.Joint(rot_axis, kc.joint_reference_line(.5)))
+for l in range(3):
     links.append(kc.Link(link_transform, kc.simple_link(1)))
 
-# Form the links, joints, and grounding point into a chain
-chain = kc.KinematicChainSequential(links, joints, gp)
+# Form the links, joints, and grounding point into a mobile chain
+chain = kc.KinematicChainMobileSequential(links, joints, 'com')
 
-# Set the angles in the chain
-chain.set_configuration([1, -1, 1])
 
 # Create a plotting window with equal axes
 ax = plt.subplot(1, 1, 1)
 ax.set_aspect('equal')
 
-# Draw the chain
-chain.draw(ax)
+for x in [-5, 0, 5]:
+    for y in [-5, 0, 5]:
+        g = G.element([x, y, 0])
 
-# Put a point at the center of each link
-ax.scatter(*chain.link_centers.grid[0:2], color=spot_color)
+        # Set the angles in the chain
+        chain.set_configuration(g, [x/5, y/5])
+
+
+        # Draw the chain
+        chain.draw(ax)
+
+
 
 
 plt.show()

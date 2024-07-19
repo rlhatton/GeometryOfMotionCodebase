@@ -93,8 +93,14 @@ class RigidBody:
         self.position = position
 
     def draw(self,
+<<<<<<< HEAD
              axis):
         plot_locus = self.plot_info.plot_locus
+=======
+             axis,
+             **kwargs):
+        plot_points = self.plot_info.plot_points
+>>>>>>> d52c697b4f985a32e15a2371df94b667ae5387f8
         plot_options = self.plot_info.plot_style
         plot_function = self.plot_info.plot_function
 
@@ -103,6 +109,10 @@ class RigidBody:
             plot_locus_global = self.position * p(self)
             plot_locus_global_grid = plot_locus_global.grid
 
+<<<<<<< HEAD
+            axis.fill(plot_locus_global_grid[0], plot_locus_global_grid[1], 'black', **(plot_options[i]))
+            #print(plot_locus_global_grid[0], "\n", plot_locus_global_grid[1])
+=======
             if plot_function[i] == 'fill':
                 axis.fill(*plot_points_global_grid[:2], **(plot_options[i]), **kwargs)
             elif plot_function[i] == 'plot':
@@ -114,3 +124,4 @@ class RigidBody:
             #print(plot_points_global_grid[0], "\n", plot_points_global_grid[1])
 
         return
+>>>>>>> d52c697b4f985a32e15a2371df94b667ae5387f8

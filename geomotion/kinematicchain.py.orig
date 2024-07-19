@@ -276,6 +276,8 @@ class KinematicChainPoE(KinematicChain):
             joint.proximal_position = self.links[j - 1].distal_position
 
 
+<<<<<<< HEAD
+=======
 class KinematicChainMobile(KinematicChain):
 
     def __init__(self,
@@ -354,6 +356,7 @@ class KinematicChainMobileSequential(KinematicChainMobile):
         self.move_into_baseframe(self.base, 'proximal')
 
 
+>>>>>>> d52c697b4f985a32e15a2371df94b667ae5387f8
 def ground_point(configuration, r, **kwargs):
     def T(body):
         return G.element_set(ut.GridArray([[0, 0, 0],
@@ -393,9 +396,14 @@ def ground_point(configuration, r, **kwargs):
 
 
 def simple_link(r, spot_color='black', **kwargs):
+<<<<<<< HEAD
     def L(body):
         return rb.SE2.element_set(ut.GridArray([[0, 0.05, 0], [1, 0.05, 0], [1, -0.05, 0], [0, -0.05, 0]], 1),
                            0, "element")
+=======
+    L = G.element_set(ut.GridArray([[0, 0.05, 0], [1, 0.05, 0], [1, -0.05, 0], [0, -0.05, 0]], 1),
+                      0, "element")
+>>>>>>> d52c697b4f985a32e15a2371df94b667ae5387f8
 
     plot_locus = [L]
 
