@@ -303,7 +303,6 @@ class KinematicChainMobile(KinematicChain):
         # Draw all the links
         KinematicChain.draw(self, ax, **kwargs)
 
-
     def move_into_baseframe(self,
                             new_base,
                             old_base):
@@ -387,7 +386,10 @@ def ground_point(configuration, r, **kwargs):
     # Set the plot style
     plot_style = [{"edgecolor": 'black', "facecolor": 'white'} | kwargs] * len(plot_locus)
 
-    plot_info = rb.RigidBodyPlotInfo(plot_locus=plot_locus, plot_style=plot_style)
+    # Set the plot function
+    plot_function = ['fill'] * len(plot_locus)
+
+    plot_info = rb.RigidBodyPlotInfo(plot_locus=plot_locus, plot_style=plot_style, plot_function=plot_function)
 
     return rb.RigidBody(plot_info, configuration)
 
@@ -395,7 +397,7 @@ def ground_point(configuration, r, **kwargs):
 def simple_link(r, spot_color='black', **kwargs):
     def L(body):
         return rb.SE2.element_set(ut.GridArray([[0, 0.05, 0], [1, 0.05, 0], [1, -0.05, 0], [0, -0.05, 0]], 1),
-                           0, "element")
+                                  0, "element")
 
     plot_locus = [L]
 
@@ -407,29 +409,34 @@ def simple_link(r, spot_color='black', **kwargs):
 
 
 def joint_reference_line(l, **kwargs):
-    L = G.element_set(ut.GridArray([[0, 0, 0], [l, 0, 0]], 1), 0, "element")
+    def L(body):
+        return G.element_set(ut.GridArray([[0, 0, 0], [l, 0, 0]], 1), 0, "element")
 
-    plot_points = [L]
+    plot_locus = [L]
+    plot_locus = [L]
 
     plot_style = [{"linestyle": 'dashed', "color": 'black', "zorder": -3} | kwargs]
 
     plot_function = ['plot']
 
-    plot_info = rb.RigidBodyPlotInfo(plot_points=plot_points, plot_style=plot_style, plot_function=plot_function)
+    plot_info = rb.RigidBodyPlotInfo(plot_locus=plot_locus, plot_style=plot_style, plot_function=plot_function)
 
     return plot_info
 
 
 def baseframe_line(l, **kwargs):
-    L = G.element_set(ut.GridArray([[-l / 2, 0, 0], [l / 2, 0, 0]], 1), 0, "element")
-    D = G.element_set(ut.GridArray([[0, 0, 0]], 1), 0, "element")
+    def L(body):
+        return G.element_set(ut.GridArray([[-l / 2, 0, 0], [l / 2, 0, 0]], 1), 0, "element")
 
-    plot_points = [L, D]
+    def D(body):
+        return G.element_set(ut.GridArray([[0, 0, 0]], 1), 0, "element")
+
+    plot_locus = [L, D]
 
     plot_function = ['plot', 'scatter']
 
     plot_style = [{"linestyle": 'dashed', "color": 'grey', "zorder": 3} | kwargs, {"color": spot_color, "zorder": 3}]
 
-    plot_info = rb.RigidBodyPlotInfo(plot_points=plot_points, plot_style=plot_style, plot_function=plot_function)
+    plot_info = rb.RigidBodyPlotInfo(plot_locus=plot_locus, plot_style=plot_style, plot_function=plot_function)
 
     return plot_info

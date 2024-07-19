@@ -104,11 +104,11 @@ class RigidBody:
             plot_locus_global_grid = plot_locus_global.grid
 
             if plot_function[i] == 'fill':
-                axis.fill(*plot_points_global_grid[:2], **(plot_options[i]), **kwargs)
+                axis.fill(*plot_locus_global_grid[:2], **(plot_options[i]))
             elif plot_function[i] == 'plot':
-                axis.plot(*plot_points_global_grid[:2], **(plot_options[i]), **kwargs)
+                axis.plot(*plot_locus_global_grid[:2], **(plot_options[i]))
             elif plot_function[i] == 'scatter':
-                axis.scatter(*plot_points_global_grid[:2], **(plot_options[i]), **kwargs)
+                axis.scatter(*plot_locus_global_grid[:2], **(plot_options[i]))
             else:
                 raise Exception("Unknown plot_function specification")
             #print(plot_points_global_grid[0], "\n", plot_points_global_grid[1])
