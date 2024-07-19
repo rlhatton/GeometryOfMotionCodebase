@@ -199,7 +199,7 @@ class KinematicChainPoE(KinematicChain):
 
         exp_prod = G.identity_element()
         for j, joint in enumerate(self.joints):
-            exp_prod = exp_prod * (joint.angle*joint.spatial_axis_ref).exp_L
+            exp_prod = exp_prod * (joint.angle * joint.spatial_axis_ref).exp_L
             self.links[j].distal_position = exp_prod * self.links[j].reference_position
 
         # self.joints[0].proximal_position = G.identity_element()
@@ -207,18 +207,19 @@ class KinematicChainPoE(KinematicChain):
         #     joint.proximal_position = self.links[j-1].distal_position
 
 
-
-
 def ground_point(configuration, r, **kwargs):
-    T = G.element_set(ut.GridArray([[0, 0, 0],
-                                    [-r * np.sin(np.pi / 6), -r * np.cos(np.pi / 6), 0],
-                                    [r * np.sin(np.pi / 6), -r * np.cos(np.pi / 6), 0]], 1),
-                      0, "element")
+    def T(body):
+        return G.element_set(ut.GridArray([[0, 0, 0],
+                                           [-r * np.sin(np.pi / 6), -r * np.cos(np.pi / 6), 0],
+                                           [r * np.sin(np.pi / 6), -r * np.cos(np.pi / 6), 0]], 1),
+                             0, "element")
 
     bar_width = 3 * r
     bar_offset = -r * np.cos(np.pi / 6)
-    bar = G.element_set(ut.GridArray([[-bar_width / 2, bar_offset, 0],
-                                      [bar_width / 2, bar_offset, 0]], 1))
+
+    def bar(body):
+        return G.element_set(ut.GridArray([[-bar_width / 2, bar_offset, 0],
+                                           [bar_width / 2, bar_offset, 0]], 1))
 
     hash_height = .5 * r
     hash_angle = np.pi / 4
@@ -227,30 +228,32 @@ def ground_point(configuration, r, **kwargs):
 
     hashes = []
     for h in hash_tops:
-        hashes.append(G.element_set(ut.GridArray([[h, bar_offset, 0],
-                                                  [h - hash_height * np.tan(hash_angle), bar_offset - hash_height,
-                                                   0]],
-                                                 1)))
+        hashes.append(lambda x: G.element_set(ut.GridArray([[h, bar_offset, 0],
+                                                            [h - hash_height * np.tan(hash_angle),
+                                                             bar_offset - hash_height,
+                                                             0]],
+                                                           1)))
 
     # Unpack the hashes and combine them with the triangle and bar
-    plot_points = [T, bar, *hashes]
+    plot_locus = [T, bar, *hashes]
 
     # Set the plot style
-    plot_style = [{"edgecolor": 'black', "facecolor": 'white'} | kwargs] * len(plot_points)
+    plot_style = [{"edgecolor": 'black', "facecolor": 'white'} | kwargs] * len(plot_locus)
 
-    plot_info = rb.RigidBodyPlotInfo(plot_points=plot_points, plot_style=plot_style)
+    plot_info = rb.RigidBodyPlotInfo(plot_locus=plot_locus, plot_style=plot_style)
 
     return rb.RigidBody(plot_info, configuration)
 
 
 def simple_link(r, spot_color='black', **kwargs):
-    L = rb.SE2.element_set(ut.GridArray([[0, 0.05, 0], [1, 0.05, 0], [1, -0.05, 0], [0, -0.05, 0]], 1),
+    def L(body):
+        return rb.SE2.element_set(ut.GridArray([[0, 0.05, 0], [1, 0.05, 0], [1, -0.05, 0], [0, -0.05, 0]], 1),
                            0, "element")
 
-    plot_points = [L]
+    plot_locus = [L]
 
     plot_style = [{"edgecolor": 'black', "facecolor": 'white'} | kwargs]
 
-    plot_info = rb.RigidBodyPlotInfo(plot_points=plot_points, plot_style=plot_style)
+    plot_info = rb.RigidBodyPlotInfo(plot_locus=plot_locus, plot_style=plot_style)
 
     return plot_info
