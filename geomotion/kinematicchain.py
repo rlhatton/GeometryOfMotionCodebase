@@ -1,5 +1,7 @@
-from geomotion import utilityfunctions as ut, representationliegroup as rlgp, rigidbody as rb
+from geomotion import utilityfunctions as ut, representationliegroup as rlgp, rigidbody as rb, plottingfunctions as gplt
 import numpy as np
+
+spot_color = gplt.crimson
 
 G = rb.SE2
 
@@ -147,24 +149,73 @@ class KinematicChain:
         self.joints = joints
         self.ground = ground
 
-    def draw(self, ax):
+    def draw(self, ax, **kwargs):
 
         # Draw the links in the chain
         for l in self.links:
-            l.draw(ax)
+            if l.plot_info is not None:
+                l.draw(ax, **kwargs)
 
         # Draw the joints in the chain
         for j in self.joints:
-            j.draw(ax)
+            if j.plot_info is not None:
+                j.draw(ax, **kwargs)
 
         # Draw a ground point if provided
         if self.ground is not None:
             self.ground.draw(ax)
 
+    @property
+    def link_centers(self):
+
+        return rlgp.RepresentationLieGroupElementSet([l.medial_position for l in self.links])
+
+    def parse_frame(self, framespec):
+
+        # If the frame is specified via an integer, take that as a link index
+        if isinstance(framespec, int):
+            frame = self.links[framespec].position
+
+        # Possible string specifications for frame:
+        elif isinstance(framespec, str):
+
+            # Place the frame half-way down the chain
+            if framespec == 'midpoint':
+                if len(self.links) % 2 != 0:
+                    frame = self.links[len(self.links) // 2].medial_position
+                else:
+                    frame = self.joints[len(self.joints) // 2].medial_position
+
+            # Place the frame at the proximal end of the proximal link
+            elif framespec == 'proximal':
+                frame = self.links[0].proximal_position
+
+
+            # Place the frame at the center of mass and mean orientation (taking all links as equal mass for now)
+            elif framespec == 'com':
+
+                # Get a set of the link positions and extract to grid form
+                link_pos = []
+                for l in self.links:
+                    link_pos.append(l.medial_position)
+                link_pos_grid = link_pos[1].plural(link_pos).grid
+
+                com = []
+                for c in link_pos_grid:
+                    com.append(np.mean(np.ravel(c)))
+                frame = G.element(com)
+
+            else:
+                raise Exception("Unknown string used to specify frame on mobile chain")
+        else:
+            raise Exception("Unsupported format used to specify frame on mobile chain")
+
+        return frame
+
 
 class KinematicChainSequential(KinematicChain):
-    def set_angles(self,
-                   joint_angles):
+    def set_configuration(self,
+                          joint_angles):
 
         for j, alpha in enumerate(joint_angles):
             self.joints[j].angle = alpha
@@ -208,8 +259,8 @@ class KinematicChainPoE(KinematicChain):
         for link in self.links:
             link.reference_position = link.distal_position
 
-    def set_angles(self,
-                   joint_angles):
+    def set_configuration(self,
+                          joint_angles):
 
         # Set the joint angles
         for j, alpha in enumerate(joint_angles):
@@ -222,7 +273,85 @@ class KinematicChainPoE(KinematicChain):
 
         self.joints[0].proximal_position = G.identity_element()
         for j, joint in enumerate(self.joints[1:], start=1):
-            joint.proximal_position = self.links[j-1].distal_position
+            joint.proximal_position = self.links[j - 1].distal_position
+
+
+class KinematicChainMobile(KinematicChain):
+
+    def __init__(self,
+                 links,
+                 joints,
+                 base='proximal',
+                 baseframe_line_length=1):
+
+        # Initialize a kinematic chain with no ground
+        KinematicChain.__init__(self, links, joints)
+        self.position = G.identity_element()
+
+        # Store the provided base-frame designator
+        self.base = base
+        self.baseframe_line_length = baseframe_line_length
+
+        self.baseframe_indicator = rb.RigidBody(baseframe_line(baseframe_line_length))
+
+    def draw(self, ax, baseframe_visible=True, **kwargs):
+
+        # Draw the baseframe indicator if it is wanted
+        if baseframe_visible:
+            self.baseframe_indicator.draw(ax, **kwargs)
+
+        # Draw all the links
+        KinematicChain.draw(self, ax, **kwargs)
+
+
+    def move_into_baseframe(self,
+                            new_base,
+                            old_base):
+
+        old_frame = self.parse_frame(old_base)
+        new_frame = self.parse_frame(new_base)
+
+        rebase_transform = old_frame * new_frame.inverse
+
+        for l in self.links:
+            l.position = rebase_transform * l.position
+        for j in self.joints:
+            j.position = rebase_transform * j.position
+
+        self.baseframe_indicator.position = self.position
+
+    def rebase(self,
+               new_base):
+
+        # Take the current link and joint positions, and find what they would be if the position portion
+        # of the frame configuration described the position of the new base frame
+        self.move_into_baseframe(new_base, self.base)
+
+        # Record the new base frame into the chain
+        self.base = new_base
+
+
+class KinematicChainMobileSequential(KinematicChainMobile):
+    def set_configuration(self,
+                          position,
+                          joint_angles):
+
+        # Store the system position and joint angles
+        for j, alpha in enumerate(joint_angles):
+            self.joints[j].angle = alpha
+        self.position = position
+
+        # Hand-load position of first link as if the system were being constructed using the proximal end as
+        # a base frame
+        self.links[0].proximal_position = position
+
+        # Find positions of the rest of the chain elements
+        for j, alpha in enumerate(joint_angles):
+            self.joints[j].proximal_position = self.links[j].distal_position
+            self.links[j + 1].proximal_position = self.joints[j].distal_position
+
+        # Move the links and joints from their proximally-described positions to the specified base frame
+        self.move_into_baseframe(self.base, 'proximal')
 
 
 def ground_point(configuration, r, **kwargs):
@@ -277,9 +406,24 @@ def joint_reference_line(l, **kwargs):
 
     plot_points = [L]
 
-    plot_style = [{"linestyle": 'dashed', "color": 'black'} | kwargs]
+    plot_style = [{"linestyle": 'dashed', "color": 'black', "zorder": -3} | kwargs]
 
-    plot_function = 'plot'
+    plot_function = ['plot']
+
+    plot_info = rb.RigidBodyPlotInfo(plot_points=plot_points, plot_style=plot_style, plot_function=plot_function)
+
+    return plot_info
+
+
+def baseframe_line(l, **kwargs):
+    L = G.element_set(ut.GridArray([[-l / 2, 0, 0], [l / 2, 0, 0]], 1), 0, "element")
+    D = G.element_set(ut.GridArray([[0, 0, 0]], 1), 0, "element")
+
+    plot_points = [L, D]
+
+    plot_function = ['plot', 'scatter']
+
+    plot_style = [{"linestyle": 'dashed', "color": 'grey', "zorder": 3} | kwargs, {"color": spot_color, "zorder": 3}]
 
     plot_info = rb.RigidBodyPlotInfo(plot_points=plot_points, plot_style=plot_style, plot_function=plot_function)
 

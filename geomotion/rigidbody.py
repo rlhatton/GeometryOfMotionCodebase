@@ -1,9 +1,11 @@
-from geomotion import representationliegroup as rlgp
+from geomotion import representationliegroup as rlgp, plottingfunctions as gplt
 from geomotion import group as gp
 from geomotion import utilityfunctions as ut
 import numpy as np
 from matplotlib import pyplot as plt
 from operator import methodcaller
+
+spot_color = gplt.crimson
 
 
 
@@ -54,7 +56,7 @@ class RigidBodyPlotInfo:
         if 'plot_function' in kwargs:
             self.plot_function = kwargs['plot_function']
         else:
-            self.plot_function = 'fill'
+            self.plot_function = ['fill']
 
 
 def cornered_triangle(configuration, r, spot_color, **kwargs):
@@ -88,7 +90,8 @@ class RigidBody:
         self.position = position
 
     def draw(self,
-             axis):
+             axis,
+             **kwargs):
         plot_points = self.plot_info.plot_points
         plot_options = self.plot_info.plot_style
         plot_function = self.plot_info.plot_function
@@ -98,10 +101,14 @@ class RigidBody:
             plot_points_global = self.position * p
             plot_points_global_grid = plot_points_global.grid
 
-            if plot_function == 'fill':
-                axis.fill(*plot_points_global_grid[:2], 'black', **(plot_options[i]))
-            elif plot_function == 'plot':
-                axis.plot(*plot_points_global_grid[:2], **(plot_options[i]))
+            if plot_function[i] == 'fill':
+                axis.fill(*plot_points_global_grid[:2], **(plot_options[i]), **kwargs)
+            elif plot_function[i] == 'plot':
+                axis.plot(*plot_points_global_grid[:2], **(plot_options[i]), **kwargs)
+            elif plot_function[i] == 'scatter':
+                axis.scatter(*plot_points_global_grid[:2], **(plot_options[i]), **kwargs)
+            else:
+                raise Exception("Unknown plot_function specification")
             #print(plot_points_global_grid[0], "\n", plot_points_global_grid[1])
 
         return
