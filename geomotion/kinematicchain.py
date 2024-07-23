@@ -303,7 +303,6 @@ class KinematicChainMobile(KinematicChain):
         # Draw all the links
         KinematicChain.draw(self, ax, **kwargs)
 
-
     def move_into_baseframe(self,
                             new_base,
                             old_base):
@@ -355,15 +354,18 @@ class KinematicChainMobileSequential(KinematicChainMobile):
 
 
 def ground_point(configuration, r, **kwargs):
-    T = G.element_set(ut.GridArray([[0, 0, 0],
-                                    [-r * np.sin(np.pi / 6), -r * np.cos(np.pi / 6), 0],
-                                    [r * np.sin(np.pi / 6), -r * np.cos(np.pi / 6), 0]], 1),
-                      0, "element")
+    def T(body):
+        return G.element_set(ut.GridArray([[0, 0, 0],
+                                           [-r * np.sin(np.pi / 6), -r * np.cos(np.pi / 6), 0],
+                                           [r * np.sin(np.pi / 6), -r * np.cos(np.pi / 6), 0]], 1),
+                             0, "element")
 
     bar_width = 3 * r
     bar_offset = -r * np.cos(np.pi / 6)
-    bar = G.element_set(ut.GridArray([[-bar_width / 2, bar_offset, 0],
-                                      [bar_width / 2, bar_offset, 0]], 1))
+
+    def bar(body):
+        return G.element_set(ut.GridArray([[-bar_width / 2, bar_offset, 0],
+                                           [bar_width / 2, bar_offset, 0]], 1))
 
     hash_height = .5 * r
     hash_angle = np.pi / 4
@@ -372,62 +374,109 @@ def ground_point(configuration, r, **kwargs):
 
     hashes = []
     for h in hash_tops:
-        hashes.append(G.element_set(ut.GridArray([[h, bar_offset, 0],
-                                                  [h - hash_height * np.tan(hash_angle), bar_offset - hash_height,
-                                                   0]],
-                                                 1)))
+        hashes.append(lambda x: G.element_set(ut.GridArray([[h, bar_offset, 0],
+                                                            [h - hash_height * np.tan(hash_angle),
+                                                             bar_offset - hash_height,
+                                                             0]],
+                                                           1)))
 
     # Unpack the hashes and combine them with the triangle and bar
-    plot_points = [T, bar, *hashes]
+    plot_locus = [T, bar, *hashes]
 
     # Set the plot style
-    plot_style = [{"edgecolor": 'black', "facecolor": 'white'} | kwargs] * len(plot_points)
+    plot_style = [{"edgecolor": 'black', "facecolor": 'white'} | kwargs] * len(plot_locus)
 
-    plot_info = rb.RigidBodyPlotInfo(plot_points=plot_points, plot_style=plot_style)
+    # Set the plot function
+    plot_function = ['fill'] * len(plot_locus)
+
+    plot_info = rb.RigidBodyPlotInfo(plot_locus=plot_locus, plot_style=plot_style, plot_function=plot_function)
 
     return rb.RigidBody(plot_info, configuration)
 
 
 def simple_link(r, spot_color='black', **kwargs):
-    L = G.element_set(ut.GridArray([[0, 0.05, 0], [1, 0.05, 0], [1, -0.05, 0], [0, -0.05, 0]], 1),
-                      0, "element")
+    def L(body):
+        return rb.SE2.element_set(
+            ut.GridArray([[0, 0.05 * r, 0], [r, 0.05 * r, 0], [r, -0.05 * r, 0], [0, -0.05 * r, 0]], 1),
+            0, "element")
 
-    plot_points = [L]
+    plot_locus = [L]
 
     plot_style = [{"edgecolor": 'black', "facecolor": 'white'} | kwargs]
 
-    plot_info = rb.RigidBodyPlotInfo(plot_points=plot_points, plot_style=plot_style)
+    plot_info = rb.RigidBodyPlotInfo(plot_locus=plot_locus, plot_style=plot_style)
 
     return plot_info
 
 
 def rotational_joint(l, **kwargs):
-    L = G.element_set(ut.GridArray([[0, 0, 0], [l, 0, 0]], 1), 0, "element")
+    def L(body):
+        return G.element_set(ut.GridArray([[0, 0, 0], [l, 0, 0]], 1), 0, "element")
 
-    plot_points = [L]
+    plot_locus = [L]
 
     plot_style = [{"linestyle": 'dashed', "color": 'black', "zorder": -3} | kwargs]
 
     plot_function = ['plot']
 
-    plot_info = rb.RigidBodyPlotInfo(plot_points=plot_points, plot_style=plot_style, plot_function=plot_function)
+    plot_info = rb.RigidBodyPlotInfo(plot_locus=plot_locus, plot_style=plot_style, plot_function=plot_function)
 
     return plot_info
 
-def prismatic_joint(l, **kwargs):
-    L
+def piston_link(length, backdraft_percent, width_ratio, **kwargs):
+    def piston(body):
+        return rb.SE2.element_set(ut.GridArray(
+            [[-(backdraft_percent*length), width_ratio * length, 0], [length, width_ratio*length, 0],
+             [length, -width_ratio * length, 0], [-(backdraft_percent*length), -width_ratio * length, 0]], 1),
+                                  0, "element")
+
+    plot_locus = [piston]
+
+    plot_function = ['fill']
+
+    plot_style = [{"edgecolor": 'black', "facecolor": 'white'} | kwargs]
+
+    plot_info = rb.RigidBodyPlotInfo(plot_locus=plot_locus, plot_style=plot_style, plot_function=plot_function)
+
+    return plot_info
+
+
+def prismatic_joint(w, l, **kwargs):
+    def reference(body):
+        return rb.SE2.element_set(ut.GridArray([[0, 0.05 * w, 0], [0, (0.05 + l) * w, 0]], 1),
+                                  0, "element")
+
+    def fiducial(body):
+        return rb.SE2.element_set(ut.GridArray([[body.angle, 0.05 * w, 0], [body.angle, (0.05 + l) * w, 0]], 1),
+                                  0, "element")
+
+    plot_locus = [reference, fiducial]
+
+    plot_style = [{"linestyle": 'dashed', "color": 'black', "zorder": -3} | kwargs,
+                  {"color": 'black', "zorder": -3} | kwargs]
+
+    plot_function = ['fill', 'plot', 'plot']
+
+    plot_info = rb.RigidBodyPlotInfo(plot_locus=plot_locus, plot_style=plot_style, plot_function=plot_function)
+
+    return plot_info
+
+
 
 
 def baseframe_line(l, **kwargs):
-    L = G.element_set(ut.GridArray([[-l / 2, 0, 0], [l / 2, 0, 0]], 1), 0, "element")
-    D = G.element_set(ut.GridArray([[0, 0, 0]], 1), 0, "element")
+    def L(body):
+        return G.element_set(ut.GridArray([[-l / 2, 0, 0], [l / 2, 0, 0]], 1), 0, "element")
 
-    plot_points = [L, D]
+    def D(body):
+        return G.element_set(ut.GridArray([[0, 0, 0]], 1), 0, "element")
+
+    plot_locus = [L, D]
 
     plot_function = ['plot', 'scatter']
 
     plot_style = [{"linestyle": 'dashed', "color": 'grey', "zorder": 3} | kwargs, {"color": spot_color, "zorder": 3}]
 
-    plot_info = rb.RigidBodyPlotInfo(plot_points=plot_points, plot_style=plot_style, plot_function=plot_function)
+    plot_info = rb.RigidBodyPlotInfo(plot_locus=plot_locus, plot_style=plot_style, plot_function=plot_function)
 
     return plot_info
