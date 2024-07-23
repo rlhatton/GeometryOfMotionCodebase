@@ -16,7 +16,7 @@ links = []
 rot_axis = G.Lie_alg_vector([0, 0, 1])
 link_transform = G.element([1, 0, 0])
 for j in range(3):
-    joints.append(kc.Joint(rot_axis, kc.joint_reference_line(.5)))
+    joints.append(kc.Joint(rot_axis, kc.rotational_joint(.5)))
     links.append(kc.Link(link_transform, kc.simple_link(1)))
 
 chain = kc.KinematicChainPoE(links, joints)

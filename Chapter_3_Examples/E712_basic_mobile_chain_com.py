@@ -14,7 +14,7 @@ links = []
 rot_axis = G.Lie_alg_vector([0, 0, 1])
 link_transform = G.element([1, 0, 0])
 for j in range(2):
-    joints.append(kc.Joint(rot_axis, kc.joint_reference_line(.5)))
+    joints.append(kc.Joint(rot_axis, kc.rotational_joint(.5)))
 for l in range(3):
     links.append(kc.Link(link_transform, kc.simple_link(1)))
 

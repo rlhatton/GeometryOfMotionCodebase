@@ -401,7 +401,7 @@ def simple_link(r, spot_color='black', **kwargs):
     return plot_info
 
 
-def joint_reference_line(l, **kwargs):
+def rotational_joint(l, **kwargs):
     L = G.element_set(ut.GridArray([[0, 0, 0], [l, 0, 0]], 1), 0, "element")
 
     plot_points = [L]
@@ -413,6 +413,9 @@ def joint_reference_line(l, **kwargs):
     plot_info = rb.RigidBodyPlotInfo(plot_points=plot_points, plot_style=plot_style, plot_function=plot_function)
 
     return plot_info
+
+def prismatic_joint(l, **kwargs):
+    L
 
 
 def baseframe_line(l, **kwargs):
