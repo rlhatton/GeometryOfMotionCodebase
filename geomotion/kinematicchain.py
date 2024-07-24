@@ -129,8 +129,9 @@ class Link(ChainElement):
     def __init__(self,
                  transform: G.element,
                  plot_info=None,
-                 proximal_position=G.identity_element()):
-        # A link is currently a basic chain element
+                 proximal_position=G.identity_element(),
+                 backdraft_position=G.identity_element()):
+
         ChainElement.__init__(self, transform, plot_info, proximal_position)
 
         # Save a default reference position
