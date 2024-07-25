@@ -30,7 +30,7 @@ joints.append(kc.Joint(rot_axis, kc.rotational_joint(.5)))
 links.append(kc.Link(link_transform, kc.simple_link(1)))
 
 # Then place a prismatic joint and a piston link whose base extension is the midpoint of the link
-joints.append(kc.Joint(prismatic_axis, kc.prismatic_joint(1, .25)))
+joints.append(kc.Joint(prismatic_axis, kc.prismatic_joint(.05, .25)))
 links.append(kc.Link(link_transform, kc.piston_link(1, .5, .025)))
 
 # Finish with a simple rotary joint followed by a unit-length link

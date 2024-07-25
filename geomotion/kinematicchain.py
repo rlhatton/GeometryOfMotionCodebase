@@ -442,13 +442,13 @@ def piston_link(length, backdraft_percent, width_ratio, **kwargs):
     return plot_info
 
 
-def prismatic_joint(w, l, **kwargs):
+def prismatic_joint(width, marklength, **kwargs):
     def reference(body):
-        return rb.SE2.element_set(ut.GridArray([[0, 0.05 * w, 0], [0, (0.05 + l) * w, 0]], 1),
+        return rb.SE2.element_set(ut.GridArray([[0, width, 0], [0, width+marklength, 0]], 1),
                                   0, "element")
 
     def fiducial(body):
-        return rb.SE2.element_set(ut.GridArray([[body.angle, 0.05 * w, 0], [body.angle, (0.05 + l) * w, 0]], 1),
+        return rb.SE2.element_set(ut.GridArray([[body.angle, width, 0], [body.angle, width+marklength, 0]], 1),
                                   0, "element")
 
     plot_locus = [reference, fiducial]
@@ -463,7 +463,37 @@ def prismatic_joint(w, l, **kwargs):
     return plot_info
 
 
+def arc_link(length, radius, backdraft_percent, width_ratio, **kwargs):
+    def piston(body):
+        return rb.SE2.element_set(ut.GridArray(
+            [[-(backdraft_percent*length), width_ratio * length, 0], [length, width_ratio*length, 0],
+             [length, -width_ratio * length, 0], [-(backdraft_percent*length), -width_ratio * length, 0]], 1),
+                                  0, "element")
 
+    centerline_feeds = np.linspace(-backdraft_percent*length, length, 30)
+    centerline_exp_coords = rb.SE2.vector_set(rb.SE2.identity_element(),
+                                              ut.GridArray([centerline_feeds,
+                                                            np.zeros_like(centerline_feeds),
+                                                            centerline_feeds/radius], 1),
+                                              0,
+                                              0,
+                                              'component')
+
+    centerline = centerline_exp_coords.exp_R
+    topline =  centerline * rb.SE2.element([0, width_ratio * length, 1/radius])
+    bottomline = centerline * rb.SE2.element([0, - width_ratio * length, 1 / radius])
+    rlgp.RepresentationLieGroupElementSet
+    return rlgp.RepresentationLieGroupElementSet * rb.SE2.element([])
+
+    plot_locus = [piston]
+
+    plot_function = ['fill']
+
+    plot_style = [{"edgecolor": 'black', "facecolor": 'white'} | kwargs]
+
+    plot_info = rb.RigidBodyPlotInfo(plot_locus=plot_locus, plot_style=plot_style, plot_function=plot_function)
+
+    return plot_info
 
 def baseframe_line(l, **kwargs):
     def L(body):
