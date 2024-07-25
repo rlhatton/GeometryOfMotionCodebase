@@ -18,9 +18,17 @@ for j in range(2):
 for l in range(3):
     links.append(kc.Link(link_transform, kc.simple_link(1)))
 
-# Form the links, joints, and grounding point into a mobile chain
-chain = kc.KinematicChainMobileSequential(links, joints, 'midpoint')
 
+# Define an even-odd reparameterization function
+def even_odd_reparam(even_odd):
+    modal_matrix = np.array([[1, -1], [1, 1]])
+
+    joint_angles = np.matmul(modal_matrix, even_odd)
+    return joint_angles
+
+
+# Form the links, joints, and grounding point into a mobile chain
+chain = kc.KinematicChainMobileSequential(links, joints, 'midpoint', 1, even_odd_reparam)
 
 # Create a plotting window with equal axes
 ax = plt.subplot(1, 1, 1)
@@ -28,16 +36,12 @@ ax.set_aspect('equal')
 
 for x in [-1, 0, 1]:
     for y in [-1, 0, 1]:
-        g = G.element([x * 5, y * 5, 0])
+        g = G.element([x*5, y*5, 0])
 
         # Set the angles in the chain
         chain.set_configuration(g, [x, y])
 
-
         # Draw the chain
         chain.draw(ax, False)
-
-
-
 
 plt.show()

@@ -143,12 +143,14 @@ class KinematicChain:
     def __init__(self,
                  links,
                  joints,
-                 ground=None):
+                 ground=None,
+                 reparameterization_function=None):
 
-        # Save the links, joints, and ground information
+        # Save the links, joints, ground, and reparameterization information
         self.links = links
         self.joints = joints
         self.ground = ground
+        self.reparameterization_function = reparameterization_function
 
     def draw(self, ax, **kwargs):
 
@@ -165,6 +167,7 @@ class KinematicChain:
         # Draw a ground point if provided
         if self.ground is not None:
             self.ground.draw(ax)
+
 
     @property
     def link_centers(self):
@@ -218,6 +221,10 @@ class KinematicChainSequential(KinematicChain):
     def set_configuration(self,
                           joint_angles):
 
+        # Push the provided coordinates through the reparameterization function if it exists
+        if self.reparameterization_function is not None:
+            joint_angles = self.reparameterization_function(joint_angles)
+
         for j, alpha in enumerate(joint_angles):
             self.joints[j].angle = alpha
 
@@ -263,6 +270,10 @@ class KinematicChainPoE(KinematicChain):
     def set_configuration(self,
                           joint_angles):
 
+        # Push the provided coordinates through the reparameterization function if it exists
+        if self.reparameterization_function is not None:
+            joint_angles = self.reparameterization_function(joint_angles)
+
         # Set the joint angles
         for j, alpha in enumerate(joint_angles):
             self.joints[j].angle = alpha
@@ -283,10 +294,11 @@ class KinematicChainMobile(KinematicChain):
                  links,
                  joints,
                  base='proximal',
-                 baseframe_line_length=1):
+                 baseframe_line_length=1,
+                 reparameterization_function=None):
 
         # Initialize a kinematic chain with no ground
-        KinematicChain.__init__(self, links, joints)
+        KinematicChain.__init__(self, links, joints, None, reparameterization_function)
         self.position = G.identity_element()
 
         # Store the provided base-frame designator
@@ -335,6 +347,10 @@ class KinematicChainMobileSequential(KinematicChainMobile):
     def set_configuration(self,
                           position,
                           joint_angles):
+
+        # Push the provided coordinates through the reparameterization function if it exists
+        if self.reparameterization_function is not None:
+            joint_angles = self.reparameterization_function(joint_angles)
 
         # Store the system position and joint angles
         for j, alpha in enumerate(joint_angles):
