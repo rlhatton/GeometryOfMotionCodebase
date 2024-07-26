@@ -131,7 +131,6 @@ class Link(ChainElement):
                  plot_info=None,
                  proximal_position=G.identity_element(),
                  backdraft_position=G.identity_element()):
-
         ChainElement.__init__(self, transform, plot_info, proximal_position)
 
         # Save a default reference position
@@ -167,7 +166,6 @@ class KinematicChain:
         # Draw a ground point if provided
         if self.ground is not None:
             self.ground.draw(ax)
-
 
     @property
     def link_centers(self):
@@ -390,21 +388,27 @@ def ground_point(configuration, r, **kwargs):
     hash_tops = np.linspace(-bar_width / 2 + hash_height * np.tan(hash_angle), bar_width * (hash_fraction - .5), 4)
 
     hashes = []
-    for h in hash_tops:
-        hashes.append(lambda x: G.element_set(ut.GridArray([[h, bar_offset, 0],
-                                                            [h - hash_height * np.tan(hash_angle),
-                                                             bar_offset - hash_height,
-                                                             0]],
-                                                           1)))
+    for ht in hash_tops:
 
-    # Unpack the hashes and combine them with the triangle and bar
+        def hash_points(body, h=ht):
+
+            return G.element_set(ut.GridArray([[h, bar_offset, 0],
+                                               [h - hash_height * np.tan(hash_angle),
+                                                bar_offset - hash_height,
+                                                0]],
+                                              1))
+
+        hashes.append(hash_points)
+
+        # Unpack the hashes and combine them with the triangle and bar
     plot_locus = [T, bar, *hashes]
 
     # Set the plot style
-    plot_style = [{"edgecolor": 'black', "facecolor": 'white'} | kwargs] * len(plot_locus)
+    plot_style = [{"edgecolor": 'black', "facecolor": 'white'} | kwargs] + \
+                 [{"color": 'black', "zorder": -3}] * (len(plot_locus) + 1)
 
     # Set the plot function
-    plot_function = ['fill'] * len(plot_locus)
+    plot_function = ['fill'] + ['plot'] * (len(plot_locus) + 1)
 
     plot_info = rb.RigidBodyPlotInfo(plot_locus=plot_locus, plot_style=plot_style, plot_function=plot_function)
 
@@ -440,12 +444,13 @@ def rotational_joint(l, **kwargs):
 
     return plot_info
 
+
 def piston_link(length, backdraft_percent, width_ratio, **kwargs):
     def piston(body):
         return rb.SE2.element_set(ut.GridArray(
-            [[-(backdraft_percent*length), width_ratio * length, 0], [length, width_ratio*length, 0],
-             [length, -width_ratio * length, 0], [-(backdraft_percent*length), -width_ratio * length, 0]], 1),
-                                  0, "element")
+            [[-(backdraft_percent * length), width_ratio * length, 0], [length, width_ratio * length, 0],
+             [length, -width_ratio * length, 0], [-(backdraft_percent * length), -width_ratio * length, 0]], 1),
+            0, "element")
 
     plot_locus = [piston]
 
@@ -460,11 +465,11 @@ def piston_link(length, backdraft_percent, width_ratio, **kwargs):
 
 def prismatic_joint(width, marklength, **kwargs):
     def reference(body):
-        return rb.SE2.element_set(ut.GridArray([[0, width, 0], [0, width+marklength, 0]], 1),
+        return rb.SE2.element_set(ut.GridArray([[0, width, 0], [0, width + marklength, 0]], 1),
                                   0, "element")
 
     def fiducial(body):
-        return rb.SE2.element_set(ut.GridArray([[body.angle, width, 0], [body.angle, width+marklength, 0]], 1),
+        return rb.SE2.element_set(ut.GridArray([[body.angle, width, 0], [body.angle, width + marklength, 0]], 1),
                                   0, "element")
 
     plot_locus = [reference, fiducial]
@@ -482,21 +487,21 @@ def prismatic_joint(width, marklength, **kwargs):
 def arc_link(length, radius, backdraft_percent, width_ratio, **kwargs):
     def piston(body):
         return rb.SE2.element_set(ut.GridArray(
-            [[-(backdraft_percent*length), width_ratio * length, 0], [length, width_ratio*length, 0],
-             [length, -width_ratio * length, 0], [-(backdraft_percent*length), -width_ratio * length, 0]], 1),
-                                  0, "element")
+            [[-(backdraft_percent * length), width_ratio * length, 0], [length, width_ratio * length, 0],
+             [length, -width_ratio * length, 0], [-(backdraft_percent * length), -width_ratio * length, 0]], 1),
+            0, "element")
 
-    centerline_feeds = np.linspace(-backdraft_percent*length, length, 30)
+    centerline_feeds = np.linspace(-backdraft_percent * length, length, 30)
     centerline_exp_coords = rb.SE2.vector_set(rb.SE2.identity_element(),
                                               ut.GridArray([centerline_feeds,
                                                             np.zeros_like(centerline_feeds),
-                                                            centerline_feeds/radius], 1),
+                                                            centerline_feeds / radius], 1),
                                               0,
                                               0,
                                               'component')
 
     centerline = centerline_exp_coords.exp_R
-    topline =  centerline * rb.SE2.element([0, width_ratio * length, 1/radius])
+    topline = centerline * rb.SE2.element([0, width_ratio * length, 1 / radius])
     bottomline = centerline * rb.SE2.element([0, - width_ratio * length, 1 / radius])
     rlgp.RepresentationLieGroupElementSet
     return rlgp.RepresentationLieGroupElementSet * rb.SE2.element([])
@@ -510,6 +515,7 @@ def arc_link(length, radius, backdraft_percent, width_ratio, **kwargs):
     plot_info = rb.RigidBodyPlotInfo(plot_locus=plot_locus, plot_style=plot_style, plot_function=plot_function)
 
     return plot_info
+
 
 def baseframe_line(l, **kwargs):
     def L(body):
