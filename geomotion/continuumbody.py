@@ -35,6 +35,9 @@ class ContinuumBody(rb.RigidBody):
         # Save an empty initial shape locus
         self.shape_locus = None
 
+        # Save default width
+        self.width = 0.03
+
     def set_configuration(self,
                           shape_parameters,
                           t=0):
@@ -52,9 +55,14 @@ class ContinuumBody(rb.RigidBody):
     def draw(self, ax, **kwargs):
         s_dense = np.linspace(self.s_span[0], self.s_span[1], 100)
 
-        g_dense = self.shape_locus.sol(s_dense)
+        g_dense = G.element_set(ut.GridArray(self.shape_locus.sol(s_dense), 1), 0, 'component')
 
-        ax.plot(*g_dense[:2])
+        topline = g_dense * rb.SE2.element([0, self.width / 2, 0])
+        bottomline = g_dense * rb.SE2.element([0, - self.width / 2, 0])
+
+        boundaryline = rlgp.RepresentationLieGroupElementSet(topline.value + bottomline.value[::-1])
+
+        ax.fill(*boundaryline.grid[:2], facecolor='white', edgecolor='black')
 
         # Draw a ground point if provided
         if self.ground is not None:
