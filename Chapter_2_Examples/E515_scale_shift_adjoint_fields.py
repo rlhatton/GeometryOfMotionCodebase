@@ -29,7 +29,7 @@ g = G.element([1.5, 1])
 # Demonstrate that the adjoint of the right velocity is the left, and the adjoint inverse
 # of the left velocity is the right
 print("The adjoint of g_circ_r=", g_circ_r, " by g=", g, " is ", g.Ad(g_circ_r), " which is equal to g_circ_l.")
-print("The adjoint-inverse of g_circ_l=", g_circ_l, " by g=", g, " is ", g.Adinv(g_circ_l), " which is equal to g_circ_r.")
+print("The adjoint-inverse of g_circ_l=", g_circ_l, " by g=", g, " is ", g.Ad_inv(g_circ_l), " which is equal to g_circ_r.")
 print("The adjoint of g_circ_l=", g_circ_l, " by g_inv=", g.inverse, " is ", g.inverse.Ad(g_circ_l), " which is equal to g_circ_r.")
 
 
