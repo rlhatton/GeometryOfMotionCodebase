@@ -49,14 +49,23 @@ class RigidBodyPlotInfo:
 
         if 'plot_locus' in kwargs:
             self.plot_locus = kwargs['plot_locus']
+        else:
+            self.plot_locus = None
 
         if 'plot_style' in kwargs:
             self.plot_style = kwargs['plot_style']
+        else:
+            self.plot_style = None
 
         if 'plot_function' in kwargs:
             self.plot_function = kwargs['plot_function']
         else:
             self.plot_function = ['fill']
+
+        if 'plot_geometry' in kwargs:
+            self.plot_geometry = kwargs['plot_geometry']
+        else:
+            self.plot_geometry = None
 
 
 def cornered_triangle(configuration, r, spot_color, **kwargs):
