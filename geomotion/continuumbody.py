@@ -57,12 +57,16 @@ class ContinuumBody(rb.RigidBody):
 
         g_dense = G.element_set(ut.GridArray(self.shape_locus.sol(s_dense), 1), 0, 'component')
 
+        s_coarse = np.linspace(self.s_span[0], self.s_span[1], 10)
+        g_coarse = G.element_set(ut.GridArray(self.shape_locus.sol(s_coarse), 1), 0, 'component')
+
         topline = g_dense * rb.SE2.element([0, self.width / 2, 0])
         bottomline = g_dense * rb.SE2.element([0, - self.width / 2, 0])
 
         boundaryline = rlgp.RepresentationLieGroupElementSet(topline.value + bottomline.value[::-1])
 
         ax.fill(*boundaryline.grid[:2], facecolor='white', edgecolor='black')
+        ax.scatter(*g_coarse.grid[:2], color=spot_color)
 
         # Draw a ground point if provided
         if self.ground is not None:
