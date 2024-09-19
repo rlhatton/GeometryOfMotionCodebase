@@ -11,8 +11,8 @@ spot_color = gplt.crimson
 G = SE2
 
 # Make the generating vectors
-g_circ_A = G.Lie_alg_vector([1, 0, 0])
-g_circ_B = G.Lie_alg_vector([0, 0, np.pi/2])
+g_circ_A = G.Lie_alg_vector([0, 0, np.pi/2])
+g_circ_B = G.Lie_alg_vector([1, 0, 0])
 
 triangles_ApB=[]
 triangles_ApB.append(RigidBody(cornered_triangle(.1, 'black'), G.identity_element()))
@@ -52,7 +52,7 @@ sol = G.L_generator(g_circ.value).integrate([start1, end1], g_initial)
 traj_ApB = sol.sol(t)
 
 # Now take the Lie bracket and add it to the exponent
-g_circ_L_AB = G.Lie_alg_vector([0, -np.pi/2, 0])
+g_circ_L_AB = G.Lie_alg_vector([0, np.pi/2, 0])
 
 triangles_ApBpLAB=[]
 triangles_ApBpLAB.append(RigidBody(cornered_triangle(.1, 'black'), G.identity_element()))
@@ -88,7 +88,7 @@ traj_L_AmBLAB = sol.sol(t)
 
 ax = plt.subplot(1, 3, 1)
 ax.set_xlim(-.25, 1.25)
-ax.set_ylim(-.3, 1)
+ax.set_ylim(-.1, 1.5)
 ax.set_aspect('equal')
 #ax.scatter(1, 0, edgecolor=spot_color, facecolor=spot_color, zorder=-2)
 for t in triangles_ApB:
@@ -104,12 +104,12 @@ ax.axis('off')
 
 ax = plt.subplot(1, 3, 2)
 ax.set_xlim(-.25, 1.25)
-ax.set_ylim(-.3, 1)
+ax.set_ylim(-.1, 1.5)
 ax.set_aspect('equal')
 for t in triangles_ApBpLAB:
     t.draw(ax)
 # ax.plot(*traj_A[0:2], color=spot_color, zorder=-3)  # , marker='.', markersize=10)
-ax.scatter(1, 0, edgecolor=spot_color, facecolor=spot_color, zorder=-2)
+# ax.scatter(1, 0, edgecolor=spot_color, facecolor=spot_color, zorder=-2)
 ax.plot(*traj_ApB[0:2], color='grey', zorder=-3, linestyle='dotted', linewidth=2.25) #, marker='.', markersize=10)
 ax.plot(*traj_ApBpLAB[0:2], color=spot_color, zorder=-3) #, marker='.', markersize=10)
 # ax.plot(*traj_L_AmBLAB[0:2], color='black', zorder=-3) #, marker='.', markersize=10)
@@ -120,11 +120,11 @@ ax.axis('off')
 
 ax = plt.subplot(1, 3, 3)
 ax.set_xlim(-.25, 1.25)
-ax.set_ylim(-.3, 1)
+ax.set_ylim(-.1, 1.5)
 ax.set_aspect('equal')
 for t in triangles_ApB[0:2]:
     t.draw(ax)
-ax.scatter(1, 0, edgecolor=spot_color, facecolor=spot_color, zorder=-2)
+# ax.scatter(1, 0, edgecolor=spot_color, facecolor=spot_color, zorder=-2)
 ax.plot(*traj_ApB[0:2], color='grey', zorder=-3, linestyle='dotted', linewidth=2.25) #, marker='.', markersize=10)
 ax.plot(*traj_ApBpLAB[0:2], color='grey', zorder=-3, linestyle='dashed', linewidth=2) #, marker='.', markersize=10)
 ax.plot(*traj_L_AmBLAB[0:2], color=spot_color, zorder=-3) #, marker='.', markersize=10)
