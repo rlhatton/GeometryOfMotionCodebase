@@ -92,7 +92,7 @@ traj_L_AmBLAB = sol.sol(t)
 
 ax = plt.subplot(1, 3, 1)
 ax.set_xlim(-.25, 1.25)
-ax.set_ylim(-.1, 1.5)
+ax.set_ylim(-.25, 1.5)
 ax.set_aspect('equal')
 #ax.scatter(1, 0, edgecolor=spot_color, facecolor=spot_color, zorder=-2)
 for t in triangles_ApB:
@@ -108,7 +108,7 @@ ax.axis('off')
 
 ax = plt.subplot(1, 3, 2)
 ax.set_xlim(-.25, 1.25)
-ax.set_ylim(-.2, 1.5)
+ax.set_ylim(-.25, 1.5)
 ax.set_aspect('equal')
 for t in triangles_ApBpLAB:
     t.draw(ax)
@@ -124,7 +124,7 @@ ax.axis('off')
 
 ax = plt.subplot(1, 3, 3)
 ax.set_xlim(-.25, 1.25)
-ax.set_ylim(-.3, 1.5)
+ax.set_ylim(-.25, 1.5)
 ax.set_aspect('equal')
 for t in triangles_ApB[0:2]:
     t.draw(ax)
